@@ -1,0 +1,100 @@
+---
+- name: Configure Raspberry Pi Sculpture Nodes
+  hosts: sculptures
+  become: yes
+  vars:
+    sculpture_dir: /opt/sculpture-system
+    
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - darkice
+          - mpv
+          - python3-paho-mqtt
+          - pulseaudio
+          - rsync
+          - alsa-utils
+          - python3-pip
+        state: present
+
+    - name: Create sculpture system directory
+      file:
+        path: "{{ sculpture_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create loops directory
+      file:
+        path: "{{ sculpture_dir }}/loops"
+        state: directory
+        mode: '0755'
+
+    - name: Template darkice configuration
+      template:
+        src: ../darkice/darkice.cfg
+        dest: "{{ sculpture_dir }}/darkice.cfg"
+        mode: '0644'
+
+    - name: Copy pi-agent script
+      copy:
+        src: ../scripts/pi-agent.py
+        dest: "{{ sculpture_dir }}/pi-agent.py"
+        mode: '0755'
+
+    - name: Copy update-loops script
+      copy:
+        src: ../scripts/update-loops.sh
+        dest: "{{ sculpture_dir }}/update-loops.sh"
+        mode: '0755'
+
+    - name: Install systemd service files
+      copy:
+        src: "../systemd/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        mode: '0644'
+      loop:
+        - darkice.service
+        - player-live.service
+        - player-loop.service
+        - pi-agent.service
+      notify: reload systemd
+
+    - name: Create default loop file
+      copy:
+        content: ""
+        dest: "{{ sculpture_dir }}/loops/default.wav"
+        force: no
+
+    - name: Enable and start services
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      loop:
+        - darkice.service
+        - player-live.service
+        - pi-agent.service
+
+    - name: Ensure player-loop is disabled by default
+      systemd:
+        name: player-loop.service
+        enabled: no
+        state: stopped
+
+    - name: Configure PulseAudio for system mode
+      lineinfile:
+        path: /etc/pulse/system.pa
+        line: "load-module module-alsa-source device=hw:1,0"
+        create: yes
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes 

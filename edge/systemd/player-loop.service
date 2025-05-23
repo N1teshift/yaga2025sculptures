@@ -1,0 +1,22 @@
+[Unit]
+Description=Sculpture Loop Player
+After=sound.target
+Requires=sound.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mpv --loop --no-video --ao=pulse /opt/sculpture-system/loops/default.wav
+Restart=always
+RestartSec=5
+User=pi
+Group=audio
+
+# Environment variables
+Environment=SCULPTURE_ID=1
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target 

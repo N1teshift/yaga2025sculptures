@@ -1,0 +1,244 @@
+---
+- name: Install and Configure Control Node
+  hosts: localhost
+  become: yes
+  vars:
+    sculpture_dir: /opt/sculpture-system
+    liquidsoap_config_dir: /etc/liquidsoap
+    
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - icecast2
+          - liquidsoap
+          - mosquitto
+          - mosquitto-clients
+          - nodejs
+          - npm
+        state: present
+
+    - name: Install Node-RED globally
+      npm:
+        name: node-red
+        global: yes
+
+    - name: Create sculpture system directory
+      file:
+        path: "{{ sculpture_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create shared loops directory
+      file:
+        path: "{{ sculpture_dir }}/shared-loops"
+        state: directory
+        mode: '0755'
+
+    - name: Create liquidsoap config directory
+      file:
+        path: "{{ liquidsoap_config_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Configure Icecast2
+      template:
+        src: ../templates/icecast.xml
+        dest: /etc/icecast2/icecast.xml
+        backup: yes
+      notify: restart icecast2
+
+    - name: Enable Icecast2 in default config
+      lineinfile:
+        path: /etc/default/icecast2
+        regexp: '^ENABLE='
+        line: 'ENABLE=true'
+      notify: restart icecast2
+
+    - name: Copy Liquidsoap main configuration
+      copy:
+        src: ../liquidsoap/main.liq
+        dest: "{{ liquidsoap_config_dir }}/main.liq"
+        mode: '0644'
+      notify: restart liquidsoap
+
+    - name: Copy Liquidsoap presets
+      copy:
+        src: ../liquidsoap/presets.liq
+        dest: "{{ liquidsoap_config_dir }}/presets.liq"
+        mode: '0644'
+      notify: restart liquidsoap
+
+    - name: Create Liquidsoap systemd service
+      copy:
+        dest: /etc/systemd/system/liquidsoap.service
+        content: |
+          [Unit]
+          Description=Liquidsoap Audio Streaming
+          After=network.target icecast2.service
+          Wants=icecast2.service
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/bin/liquidsoap /etc/liquidsoap/main.liq
+          Restart=always
+          RestartSec=5
+          User=liquidsoap
+          Group=liquidsoap
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      notify: 
+        - reload systemd
+        - restart liquidsoap
+
+    - name: Create liquidsoap user
+      user:
+        name: liquidsoap
+        system: yes
+        shell: /bin/false
+        home: /var/lib/liquidsoap
+        create_home: yes
+
+    - name: Configure Mosquitto MQTT broker
+      copy:
+        dest: /etc/mosquitto/conf.d/sculpture.conf
+        content: |
+          listener 1883
+          allow_anonymous true
+          log_type all
+          log_dest file /var/log/mosquitto/mosquitto.log
+        mode: '0644'
+      notify: restart mosquitto
+
+    - name: Create Node-RED systemd service
+      copy:
+        dest: /etc/systemd/system/node-red.service
+        content: |
+          [Unit]
+          Description=Node-RED
+          After=syslog.target network.target
+
+          [Service]
+          ExecStart=/usr/bin/node-red --settings /opt/sculpture-system/node-red-settings.js
+          Restart=always
+          RestartSec=5
+          KillSignal=SIGINT
+          User=node-red
+          Group=node-red
+          WorkingDirectory=/opt/sculpture-system
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      notify:
+        - reload systemd
+        - restart node-red
+
+    - name: Create node-red user
+      user:
+        name: node-red
+        system: yes
+        shell: /bin/false
+        home: /opt/sculpture-system
+        create_home: no
+
+    - name: Copy Node-RED flow configuration
+      copy:
+        src: ../nodered/flow.json
+        dest: "{{ sculpture_dir }}/flow.json"
+        mode: '0644'
+        owner: node-red
+        group: node-red
+
+    - name: Create Node-RED settings file
+      copy:
+        dest: "{{ sculpture_dir }}/node-red-settings.js"
+        content: |
+          module.exports = {
+              uiPort: process.env.PORT || 1880,
+              mqttReconnectTime: 15000,
+              serialReconnectTime: 15000,
+              debugMaxLength: 1000,
+              functionGlobalContext: {},
+              exportGlobalContextKeys: false,
+              logging: {
+                  console: {
+                      level: "info",
+                      metrics: false,
+                      audit: false
+                  }
+              },
+              editorTheme: {
+                  projects: {
+                      enabled: false
+                  }
+              },
+              flowFile: 'flow.json',
+              userDir: '/opt/sculpture-system/',
+              httpAdminRoot: '/admin',
+              httpNodeRoot: '/api',
+              ui: { path: "ui" },
+              requireHttps: false,
+              httpNodeCors: {
+                  origin: "*",
+                  methods: "GET,PUT,POST,DELETE"
+              },
+              httpAdminCors: {
+                  origin: "*",
+                  methods: "GET,PUT,POST,DELETE"
+              }
+          }
+        mode: '0644'
+        owner: node-red
+        group: node-red
+
+    - name: Set ownership of sculpture directory
+      file:
+        path: "{{ sculpture_dir }}"
+        owner: node-red
+        group: node-red
+        recurse: yes
+
+    - name: Enable and start services
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      loop:
+        - icecast2
+        - mosquitto
+        - liquidsoap
+        - node-red
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart icecast2
+      systemd:
+        name: icecast2
+        state: restarted
+
+    - name: restart liquidsoap
+      systemd:
+        name: liquidsoap
+        state: restarted
+
+    - name: restart mosquitto
+      systemd:
+        name: mosquitto
+        state: restarted
+
+    - name: restart node-red
+      systemd:
+        name: node-red
+        state: restarted 

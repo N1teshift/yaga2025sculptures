@@ -1,0 +1,169 @@
+<icecast>
+    <location>Sculpture Installation</location>
+    <admin>admin@sculpture.local</admin>
+
+    <limits>
+        <clients>100</clients>
+        <sources>10</sources>
+        <queue-size>524288</queue-size>
+        <client-timeout>30</client-timeout>
+        <header-timeout>15</header-timeout>
+        <source-timeout>10</source-timeout>
+        <burst-on-connect>1</burst-on-connect>
+        <burst-size>65535</burst-size>
+    </limits>
+
+    <authentication>
+        <source-password>hackme</source-password>
+        <relay-password>hackme</relay-password>
+        <admin-user>admin</admin-user>
+        <admin-password>hackme</admin-password>
+    </authentication>
+
+    <hostname>localhost</hostname>
+
+    <listen-socket>
+        <port>8000</port>
+    </listen-socket>
+
+    <mount type="normal">
+        <mount-name>/s1-mic.ogg</mount-name>
+        <username>source</username>
+        <password>hackme</password>
+        <max-listeners>20</max-listeners>
+        <dump-file>/tmp/s1-mic.dump</dump-file>
+        <burst-size>65536</burst-size>
+        <fallback-mount>/silence.ogg</fallback-mount>
+        <fallback-override>1</fallback-override>
+        <fallback-when-full>1</fallback-when-full>
+        <intro>/intro.ogg</intro>
+        <hidden>0</hidden>
+        <public>0</public>
+        <stream-name>Sculpture 1 Microphone</stream-name>
+        <stream-description>Live audio from sculpture 1</stream-description>
+        <stream-url>http://sculpture.local</stream-url>
+        <genre>ambient</genre>
+        <bitrate>128</bitrate>
+        <type>application/ogg</type>
+        <subtype>vorbis</subtype>
+    </mount>
+
+    <mount type="normal">
+        <mount-name>/s2-mic.ogg</mount-name>
+        <username>source</username>
+        <password>hackme</password>
+        <max-listeners>20</max-listeners>
+        <dump-file>/tmp/s2-mic.dump</dump-file>
+        <burst-size>65536</burst-size>
+        <fallback-mount>/silence.ogg</fallback-mount>
+        <fallback-override>1</fallback-override>
+        <fallback-when-full>1</fallback-when-full>
+        <intro>/intro.ogg</intro>
+        <hidden>0</hidden>
+        <public>0</public>
+        <stream-name>Sculpture 2 Microphone</stream-name>
+        <stream-description>Live audio from sculpture 2</stream-description>
+        <stream-url>http://sculpture.local</stream-url>
+        <genre>ambient</genre>
+        <bitrate>128</bitrate>
+        <type>application/ogg</type>
+        <subtype>vorbis</subtype>
+    </mount>
+
+    <mount type="normal">
+        <mount-name>/s3-mic.ogg</mount-name>
+        <username>source</username>
+        <password>hackme</password>
+        <max-listeners>20</max-listeners>
+        <dump-file>/tmp/s3-mic.dump</dump-file>
+        <burst-size>65536</burst-size>
+        <fallback-mount>/silence.ogg</fallback-mount>
+        <fallback-override>1</fallback-override>
+        <fallback-when-full>1</fallback-when-full>
+        <intro>/intro.ogg</intro>
+        <hidden>0</hidden>
+        <public>0</public>
+        <stream-name>Sculpture 3 Microphone</stream-name>
+        <stream-description>Live audio from sculpture 3</stream-description>
+        <stream-url>http://sculpture.local</stream-url>
+        <genre>ambient</genre>
+        <bitrate>128</bitrate>
+        <type>application/ogg</type>
+        <subtype>vorbis</subtype>
+    </mount>
+
+    <mount type="normal">
+        <mount-name>/mix-for-1.ogg</mount-name>
+        <username>source</username>
+        <password>hackme</password>
+        <max-listeners>20</max-listeners>
+        <dump-file>/tmp/mix-for-1.dump</dump-file>
+        <burst-size>65536</burst-size>
+        <hidden>0</hidden>
+        <public>0</public>
+        <stream-name>Mix for Sculpture 1</stream-name>
+        <stream-description>Personalized mix for sculpture 1</stream-description>
+        <stream-url>http://sculpture.local</stream-url>
+        <genre>ambient</genre>
+        <bitrate>128</bitrate>
+        <type>application/ogg</type>
+        <subtype>opus</subtype>
+    </mount>
+
+    <mount type="normal">
+        <mount-name>/mix-for-2.ogg</mount-name>
+        <username>source</username>
+        <password>hackme</password>
+        <max-listeners>20</max-listeners>
+        <dump-file>/tmp/mix-for-2.dump</dump-file>
+        <burst-size>65536</burst-size>
+        <hidden>0</hidden>
+        <public>0</public>
+        <stream-name>Mix for Sculpture 2</stream-name>
+        <stream-description>Personalized mix for sculpture 2</stream-description>
+        <stream-url>http://sculpture.local</stream-url>
+        <genre>ambient</genre>
+        <bitrate>128</bitrate>
+        <type>application/ogg</type>
+        <subtype>opus</subtype>
+    </mount>
+
+    <mount type="normal">
+        <mount-name>/mix-for-3.ogg</mount-name>
+        <username>source</username>
+        <password>hackme</password>
+        <max-listeners>20</max-listeners>
+        <dump-file>/tmp/mix-for-3.dump</dump-file>
+        <burst-size>65536</burst-size>
+        <hidden>0</hidden>
+        <public>0</public>
+        <stream-name>Mix for Sculpture 3</stream-name>
+        <stream-description>Personalized mix for sculpture 3</stream-description>
+        <stream-url>http://sculpture.local</stream-url>
+        <genre>ambient</genre>
+        <bitrate>128</bitrate>
+        <type>application/ogg</type>
+        <subtype>opus</subtype>
+    </mount>
+
+    <fileserve>1</fileserve>
+
+    <paths>
+        <basedir>/usr/share/icecast2</basedir>
+        <logdir>/var/log/icecast2</logdir>
+        <webroot>/usr/share/icecast2/web</webroot>
+        <adminroot>/usr/share/icecast2/admin</adminroot>
+        <alias source="/" destination="/status.xsl"/>
+    </paths>
+
+    <logging>
+        <accesslog>access.log</accesslog>
+        <errorlog>error.log</errorlog>
+        <loglevel>3</loglevel>
+        <logsize>10000</logsize>
+    </logging>
+
+    <security>
+        <chroot>0</chroot>
+    </security>
+</icecast> 
