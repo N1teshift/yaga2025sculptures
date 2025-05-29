@@ -1,0 +1,24 @@
+[Unit]
+Description=Sculpture Live Audio Player (Simulator)
+After=network-online.target sound.target
+Wants=network-online.target
+Requires=sound.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mpv --no-video --ao=pulse --cache=yes --demuxer-max-bytes=1M http://host.docker.internal:8000/mix-for-1.ogg
+Restart=always
+RestartSec=5
+User=pi
+Group=audio
+
+# Environment variables
+Environment=SCULPTURE_ID=1
+Environment=CONTROL_HOST=host.docker.internal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target 

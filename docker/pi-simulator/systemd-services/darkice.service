@@ -1,0 +1,26 @@
+[Unit]
+Description=DarkIce Live Audio Streamer (Simulator)
+Documentation=man:darkice(1)
+After=network-online.target sound.target
+Wants=network-online.target
+Requires=sound.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/darkice -c /opt/sculpture-system/darkice.cfg
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+User=pi
+Group=audio
+
+# Environment variables
+Environment=SCULPTURE_ID=1
+Environment=CONTROL_HOST=host.docker.internal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target 

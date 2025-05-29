@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # Simulated Raspberry Pi Sculpture 1
+  sculpture1:
+    build: 
+      context: .
+      dockerfile: Dockerfile.pi-simulator
+    container_name: sculpture1
+    hostname: sculpture1
+    environment:
+      - SCULPTURE_ID=1
+      - CONTROL_HOST=host.docker.internal
+      - ALSA_DEVICE=hw:0,0
+    volumes:
+      - ./pi-simulator/sculpture1:/opt/sculpture-system
+      - ./pi-simulator/audio-samples:/audio-samples:ro
+    networks:
+      sculpture_net:
+        ipv4_address: 172.20.0.101
+    ports:
+      - "2201:22"  # SSH access for testing
+    depends_on:
+      - audio-generator1
+
+  # Simulated Raspberry Pi Sculpture 2  
+  sculpture2:
+    build: 
+      context: .
+      dockerfile: Dockerfile.pi-simulator
+    container_name: sculpture2
+    hostname: sculpture2
+    environment:
+      - SCULPTURE_ID=2
+      - CONTROL_HOST=host.docker.internal
+      - ALSA_DEVICE=hw:0,0
+    volumes:
+      - ./pi-simulator/sculpture2:/opt/sculpture-system
+      - ./pi-simulator/audio-samples:/audio-samples:ro
+    networks:
+      sculpture_net:
+        ipv4_address: 172.20.0.102
+    ports:
+      - "2202:22"
+    depends_on:
+      - audio-generator2
+
+  # Simulated Raspberry Pi Sculpture 3
+  sculpture3:
+    build: 
+      context: .
+      dockerfile: Dockerfile.pi-simulator
+    container_name: sculpture3
+    hostname: sculpture3
+    environment:
+      - SCULPTURE_ID=3
+      - CONTROL_HOST=host.docker.internal
+      - ALSA_DEVICE=hw:0,0
+    volumes:
+      - ./pi-simulator/sculpture3:/opt/sculpture-system
+      - ./pi-simulator/audio-samples:/audio-samples:ro
+    networks:
+      sculpture_net:
+        ipv4_address: 172.20.0.103
+    ports:
+      - "2203:22"
+    depends_on:
+      - audio-generator3
+
+  # Audio generators to simulate microphone input
+  audio-generator1:
+    image: alpine:latest
+    container_name: audio-gen1
+    command: >
+      sh -c "
+        apk add --no-cache ffmpeg &&
+        while true; do
+          ffmpeg -f lavfi -i 'sine=frequency=440:duration=10' -f wav /tmp/audio1.wav 2>/dev/null &&
+          sleep 5
+        done
+      "
+    volumes:
+      - audio1_data:/tmp
+    networks:
+      - sculpture_net
+
+  audio-generator2:
+    image: alpine:latest
+    container_name: audio-gen2
+    command: >
+      sh -c "
+        apk add --no-cache ffmpeg &&
+        while true; do
+          ffmpeg -f lavfi -i 'sine=frequency=880:duration=10' -f wav /tmp/audio2.wav 2>/dev/null &&
+          sleep 5
+        done
+      "
+    volumes:
+      - audio2_data:/tmp
+    networks:
+      - sculpture_net
+
+  audio-generator3:
+    image: alpine:latest
+    container_name: audio-gen3
+    command: >
+      sh -c "
+        apk add --no-cache ffmpeg &&
+        while true; do
+          ffmpeg -f lavfi -i 'sine=frequency=1320:duration=10' -f wav /tmp/audio3.wav 2>/dev/null &&
+          sleep 5
+        done
+      "
+    volumes:
+      - audio3_data:/tmp
+    networks:
+      - sculpture_net
+
+networks:
+  sculpture_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  audio1_data:
+  audio2_data:
+  audio3_data: 
