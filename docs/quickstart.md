@@ -16,6 +16,7 @@ If using Windows as the control node, set up WSL 2 first:
 
 ```powershell
 # In PowerShell as Administrator
+# Optionally, first check existing WSL distributions: wsl -l -v
 wsl --install -d Ubuntu-22.04
 
 # After restart, open Ubuntu terminal and update
@@ -23,7 +24,7 @@ sudo apt update && sudo apt upgrade -y
 ```
 
 **Important WSL 2 Network Notes:**
-- WSL 2 uses a virtual network adapter
+- WSL 2 uses a virtual network adapter. If you have multiple WSL distributions (e.g., one for Docker Desktop), ensure you are running subsequent commands in your `Ubuntu-22.04` instance. You can launch it specifically with `wsl -d Ubuntu-22.04` and set it as default with `wsl -s Ubuntu-22.04`.
 - Your WSL IP will be different from your Windows IP
 - Use `ip addr show eth0` in WSL to find your WSL IP address
 - Raspberry Pis should connect to your **WSL IP**, not Windows IP
@@ -90,7 +91,7 @@ ssh-copy-id pi@YOUR_PI3_IP
 ```bash
 # In WSL Ubuntu terminal
 sudo apt update
-sudo apt install ansible
+sudo apt install ansible -y
 ```
 
 ## Step 6: Deploy to Raspberry Pis
@@ -103,9 +104,39 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
+## Step 6.5: Install Node.js and Node-RED Dashboard prerequisites (Control Node)
+
+Node-RED (installed in the next step by Ansible) requires a modern version of Node.js (e.g., v18 LTS or newer). The default Node.js in Ubuntu repositories might be too old. Additionally, the Node-RED dashboard UI components need to be installed.
+
+**1. Install/Verify Node.js Version:**
+It's recommended to install Node.js using NodeSource for a system-wide compatible version.
+
+```bash
+# In WSL Ubuntu terminal
+sudo apt update
+sudo apt install -y curl # Ensure curl is installed
+# Install Node.js (e.g., v22.x - choose a current LTS or recent version)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+# Or for Node.js 20.x (another good LTS choice):
+# curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+# Verify installation (should show the new version, e.g., v22.x.x)
+echo "Node version: $(node -v)"
+echo "Node path: $(which node)" # Should be /usr/bin/node
+```
+**Note:** If `sudo apt-get install -y nodejs` fails due to file conflicts (e.g., with `libnode-dev` or `common.gypi`), you may need to remove older Node.js-related packages first:
+`sudo apt-get remove --purge libnode-dev nodejs-doc npm node-gyp` (and others if listed)
+`sudo apt autoremove -y && sudo apt clean`
+Then retry the `sudo apt-get install -y nodejs` command. If a specific file conflict persists, a forced overwrite might be needed as a last resort for the `.deb` package, followed by `sudo apt-get install -f -y`.
+
+**2. Prepare for Node-RED Dashboard Module:**
+(The actual module will be installed after Node-RED itself is set up by Ansible).
+
 ## Step 7: Install Control Node Services
 
 ```bash
+# In WSL Ubuntu terminal, ensure you are in your project directory
+# cd /path/to/your/yaga2025sculptures
 # Run the control node playbook
 ansible-playbook server/ansible/install_control_node.yml
 
@@ -115,6 +146,32 @@ sudo systemctl status mosquitto
 sudo systemctl status liquidsoap
 sudo systemctl status node-red
 ```
+
+**Troubleshooting after Ansible Playbook:**
+
+*   **Mosquitto:** If Mosquitto fails to start (check `sudo systemctl status mosquitto.service`), it might be due to a duplicate `log_dest file` configuration.
+    1.  Confirm error: `/usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf`.
+    2.  If duplicate `log_dest` error, edit `/etc/mosquitto/conf.d/sculpture.conf` (e.g., `sudo nano /etc/mosquitto/conf.d/sculpture.conf`) and comment out the `log_dest file ...` line (add `#` at the beginning).
+    3.  Then: `sudo systemctl restart mosquitto` and check status.
+
+*   **Node-RED:** If Node-RED fails to start:
+    1.  Check logs: `sudo journalctl -xeu node-red.service`.
+    2.  Common issues include incorrect Node.js version (addressed in Step 6.5) or path issues for the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` uses the correct path (usually `/usr/local/bin/node-red` or `/usr/bin/node-red`).
+    3.  **Install `node-red-dashboard` module:** The UI components require this.
+        ```bash
+        # In WSL Ubuntu terminal, navigate to Node-RED's working/user directory.
+        # This is often /opt/sculpture-system or a .node-red folder within it,
+        # or /var/lib/node-red, or the home dir of the 'node-red' user.
+        # For this project, /opt/sculpture-system is a good place:
+        cd /opt/sculpture-system
+        sudo npm install node-red-dashboard
+        # Ensure the node-red user owns the installed module:
+        sudo chown -R node-red:node-red /opt/sculpture-system/node_modules
+        # If package-lock.json was created in /opt/sculpture-system:
+        # sudo chown node-red:node-red /opt/sculpture-system/package-lock.json
+        sudo systemctl restart node-red
+        ```
+    4. After restarting, check `sudo systemctl status node-red` again.
 
 ## Step 8: Start Audio Processing
 
@@ -129,8 +186,8 @@ sudo journalctl -u liquidsoap -f
 ## Step 9: Access Control Dashboard
 
 **From Windows:**
-1. Open web browser to `http://YOUR_WSL_IP:1880/ui`
-2. You should see the sculpture control dashboard
+1. Open web browser. The Node-RED dashboard is often at `http://YOUR_WSL_IP:1880/ui`. If this path does not work, try `http://YOUR_WSL_IP:1880/dashboard` or `http://YOUR_WSL_IP:1880/api/ui/`. The Node-RED flow editor (usually at `http://YOUR_WSL_IP:1880/` or `http://YOUR_WSL_IP:1880/admin/`) typically has a sidebar tab for 'dashboard' with a direct launch button.
+2. You should see the sculpture control dashboard.
 3. Test volume sliders and mode switches
 
 **From WSL:**
