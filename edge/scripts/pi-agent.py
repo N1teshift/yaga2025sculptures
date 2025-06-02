@@ -34,6 +34,8 @@ class SculptureAgent:
         client.subscribe(self.cmd_topic)
         client.subscribe(self.broadcast_topic)
         logger.info(f"Subscribed to {self.cmd_topic} and {self.broadcast_topic}")
+        # Default to live mode on connect for the simulator
+        self.handle_mode_command("live")
         
     def on_message(self, client, userdata, msg):
         try:
@@ -58,16 +60,16 @@ class SculptureAgent:
             if mode == "live":
                 logger.info("Switching to live mode")
                 # Stop local playback
-                subprocess.run(['systemctl', 'stop', 'player-loop.service'], check=False)
+                subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
                 # Start live streaming and playback
-                subprocess.run(['systemctl', 'start', 'darkice.service'], check=True)
-                subprocess.run(['systemctl', 'start', 'player-live.service'], check=True)
+                subprocess.run(['sudo', 'systemctl', 'start', 'darkice.service'], check=True)
+                subprocess.run(['sudo', 'systemctl', 'start', 'player-live.service'], check=True)
                 
             elif mode == "local":
                 logger.info(f"Switching to local mode with track: {track}")
                 # Stop live services
-                subprocess.run(['systemctl', 'stop', 'darkice.service'], check=False)
-                subprocess.run(['systemctl', 'stop', 'player-live.service'], check=False)
+                subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+                subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
                 
                 # Update track if specified
                 if track:
@@ -79,7 +81,7 @@ class SculptureAgent:
                         logger.warning(f"Track not found: {track_path}")
                         
                 # Start local playback
-                subprocess.run(['systemctl', 'start', 'player-loop.service'], check=True)
+                subprocess.run(['sudo', 'systemctl', 'start', 'player-loop.service'], check=True)
                 
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to execute systemctl command: {e}")
@@ -93,7 +95,7 @@ class SculptureAgent:
             
             logger.info(f"Setting volume to {volume_percent}%")
             subprocess.run([
-                'pactl', 'set-sink-volume', '0', f'{volume_percent}%'
+                'pactl', 'set-sink-volume', 'sculpture_sink', f'{volume_percent}%'
             ], check=True)
             
         except subprocess.CalledProcessError as e:
@@ -118,7 +120,7 @@ WantedBy=multi-user.target
         try:
             with open('/etc/systemd/system/player-loop.service', 'w') as f:
                 f.write(service_content)
-            subprocess.run(['systemctl', 'daemon-reload'], check=True)
+            subprocess.run(['sudo', 'systemctl', 'daemon-reload'], check=True)
         except Exception as e:
             logger.error(f"Failed to update loop service: {e}")
             

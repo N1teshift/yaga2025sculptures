@@ -1,0 +1,16 @@
+[Unit]
+Description=Audio Input Simulator (ffmpeg Tones)
+After=pulseaudio.service
+Requires=pulseaudio.service
+
+[Service]
+Type=simple
+ExecStart=/opt/sculpture-system/audio-simulator.sh
+User=pi
+Group=pi
+Restart=always
+RestartSec=5
+PassEnvironment=SCULPTURE_ID
+
+[Install]
+WantedBy=multi-user.target 

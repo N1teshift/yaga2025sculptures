@@ -16,7 +16,7 @@ Environment=SCULPTURE_ID=1
 Environment=CONTROL_HOST=host.docker.internal
 
 # Security settings
-NoNewPrivileges=true
+NoNewPrivileges=false
 PrivateTmp=true
 
 [Install]

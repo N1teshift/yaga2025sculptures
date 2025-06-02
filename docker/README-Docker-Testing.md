@@ -170,6 +170,42 @@ docker exec sculpture1 telnet host.docker.internal 1883
 docker network inspect docker_sculpture_net
 ```
 
+## Advanced Troubleshooting
+
+### `systemd` in Docker Containers
+
+The simulated Raspberry Pi containers run `systemd` as their init process (PID 1) to closely mimic a real Pi environment. Running `systemd` in Docker has specific requirements:
+
+*   **Permissions**: The container needs elevated privileges. The provided `docker-compose.yml` grants these via:
+    *   `cap_add: [SYS_ADMIN]`
+    *   Volume mount for cgroups: `- /sys/fs/cgroup:/sys/fs/cgroup:rw` (read-write is important)
+    *   `tmpfs` mounts for `/run` and `/run/lock`.
+    If `systemd` fails to start (often with container exit code 255 and no `docker logs` output), check these settings in your `docker-compose.yml`.
+*   **Debugging `systemd`**: If a container with `systemd` fails to stay up, or if services managed by `systemd` are misbehaving, use `docker-compose run --rm --service-ports <service_name> bash` (e.g., `sculpture1`) to get an interactive shell. From there, you can attempt to start `systemd` manually (`exec /sbin/init` or by running the container's `/startup.sh`) to see detailed error messages.
+
+### Service-Specific Issues within Containers
+
+When `docker logs <container_name>` provides little information (common when `systemd` is PID 1), use `docker exec -it <container_name> bash` to enter the container and then:
+
+*   **Check service status**: `systemctl status <service_name.service>` (e.g., `darkice.service`, `pi-agent.service`, `pulseaudio.service`).
+*   **View detailed logs**: `journalctl -u <service_name.service> -n 50 --no-pager` (shows last 50 lines) or `journalctl -u <service_name.service> -f` (to follow logs).
+
+**DarkIce (`darkice.service`):**
+*   **Configuration Parsing Error**: If DarkIce logs show `no section [general] in config` or `no current section [0]`, this is almost always due to incorrect line endings in its configuration file (`/opt/sculpture-system/darkice.cfg` inside the container, which originates from `docker/pi-simulator/darkice-simulator.cfg` on the host).
+    *   **Fix**: Ensure the `darkice-simulator.cfg` file on your host uses **LF (Unix) line endings**, not CRLF (Windows). Use a text editor (VS Code, Notepad++, etc.) to change and save with LF line endings. You can check line endings inside the container using `xxd /opt/sculpture-system/darkice.cfg | head` (look for `0d0a` for CRLF vs. `0a` for LF).
+*   **PulseAudio Connection**: If DarkIce reports "Access Denied" or "Connection Refused" to PulseAudio:
+    *   Ensure PulseAudio is running (see below).
+    *   The `darkice.service` file should specify `User=pi` (or another user present in the `pulse-access` group). The `pi` user is added to `pulse-access` in the Dockerfile.
+
+**PulseAudio (`pulseaudio.service`):**
+*   **Not Running**: DarkIce (if configured with `device = pulse`) requires PulseAudio. If PulseAudio isn't running, DarkIce can't connect. The provided setup now includes a `pulseaudio.service` file to start it automatically.
+    *   Check status: `systemctl status pulseaudio.service`.
+    *   If it's not starting, check its journal: `journalctl -u pulseaudio.service`.
+*   **Authentication**: System-wide PulseAudio (run by user `pulse`) uses cookie authentication. The `pulse` user (and users in the `pulse-access` group, like `pi`) should generally have access. The cookie is often at `/var/lib/pulse/cookie`.
+
+**Pi Agent (`pi-agent.service`):**
+*   **`vcgencmd` Error**: The agent logs `[Errno 2] No such file or directory: 'vcgencmd'`. This is expected in the Docker simulator as `vcgencmd` is a Raspberry Pi-specific hardware utility. This error is generally non-critical for the agent's core MQTT communication and command processing in the simulated environment.
+
 ## Customization
 
 ### Modify Audio Patterns

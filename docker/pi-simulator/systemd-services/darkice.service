@@ -1,22 +1,26 @@
 [Unit]
 Description=DarkIce Live Audio Streamer (Simulator)
 Documentation=man:darkice(1)
-After=network-online.target sound.target
+After=network-online.target sound.target pulseaudio.service
 Wants=network-online.target
-Requires=sound.target
+Requires=sound.target pulseaudio.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/darkice -c /opt/sculpture-system/darkice.cfg
+EnvironmentFile=/etc/environment
+Environment="ALSA_CARD=default"
+PassEnvironment=SCULPTURE_ID
+Environment="PULSE_SERVER=unix:/var/run/pulse/native"
+ExecStart=/opt/sculpture-system/start-darkice.sh
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=5
 User=pi
 Group=audio
 
-# Environment variables
-Environment=SCULPTURE_ID=1
-Environment=CONTROL_HOST=host.docker.internal
+# Environment variables from docker-compose are automatically available
+# Environment=SCULPTURE_ID=1 # No longer needed here, picked up from container env
+# Environment=CONTROL_HOST=host.docker.internal # No longer needed here
 
 # Security settings
 NoNewPrivileges=true

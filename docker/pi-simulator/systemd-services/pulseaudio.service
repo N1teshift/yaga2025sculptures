@@ -1,0 +1,21 @@
+[Unit]
+Description=PulseAudio System-Wide Sound Server
+After=sound.target
+Documentation=man:pulseaudio(1)
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/pulseaudio --system --disallow-exit --disallow-module-loading=false --log-target=journal
+Restart=always
+RestartSec=5
+TimeoutStartSec=90
+TimeoutStopSec=5
+# User=pulse
+# Group=pulse
+# WorkingDirectory=/var/lib/pulse
+
+RuntimeDirectory=pulse
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target 
