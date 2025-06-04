@@ -45,7 +45,12 @@ s3_proc = sculpture_process(s3_safe)
 prerecorded = sine(440.0)
 
 # Reference to current plan (default: C)
-current_plan = "C"
+current_plan = ref "C"
+
+# Mix output references updated when the plan changes
+to1 = ref(silence)
+to2 = ref(silence)
+to3 = ref(silence)
 
 
 # Function to create mixes based on plan
@@ -83,27 +88,29 @@ def set_plan(arg)
   if arg == "" then
     "Usage: set_plan <A1|A2|B1|B2|B3|C|D>"
   else
-    current_plan = arg
+    current_plan := arg
+    update_mixes()
     log("Plan changed to #{arg}")
     "Plan set to #{arg}"
   end
 end
 server.register("set_plan", set_plan)
 
-# Get mixes based on current plan
-def plan_switch()
-  get_mixes(current_plan)
+# Update mix references based on the current plan
+def update_mixes()
+  mixes = get_mixes(!current_plan)
+  to1 := list.hd(mixes)
+  to2 := list.hd(list.tl(mixes))
+  to3 := list.hd(list.tl(list.tl(mixes)))
 end
 
-mixes = plan_switch()
-to1 = list.hd(mixes)
-to2 = list.hd(list.tl(mixes))
-to3 = list.hd(list.tl(list.tl(mixes)))
+# Initialize mixes
+update_mixes()
 
 # Apply final processing to mixes
-to1_final = to_mono(sculpture_process(to1))
-to2_final = to_mono(sculpture_process(to2))
-to3_final = to_mono(sculpture_process(to3))
+to1_final = to_mono(sculpture_process(!to1))
+to2_final = to_mono(sculpture_process(!to2))
+to3_final = to_mono(sculpture_process(!to3))
 
 # Output to Icecast
 output.icecast(
