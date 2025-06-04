@@ -29,8 +29,8 @@ class SculptureAgent:
         self.status_topic = f"sculpture/{self.sculpture_id}/status"
         self.cmd_topic = f"sculpture/{self.sculpture_id}/cmd"
         self.broadcast_topic = "system/broadcast"
-        self.is_recording = False  # Track recording state
         self.is_muted = False      # Track mute state
+        self.current_mode = "live"  # Track current mode (live/local)
         
     def on_connect(self, client, userdata, flags, rc):
         logger.info(f"Connected to MQTT broker with result code {rc}")
@@ -66,7 +66,7 @@ class SculptureAgent:
         try:
             if mode == "live":
                 logger.info("Switching to live mode")
-                self.is_recording = False
+                self.current_mode = "live"
                 # Stop local playback
                 subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
                 # Start live streaming and playback
@@ -75,7 +75,7 @@ class SculptureAgent:
                 
             elif mode == "local":
                 logger.info(f"Switching to local mode with track: {track}")
-                self.is_recording = False
+                self.current_mode = "local"
                 # Stop live services
                 subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
                 subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
@@ -94,7 +94,7 @@ class SculptureAgent:
                 
             elif mode == "recording":
                 logger.info("Switching to recording mode")
-                self.is_recording = True
+                self.current_mode = "recording"
                 # Implement actual recording logic if needed
                 
             else:
@@ -160,7 +160,7 @@ WantedBy=multi-user.target
             logger.error(f"Failed to update loop service: {e}")
             
     def get_system_status(self):
-        """Get CPU, temperature, audio level, recording, and online status"""
+        """Get CPU, temperature, audio level, and online status"""
         try:
             # Get CPU usage
             cpu_result = subprocess.run(['top', '-bn1'], capture_output=True, text=True)
@@ -178,15 +178,12 @@ WantedBy=multi-user.target
             # Always online if running
             online = 1
             
-            # Recording state
-            recording = 1 if self.is_recording else 0
-            
             return {
                 'sculpture_id': self.sculpture_id,
                 'cpu_usage': cpu_usage,
                 'temperature': temperature,
                 'audio_level': audio_level,
-                'recording': recording,
+                'mode': self.current_mode,
                 'online': online,
                 'timestamp': time.time()
             }
@@ -197,7 +194,7 @@ WantedBy=multi-user.target
                 'cpu_usage': 0,
                 'temperature': 0,
                 'audio_level': -60,
-                'recording': 0,
+                'mode': self.current_mode,
                 'online': 1,
                 'timestamp': time.time(),
                 'error': str(e)
