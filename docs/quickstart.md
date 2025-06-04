@@ -145,6 +145,10 @@ node -v   # Should print a recent LTS version (18+)
 # Run the control node playbook
 ansible-playbook server/ansible/install_control_node.yml
 
+# OR
+
+ansible-playbook -i inventory --ask-become-pass server/ansible/install_control_node.yml
+
 # Verify services are running
 sudo systemctl status icecast2
 sudo systemctl status mosquitto
@@ -213,26 +217,6 @@ curl http://localhost:1880/ui
    - `http://YOUR_WSL_IP:8000/mix-for-2.ogg`
    - `http://YOUR_WSL_IP:8000/mix-for-3.ogg`
 
-## Step 14: Test System Operation
-
-1. **Switch Plans via Dashboard**
-   - Open the Node-RED dashboard and click each plan button (A1, A2, B1, B2, B3, C, D).
-   - The selected button should highlight in blue.
-2. **Confirm MQTT Broadcast**
-   ```bash
-   mosquitto_sub -t system/broadcast -v
-   ```
-   - Each button press should publish a message like `{"plan":"A1"}`.
-3. **Verify Liquidsoap Plan**
-   ```bash
-   telnet localhost 1234
-   > get_plan
-   ```
-   - The returned value should match the plan selected on the dashboard.
-4. **Listen to the Audio Mixes**
-   - Plans A1–C route live microphone streams in different patterns.
-   - Plan D plays the local loop audio.
-   - Confirm the routing or loop playback by monitoring the Icecast streams.
 
 ## WSL 2 Specific Considerations
 
