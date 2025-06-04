@@ -106,7 +106,7 @@ sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_WS
 sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
 ```
 
-**Note:** Use your WSL IP address (from Step 2) as `control_host`, not your Windows IP.
+**Note:** Use your WSL IP address (from Step 6) as `control_host`, not your Windows IP.
 
 ## Step 8: Install Ansible (in WSL)
 
@@ -161,7 +161,7 @@ sudo systemctl status node-red
 
 *   **Node-RED:** If Node-RED fails to start:
     1.  Check logs: `sudo journalctl -xeu node-red.service`.
-    2.  Common issues include incorrect Node.js version (addressed in Step 6.5) or path issues for the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` uses the correct path (usually `/usr/local/bin/node-red` or `/usr/bin/node-red`).
+    2.  Common issues include incorrect Node.js version (addressed in Step 9.5) or path issues for the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` uses the correct path (usually `/usr/local/bin/node-red` or `/usr/bin/node-red`).
     3.  **Install `node-red-dashboard` module:** The UI components require this.
         ```bash
         # In WSL Ubuntu terminal, navigate to Node-RED's working/user directory.
@@ -213,7 +213,7 @@ curl http://localhost:1880/ui
    - `http://YOUR_WSL_IP:8000/mix-for-2.ogg`
    - `http://YOUR_WSL_IP:8000/mix-for-3.ogg`
 
-## Step 11: Test System Operation
+## Step 14: Test System Operation
 
 TODO: update test system operations tests documentation area, because now the system is made to switch between plans A1 A2 B1 B2 B3 and C that are live, and D plan which is local
 
