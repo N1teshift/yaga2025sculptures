@@ -37,12 +37,29 @@ let sculpture_crossfade = crossfade(
   fade_out=1.0
 )
 
-# Smart fallback with logging
+# Smart fallback with logging when fallback sources become active
 let sculpture_fallback = fun(id, sources) ->
+  def rec wrap(idx, items)
+    if items == [] then []
+    else
+      src  = list.hd(items)
+      rest = list.tl(items)
+      logged =
+        if idx > 1 then
+          on_start(src, fun () ->
+            sculpture_log("Fallback #{id} activated (source #{idx})")
+          )
+        else
+          src
+        end
+      end
+      logged :: wrap(idx + 1, rest)
+    end
+  end
   fallback(
     id=id,
     track_sensitive=false,
-    sources
+    wrap(1, sources)
   )
 
 # Volume control function
