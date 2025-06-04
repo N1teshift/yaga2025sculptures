@@ -433,7 +433,7 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status 1",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar recording = data.recording === undefined ? 0 : data.recording; // Default to 0 (not recording) if undefined\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level; // Default to -60dB if undefined\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: recording, topic: \"recording_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
+        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 1 : 0; // 1=live,0=local\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level; // Default to -60dB if undefined\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
         "outputs": 5,
         "noerr": 0,
         "x": 260,
@@ -449,7 +449,7 @@
                 "sculpture1_status"
             ],
             [
-                "sculpture1_recording"
+                "sculpture1_mode"
             ],
             [
                 "sculpture1_audio_level"
@@ -531,7 +531,7 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status 2",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar recording = data.recording === undefined ? 0 : data.recording; // Default to 0 (not recording) if undefined\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level; // Default to -60dB if undefined\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: recording, topic: \"recording_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
+        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 1 : 0;\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
         "outputs": 5,
         "noerr": 0,
         "x": 700,
@@ -547,7 +547,7 @@
                 "sculpture2_status"
             ],
             [
-                "sculpture2_recording"
+                "sculpture2_mode"
             ],
             [
                 "sculpture2_audio_level"
@@ -629,7 +629,7 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status 3",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar recording = data.recording === undefined ? 0 : data.recording; // Default to 0 (not recording) if undefined\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level; // Default to -60dB if undefined\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: recording, topic: \"recording_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
+        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online;\nvar mode_val = data.mode === 'live' ? 1 : 0;\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
         "outputs": 5,
         "noerr": 0,
         "x": 1140,
@@ -645,7 +645,7 @@
                 "sculpture3_status"
             ],
             [
-                "sculpture3_recording"
+                "sculpture3_mode"
             ],
             [
                 "sculpture3_audio_level"
@@ -756,16 +756,16 @@
         ]
     },
     {
-        "id": "sculpture1_recording",
+        "id": "sculpture1_mode",
         "type": "ui_gauge",
         "z": "sculpture_dashboard",
-        "name": "Recording",
+        "name": "Mode",
         "group": "ui_group_sculpture1",
         "order": 6,
         "width": 0,
         "height": 0,
         "gtype": "gage",
-        "title": "Recording",
+        "title": "Mode",
         "label": "",
         "format": "{{value}}",
         "min": 0,
@@ -884,16 +884,16 @@
         ]
     },
     {
-        "id": "sculpture2_recording",
+        "id": "sculpture2_mode",
         "type": "ui_gauge",
         "z": "sculpture_dashboard",
-        "name": "Recording",
+        "name": "Mode",
         "group": "ui_group_sculpture2",
         "order": 6,
         "width": 0,
         "height": 0,
         "gtype": "gage",
-        "title": "Recording",
+        "title": "Mode",
         "label": "",
         "format": "{{value}}",
         "min": 0,
@@ -1012,16 +1012,16 @@
         ]
     },
     {
-        "id": "sculpture3_recording",
+        "id": "sculpture3_mode",
         "type": "ui_gauge",
         "z": "sculpture_dashboard",
-        "name": "Recording",
+        "name": "Mode",
         "group": "ui_group_sculpture3",
         "order": 6,
         "width": 0,
         "height": 0,
         "gtype": "gage",
-        "title": "Recording",
+        "title": "Mode",
         "label": "",
         "format": "{{value}}",
         "min": 0,
