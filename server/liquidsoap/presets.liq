@@ -52,7 +52,6 @@ def sculpture_fallback(id, sources) =
         else
           src
         end
-      end
       logged :: wrap(idx + 1, rest)
     end
   end
