@@ -38,8 +38,8 @@ let sculpture_crossfade = crossfade(
 )
 
 # Smart fallback with logging when fallback sources become active
-let sculpture_fallback = fun(id, sources) ->
-  def rec wrap(idx, items)
+def sculpture_fallback(id, sources) =
+  def rec wrap(idx, items) =
     if items == [] then []
     else
       src  = list.hd(items)
@@ -61,6 +61,7 @@ let sculpture_fallback = fun(id, sources) ->
     track_sensitive=false,
     wrap(1, sources)
   )
+end
 
 # Volume control function
 let sculpture_volume = fun(vol, s) ->
