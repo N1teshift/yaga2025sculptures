@@ -4,13 +4,13 @@ This guide will help you deploy the complete sculpture audio system with three R
 
 ## Prerequisites
 
-- 3x Raspberry Pi 4 with SD cards (16GB+)
+- 3x Raspberry Pi Zero W with SD cards (16GB+)
 - 1x Laptop/PC running **Windows 10/11 with WSL 2** (control node)
-- USB audio interfaces for each Pi
+- HAT audio interfaces for each Pi
 - Network connectivity between all devices
 - SSH access configured on all Pis
 
-## Step 0: Setup WSL 2 (Windows Control Node)
+## Step 1: Setup WSL 2 (Windows Control Node)
 
 If using Windows as the control node, set up WSL 2 first:
 
@@ -29,7 +29,7 @@ sudo apt update && sudo apt upgrade -y
 - Use `ip addr show eth0` in WSL to find your WSL IP address
 - Raspberry Pis should connect to your **WSL IP**, not Windows IP
 
-## Step 1: Flash Raspberry Pi SD Cards
+## Step 2: Flash Raspberry Pi SD Cards
 
 1. Flash Raspberry Pi OS Lite to three SD cards
 2. Enable SSH by creating empty `ssh` file in boot partition
@@ -48,30 +48,13 @@ network={
 
 4. Boot each Pi and note their IP addresses
 
-## Step 2: Find Your WSL IP Address
+## Step 3: Update and Upgrade Pis
 
-In your WSL Ubuntu terminal:
-
-```bash
-# Find your WSL IP address
-ip addr show eth0 | grep inet
-
-# Note the IP address (e.g., 172.20.10.2)
-# This is what you'll use as YOUR_LAPTOP_IP in the next step
-```
-
-## Step 3: Update Inventory File
-
-Edit `edge/ansible/hosts.ini` with your actual IP addresses:
-
-```ini
-[sculptures]
-sculpture1 ansible_host=YOUR_PI1_IP id=1 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
-sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
-sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
-```
-
-**Note:** Use your WSL IP address (from Step 2) as `control_host`, not your Windows IP.
+Run: `sudo apt update`
+Run: `sudo apt upgrade -y`
+(Optional): `sudo apt full-upgrade -y`
+(Optional): sudo `apt autoremove -y`
+(Optional): sudo `apt clean`
 
 ## Step 4: Configure SSH Keys
 
@@ -86,7 +69,46 @@ ssh-copy-id pi@YOUR_PI2_IP
 ssh-copy-id pi@YOUR_PI3_IP
 ```
 
-## Step 5: Install Ansible (in WSL)
+
+## Step 5: Audio‑HAT Preparation (required for IQaudIO CODEC / Codec Zero)
+On each Pi:
+
+1. `sudo apt update && sudo apt full-upgrade -y` → reboot
+2. `sudo apt install -y git alsa-utils`
+3. Edit `/boot/config.txt` (or could be `/boot/firmware/config.txt`): enable `dtoverlay=iqaudio-codec` and disable `dtparam=audio=on`; reboot
+4. `git clone https://github.com/raspberrypi/Pi-Codec.git && cd Pi-Codec`
+5. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
+6. *(optional)* `sudo alsactl store`
+7. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 48000 -d 5 test.wav && aplay -D hw:1,0`
+8. Copy to wsl: `scp pi@sculptureX:~/test.wav .` and check for sound
+
+
+## Step 6: Find Your WSL IP Address
+
+In your WSL Ubuntu terminal:
+
+```bash
+# Find your WSL IP address
+ip addr show eth0 | grep inet
+
+# Note the IP address (e.g., 172.20.10.2)
+# This is what you'll use as YOUR_LAPTOP_IP in the next step
+```
+
+## Step 7: Update Inventory File
+
+Edit `edge/ansible/hosts.ini` with your actual IP addresses:
+
+```ini
+[sculptures]
+sculpture1 ansible_host=YOUR_PI1_IP id=1 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
+sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
+sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
+```
+
+**Note:** Use your WSL IP address (from Step 2) as `control_host`, not your Windows IP.
+
+## Step 8: Install Ansible (in WSL)
 
 ```bash
 # In WSL Ubuntu terminal
@@ -94,7 +116,7 @@ sudo apt update
 sudo apt install ansible -y
 ```
 
-## Step 6: Deploy to Raspberry Pis
+## Step 9: Deploy to Raspberry Pis
 
 ```bash
 # Run the edge playbook to configure all Pis
@@ -104,7 +126,7 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
-## Step 6.5: Install Node.js and Node-RED Dashboard prerequisites (Control Node)
+## Step 9.5: Install Node.js and Node-RED Dashboard prerequisites (Control Node)
 
 Node-RED (installed in the next step by Ansible) requires a modern version of Node.js (e.g., v18 LTS or newer). The default Node.js in Ubuntu repositories might be too old. Additionally, the Node-RED dashboard UI components need to be installed.
 
@@ -132,7 +154,7 @@ Then retry the `sudo apt-get install -y nodejs` command. If a specific file conf
 **2. Prepare for Node-RED Dashboard Module:**
 (The actual module will be installed after Node-RED itself is set up by Ansible).
 
-## Step 7: Install Control Node Services
+## Step 10: Install Control Node Services
 
 ```bash
 # In WSL Ubuntu terminal, ensure you are in your project directory
@@ -173,7 +195,7 @@ sudo systemctl status node-red
         ```
     4. After restarting, check `sudo systemctl status node-red` again.
 
-## Step 8: Start Audio Processing
+## Step 11: Start Audio Processing
 
 ```bash
 # Start Liquidsoap for audio mixing
@@ -183,12 +205,12 @@ sudo systemctl start liquidsoap
 sudo journalctl -u liquidsoap -f
 ```
 
-## Step 9: Access Control Dashboard
+## Step 12: Access Control Dashboard
 
 **From Windows:**
 1. Open web browser. The Node-RED dashboard is often at `http://YOUR_WSL_IP:1880/ui`. If this path does not work, try `http://YOUR_WSL_IP:1880/dashboard` or `http://YOUR_WSL_IP:1880/api/ui/`. The Node-RED flow editor (usually at `http://YOUR_WSL_IP:1880/` or `http://YOUR_WSL_IP:1880/admin/`) typically has a sidebar tab for 'dashboard' with a direct launch button.
 2. You should see the sculpture control dashboard.
-3. Test volume sliders and mode switches
+3. Test volume sliders and mode/plan switches
 
 **From WSL:**
 ```bash
@@ -196,7 +218,7 @@ sudo journalctl -u liquidsoap -f
 curl http://localhost:1880/ui
 ```
 
-## Step 10: Verify Audio Streams
+## Step 13: Verify Audio Streams
 
 1. **Check Icecast status:** `http://YOUR_WSL_IP:8000`
 2. **Verify sculpture microphone streams are active:**
@@ -210,18 +232,7 @@ curl http://localhost:1880/ui
 
 ## Step 11: Test System Operation
 
-1. **Live Mode Test:**
-   - Switch to "Live Mode" in dashboard
-   - Speak into microphones on sculptures
-   - Verify each sculpture hears the other two (not itself)
-
-2. **Volume Control Test:**
-   - Adjust volume sliders in dashboard
-   - Verify volume changes on respective sculptures
-
-3. **Status Monitoring:**
-   - Check CPU and temperature gauges update every 5 seconds
-   - Verify MQTT communication is working
+TODO: update test system operations tests documentation area, because now the system is made to switch between plans A1 A2 B1 B2 B3 and C that are live, and D plan which is local
 
 ## WSL 2 Specific Considerations
 
@@ -371,5 +382,3 @@ telnet localhost 1234
 3. Customize Node-RED dashboard for your installation
 4. Set up monitoring and alerting
 5. Configure firewall rules for production deployment
-
-For advanced configuration and troubleshooting, see the individual component documentation in each service directory. 
