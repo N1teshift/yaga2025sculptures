@@ -37,7 +37,8 @@ let sculpture_crossfade = crossfade(
   fade_out=1.0
 )
 
-# Smart fallback with logging when fallback sources become active
+# Simple fallback helper
+# Wraps a list of sources with Liquidsoap's `fallback` operator.
 def sculpture_fallback(id, sources) =
   fallback(
     id=id,
