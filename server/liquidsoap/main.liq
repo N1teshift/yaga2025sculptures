@@ -52,7 +52,6 @@ to1 = ref(silence)
 to2 = ref(silence)
 to3 = ref(silence)
 
-
 # Function to create mixes based on plan
 # Returns: (to1, to2, to3)
 def get_mixes(plan)
