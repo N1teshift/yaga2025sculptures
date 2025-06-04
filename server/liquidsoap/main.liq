@@ -1,10 +1,13 @@
 #!/usr/bin/liquidsoap
 
 # Liquidsoap main configuration for sculpture system
-# Creates personalized mixes for each sculpture
+# Supports dynamic plan switching via telnet
+
+# Import presets
+%include "presets.liq"
 
 # Set log level
-set("log.level", 3)
+set("log.level", 4)
 
 # Enable telnet server for control
 set("server.telnet", true)
@@ -17,43 +20,94 @@ set("frame.audio.channels", 1)
 
 # Input sources from sculptures
 # These will be the live microphone feeds from each sculpture
-a1 = input.http(id="sculpture1_input", "http://localhost:8000/s1-mic.ogg")
-a2 = input.http(id="sculpture2_input", "http://localhost:8000/s2-mic.ogg")
-a3 = input.http(id="sculpture3_input", "http://localhost:8000/s3-mic.ogg")
+s1_input = input.http(id="sculpture1_input", "http://localhost:8000/s1-mic.ogg")
+s2_input = input.http(id="sculpture2_input", "http://localhost:8000/s2-mic.ogg")
+s3_input = input.http(id="sculpture3_input", "http://localhost:8000/s3-mic.ogg")
+
+#To mono
+s1_mono = to_mono(s1_input)
+s2_mono = to_mono(s2_input)
+s3_mono = to_mono(s3_input)
 
 # Add fallback silence for when inputs are not available
 silence = blank()
 
-a1_safe = fallback(id="a1_fallback", [a1, silence])
-a2_safe = fallback(id="a2_fallback", [a2, silence])
-a3_safe = fallback(id="a3_fallback", [a3, silence])
+s1_safe = fallback(id="s1_fallback", [s1_mono, silence])
+s2_safe = fallback(id="s2_fallback", [s2_mono, silence])
+s3_safe = fallback(id="s3_fallback", [s3_mono, silence])
 
-# Apply basic audio processing
-def process_audio(s)
-  # Simple amplification and limiting
-  s = amplify(0.8, s)
-  s = compress(s)
-  s
+# Process audio using presets if available
+s1_proc = sculpture_process(s1_safe)
+s2_proc = sculpture_process(s2_safe)
+s3_proc = sculpture_process(s3_safe)
+
+# Prerecorded file for local mode (replace with actual file path when available)
+prerecorded = sine(440.0)
+
+# Reference to current plan (default: C)
+current_plan = "C"
+
+
+# Function to create mixes based on plan
+# Returns: (to1, to2, to3)
+def get_mixes(plan)
+  if plan == "A1" then
+    # 1 hears 2, 2 hears 3, 3 hears 1
+    [s2_proc, s3_proc, s1_proc]
+  elsif plan == "A2" then
+    # 1 hears 3, 2 hears 1, 3 hears 2
+    [s3_proc, s1_proc, s2_proc]
+  elsif plan == "B1" then
+    # 1<->2, 3 silent
+    [s2_proc, s1_proc, silence]
+  elsif plan == "B2" then
+    # 2<->3, 1 silent
+    [silence, s3_proc, s2_proc]
+  elsif plan == "B3" then
+    # 3<->1, 2 silent
+    [s3_proc, silence, s1_proc]
+  elsif plan == "C" then
+    # All-to-all except self
+    [add([s2_proc, s3_proc]), add([s1_proc, s3_proc]), add([s1_proc, s2_proc])]
+  elsif plan == "D" then
+    # All outputs play prerecorded file
+    [prerecorded, prerecorded, prerecorded]
+  else
+    # Fallback to A1
+    [s2_proc, s3_proc, s1_proc]
+  end
 end
 
-a1_processed = process_audio(a1_safe)
-a2_processed = process_audio(a2_safe)
-a3_processed = process_audio(a3_safe)
+# Telnet command to set plan
+def set_plan(arg)
+  if arg == "" then
+    "Usage: set_plan <A1|A2|B1|B2|B3|C|D>"
+  else
+    current_plan = arg
+    log("Plan changed to #{arg}")
+    "Plan set to #{arg}"
+  end
+end
+server.register("set_plan", set_plan)
 
-# Create personalized mixes
-# Each sculpture hears the other two sculptures, not itself
-to1 = add([a2_processed, a3_processed])
-to2 = add([a1_processed, a3_processed])
-to3 = add([a1_processed, a2_processed])
+# Get mixes based on current plan
+def plan_switch()
+  get_mixes(current_plan)
+end
+
+mixes = plan_switch()
+to1 = list.hd(mixes)
+to2 = list.hd(list.tl(mixes))
+to3 = list.hd(list.tl(list.tl(mixes)))
 
 # Apply final processing to mixes
-to1_final = process_audio(to1)
-to2_final = process_audio(to2)
-to3_final = process_audio(to3)
+to1_final = to_mono(sculpture_process(to1))
+to2_final = to_mono(sculpture_process(to2))
+to3_final = to_mono(sculpture_process(to3))
 
 # Output to Icecast
 output.icecast(
-  %vorbis(quality=0.5),
+  %vorbis(quality=0.5, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
@@ -64,7 +118,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.5),
+  %vorbis(quality=0.5, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
@@ -75,7 +129,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.5),
+  %vorbis(quality=0.5, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
@@ -86,7 +140,8 @@ output.icecast(
 )
 
 # Log startup
-log("Sculpture system Liquidsoap configuration loaded")
+log("Sculpture system Liquidsoap configuration loaded (dynamic plans)")
+log("Default plan: C (all-to-all except self)")
 log("Creating personalized mixes:")
 log("  - mix-for-1.ogg: sculptures 2+3 for sculpture 1")
 log("  - mix-for-2.ogg: sculptures 1+3 for sculpture 2") 

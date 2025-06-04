@@ -22,12 +22,13 @@ let sculpture_lowpass = filter.iir.butterworth.low(
 
 # Combined processing chain
 let sculpture_process = fun(s) ->
-  let s = sculpture_normalize(s)
-  let s = sculpture_compress(s)
-  let s = sculpture_highpass(s)
-  let s = sculpture_lowpass(s)
-  s
-end
+  sculpture_lowpass(
+    sculpture_highpass(
+      sculpture_compress(
+        sculpture_normalize(s)
+      )
+    )
+  )
 
 # Crossfade function for smooth transitions
 let sculpture_crossfade = crossfade(
@@ -43,31 +44,22 @@ let sculpture_fallback = fun(id, sources) ->
     track_sensitive=false,
     sources
   )
-end
 
 # Volume control function
 let sculpture_volume = fun(vol, s) ->
   amplify(vol, s)
-end
 
 # Stereo to mono conversion
 let to_mono = fun(s) ->
   mean(s)
-end
 
-# Add reverb effect
-let sculpture_reverb = fun(s) ->
-  let dry = s
-  let wet = reverb(room_size=0.3, damping=0.5, wet=0.2, dry=0.8, s)
-  add(normalize=false, [dry, wet])
-end
 
 # Delay effect
 let sculpture_delay = fun(delay_time, feedback, s) ->
-  let delayed = delay(delay_time, s)
-  let feedback_signal = amplify(feedback, delayed)
-  add(normalize=false, [s, feedback_signal])
-end
+  add(normalize=false, [
+    s,
+    amplify(feedback, delay(delay_time, s))
+  ])
 
 # Dynamic range compressor specifically for ambient audio
 let ambient_compress = compress(
@@ -80,7 +72,6 @@ let ambient_compress = compress(
 # Gate to remove very quiet noise
 let sculpture_gate = fun(threshold, s) ->
   gate(threshold=threshold, s)
-end
 
 # Smooth volume automation
 let sculpture_fade_in = fade.in(duration=3.0)
@@ -92,9 +83,7 @@ let emergency_silence = blank(duration=1.0)
 # Test tone generator (for debugging)
 let test_tone = fun(freq) ->
   sine(freq)
-end
 
 # Log helper
 let sculpture_log = fun(msg) ->
-  log(label="sculpture", msg)
-end 
+  log(label="sculpture", msg) 

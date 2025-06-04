@@ -12,8 +12,8 @@ User=pi
 Group=pi
 
 # Environment variables
-Environment=SCULPTURE_ID=1
-Environment=CONTROL_HOST=192.168.1.100
+EnvironmentFile=/etc/default/sculpture
+Environment=CONTROL_HOST=192.168.178.79
 
 # Security settings
 NoNewPrivileges=true

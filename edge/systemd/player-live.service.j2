@@ -1,0 +1,24 @@
+[Unit]
+Description=Sculpture Live Audio Player
+After=network-online.target sound.target
+Wants=network-online.target
+Requires=sound.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mpv --no-video --ao=pulse --cache=yes --demuxer-max-bytes=1M http://{{ control_host }}:8000/mix-for-{{ id }}.ogg
+Restart=always
+RestartSec=5
+User=pi
+Group=audio
+
+# Environment variables
+Environment=SCULPTURE_ID={{ id }}
+Environment=CONTROL_HOST={{ control_host }}
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target 

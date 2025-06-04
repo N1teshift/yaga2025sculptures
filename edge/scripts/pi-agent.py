@@ -8,9 +8,10 @@ import sys
 import logging
 from pathlib import Path
 import paho.mqtt.client as mqtt
+import random
 
 # Configuration
-MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.1.100')
+MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.178.79')
 MQTT_PORT = 1883
 SCULPTURE_ID = os.environ.get('SCULPTURE_ID', '1')
 SCULPTURE_DIR = '/opt/sculpture-system'
@@ -28,6 +29,8 @@ class SculptureAgent:
         self.status_topic = f"sculpture/{self.sculpture_id}/status"
         self.cmd_topic = f"sculpture/{self.sculpture_id}/cmd"
         self.broadcast_topic = "system/broadcast"
+        self.is_recording = False  # Track recording state
+        self.is_muted = False      # Track mute state
         
     def on_connect(self, client, userdata, flags, rc):
         logger.info(f"Connected to MQTT broker with result code {rc}")
@@ -46,6 +49,10 @@ class SculptureAgent:
                 self.handle_mode_command(payload['mode'], payload.get('track'))
             elif 'volume' in payload:
                 self.handle_volume_command(payload['volume'])
+            elif 'mute' in payload:
+                self.handle_mute_command(payload['mute'])
+            elif 'restart' in payload and payload['restart']:
+                self.handle_restart_command()
             else:
                 logger.warning(f"Unknown command: {payload}")
                 
@@ -59,6 +66,7 @@ class SculptureAgent:
         try:
             if mode == "live":
                 logger.info("Switching to live mode")
+                self.is_recording = False
                 # Stop local playback
                 subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
                 # Start live streaming and playback
@@ -67,6 +75,7 @@ class SculptureAgent:
                 
             elif mode == "local":
                 logger.info(f"Switching to local mode with track: {track}")
+                self.is_recording = False
                 # Stop live services
                 subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
                 subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
@@ -82,6 +91,14 @@ class SculptureAgent:
                         
                 # Start local playback
                 subprocess.run(['sudo', 'systemctl', 'start', 'player-loop.service'], check=True)
+                
+            elif mode == "recording":
+                logger.info("Switching to recording mode")
+                self.is_recording = True
+                # Implement actual recording logic if needed
+                
+            else:
+                logger.warning(f"Unknown mode: {mode}")
                 
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to execute systemctl command: {e}")
@@ -100,6 +117,24 @@ class SculptureAgent:
             
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to set volume: {e}")
+            
+    def handle_mute_command(self, mute):
+        try:
+            mute_flag = '1' if mute else '0'
+            logger.info(f"Setting mute to {mute_flag} (True={mute})")
+            subprocess.run([
+                'pactl', 'set-sink-mute', 'sculpture_sink', mute_flag
+            ], check=True)
+            self.is_muted = bool(mute)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to set mute: {e}")
+
+    def handle_restart_command(self):
+        try:
+            logger.info("Restarting pi-agent.service via systemctl")
+            subprocess.run(['sudo', 'systemctl', 'restart', 'pi-agent.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to restart agent: {e}")
             
     def update_loop_track(self, track_path):
         """Update the player-loop service to use a different track"""
@@ -125,7 +160,7 @@ WantedBy=multi-user.target
             logger.error(f"Failed to update loop service: {e}")
             
     def get_system_status(self):
-        """Get CPU and temperature status"""
+        """Get CPU, temperature, audio level, recording, and online status"""
         try:
             # Get CPU usage
             cpu_result = subprocess.run(['top', '-bn1'], capture_output=True, text=True)
@@ -137,10 +172,22 @@ WantedBy=multi-user.target
             temp_str = temp_result.stdout.strip().replace('temp=', '').replace("'C", '')
             temperature = float(temp_str)
             
+            # Placeholder for audio level (simulate with random value between -50 and 0 dB)
+            audio_level = random.uniform(-50, 0)
+            
+            # Always online if running
+            online = 1
+            
+            # Recording state
+            recording = 1 if self.is_recording else 0
+            
             return {
                 'sculpture_id': self.sculpture_id,
                 'cpu_usage': cpu_usage,
                 'temperature': temperature,
+                'audio_level': audio_level,
+                'recording': recording,
+                'online': online,
                 'timestamp': time.time()
             }
         except Exception as e:
@@ -149,6 +196,9 @@ WantedBy=multi-user.target
                 'sculpture_id': self.sculpture_id,
                 'cpu_usage': 0,
                 'temperature': 0,
+                'audio_level': -60,
+                'recording': 0,
+                'online': 1,
                 'timestamp': time.time(),
                 'error': str(e)
             }

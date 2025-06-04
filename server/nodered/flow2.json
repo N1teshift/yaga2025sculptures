@@ -1,0 +1,1104 @@
+[
+    {
+        "id": "6921eea1d7e6134e",
+        "type": "tab",
+        "label": "Sculpture Control Dashboard",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "736471e38811f117",
+        "type": "ui_slider",
+        "z": "6921eea1d7e6134e",
+        "name": "Volume 1",
+        "label": "Volume",
+        "tooltip": "",
+        "group": "ui_group_sculpture1",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "sculpture/1/cmd",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "x": 320,
+        "y": 100,
+        "wires": [
+            [
+                "c97767c42e6b213a"
+            ]
+        ]
+    },
+    {
+        "id": "c97767c42e6b213a",
+        "type": "function",
+        "z": "6921eea1d7e6134e",
+        "name": "Format Volume Command",
+        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 510,
+        "y": 100,
+        "wires": [
+            [
+                "77397960cebe17f7"
+            ]
+        ]
+    },
+    {
+        "id": "77397960cebe17f7",
+        "type": "mqtt out",
+        "z": "6921eea1d7e6134e",
+        "name": "Send to Sculpture 1",
+        "topic": "sculpture/1/cmd",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 830,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "d3c386e8369ee1eb",
+        "type": "ui_slider",
+        "z": "6921eea1d7e6134e",
+        "name": "Volume 2",
+        "label": "Volume",
+        "tooltip": "",
+        "group": "ui_group_sculpture2",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "sculpture/2/cmd",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "x": 320,
+        "y": 200,
+        "wires": [
+            [
+                "58d2bdfebb757323"
+            ]
+        ]
+    },
+    {
+        "id": "58d2bdfebb757323",
+        "type": "function",
+        "z": "6921eea1d7e6134e",
+        "name": "Format Volume Command",
+        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 510,
+        "y": 200,
+        "wires": [
+            [
+                "2b980bbe48b509b5"
+            ]
+        ]
+    },
+    {
+        "id": "2b980bbe48b509b5",
+        "type": "mqtt out",
+        "z": "6921eea1d7e6134e",
+        "name": "Send to Sculpture 2",
+        "topic": "sculpture/2/cmd",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 830,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "8369b70e5686e3f7",
+        "type": "ui_slider",
+        "z": "6921eea1d7e6134e",
+        "name": "Volume 3",
+        "label": "Volume",
+        "tooltip": "",
+        "group": "ui_group_sculpture3",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "sculpture/3/cmd",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "x": 320,
+        "y": 300,
+        "wires": [
+            [
+                "49f29acff8545814"
+            ]
+        ]
+    },
+    {
+        "id": "49f29acff8545814",
+        "type": "function",
+        "z": "6921eea1d7e6134e",
+        "name": "Format Volume Command",
+        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 510,
+        "y": 300,
+        "wires": [
+            [
+                "b9a79529e00ca2de"
+            ]
+        ]
+    },
+    {
+        "id": "b9a79529e00ca2de",
+        "type": "mqtt out",
+        "z": "6921eea1d7e6134e",
+        "name": "Send to Sculpture 3",
+        "topic": "sculpture/3/cmd",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 830,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "4a306ed01d7a443d",
+        "type": "ui_switch",
+        "z": "6921eea1d7e6134e",
+        "name": "Plan A1",
+        "label": "Plan A1 (1->2, 2->3, 3->1)",
+        "tooltip": "Select Plan A1",
+        "group": "ui_group_system",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "system/broadcast",
+        "style": "",
+        "onvalue": "A1",
+        "onvalueType": "str",
+        "onicon": "fa-microphone",
+        "oncolor": "green",
+        "offvalue": "",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "red",
+        "x": 120,
+        "y": 400,
+        "wires": [
+            [
+                "9060b8d1e3142800"
+            ]
+        ]
+    },
+    {
+        "id": "d06473a50f6adb85",
+        "type": "ui_switch",
+        "z": "6921eea1d7e6134e",
+        "name": "Plan A2",
+        "label": "Plan A2 (1->3, 3->2, 2->1)",
+        "tooltip": "Select Plan A2",
+        "group": "ui_group_system",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "system/broadcast",
+        "style": "",
+        "onvalue": "A2",
+        "onvalueType": "str",
+        "onicon": "fa-microphone",
+        "oncolor": "green",
+        "offvalue": "",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "red",
+        "x": 120,
+        "y": 440,
+        "wires": [
+            [
+                "9060b8d1e3142800"
+            ]
+        ]
+    },
+    {
+        "id": "9cbb5fdb32f1e8a5",
+        "type": "ui_switch",
+        "z": "6921eea1d7e6134e",
+        "name": "Plan B",
+        "label": "Plan B (2-Sculpture: 1->2, 2->1)",
+        "tooltip": "Select Plan B",
+        "group": "ui_group_system",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "system/broadcast",
+        "style": "",
+        "onvalue": "B",
+        "onvalueType": "str",
+        "onicon": "fa-microphone",
+        "oncolor": "green",
+        "offvalue": "",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "red",
+        "x": 130,
+        "y": 480,
+        "wires": [
+            [
+                "9060b8d1e3142800"
+            ]
+        ]
+    },
+    {
+        "id": "f4194ca6d1897a08",
+        "type": "ui_switch",
+        "z": "6921eea1d7e6134e",
+        "name": "Plan C",
+        "label": "Plan C (All to All Others)",
+        "tooltip": "Select Plan C",
+        "group": "ui_group_system",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "system/broadcast",
+        "style": "",
+        "onvalue": "C",
+        "onvalueType": "str",
+        "onicon": "fa-microphone",
+        "oncolor": "green",
+        "offvalue": "",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "red",
+        "x": 130,
+        "y": 520,
+        "wires": [
+            [
+                "9060b8d1e3142800"
+            ]
+        ]
+    },
+    {
+        "id": "450c71dc311c84c8",
+        "type": "ui_switch",
+        "z": "6921eea1d7e6134e",
+        "name": "Plan D",
+        "label": "Plan D (Prerecorded)",
+        "tooltip": "Select Plan D",
+        "group": "ui_group_system",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "system/broadcast",
+        "style": "",
+        "onvalue": "D",
+        "onvalueType": "str",
+        "onicon": "fa-microphone",
+        "oncolor": "green",
+        "offvalue": "",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "red",
+        "x": 130,
+        "y": 560,
+        "wires": [
+            [
+                "9060b8d1e3142800"
+            ]
+        ]
+    },
+    {
+        "id": "9060b8d1e3142800",
+        "type": "function",
+        "z": "6921eea1d7e6134e",
+        "name": "Format Plan Command",
+        "func": "var plan = msg.payload;\nmsg.payload = {\"plan\": plan};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 400,
+        "y": 400,
+        "wires": [
+            [
+                "ece2b7d81f7249d8"
+            ]
+        ]
+    },
+    {
+        "id": "ece2b7d81f7249d8",
+        "type": "mqtt out",
+        "z": "6921eea1d7e6134e",
+        "name": "Broadcast Mode",
+        "topic": "system/broadcast",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 600,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "27c56f8b81af688d",
+        "type": "mqtt in",
+        "z": "6921eea1d7e6134e",
+        "name": "Status 1",
+        "topic": "sculpture/1/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "inputs": 0,
+        "x": 580,
+        "y": 540,
+        "wires": [
+            [
+                "75ced67553aa1cb0"
+            ]
+        ]
+    },
+    {
+        "id": "75ced67553aa1cb0",
+        "type": "function",
+        "z": "6921eea1d7e6134e",
+        "name": "Parse Status 1",
+        "func": "var data = msg.payload;\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"}\n];",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 740,
+        "y": 540,
+        "wires": [
+            [
+                "76181fa911c5cda8"
+            ],
+            [
+                "c6c548c13c4e88a9"
+            ]
+        ]
+    },
+    {
+        "id": "76181fa911c5cda8",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "CPU 1",
+        "group": "ui_group_sculpture1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "CPU %",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "x": 890,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "c6c548c13c4e88a9",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Temp 1",
+        "group": "ui_group_sculpture1",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "85",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "60",
+        "seg2": "75",
+        "x": 900,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "a8fa5aaf59824860",
+        "type": "mqtt in",
+        "z": "6921eea1d7e6134e",
+        "name": "Status 2",
+        "topic": "sculpture/2/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "inputs": 0,
+        "x": 580,
+        "y": 620,
+        "wires": [
+            [
+                "589e0f3db3adae74"
+            ]
+        ]
+    },
+    {
+        "id": "589e0f3db3adae74",
+        "type": "function",
+        "z": "6921eea1d7e6134e",
+        "name": "Parse Status 2",
+        "func": "var data = msg.payload;\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"}\n];",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 740,
+        "y": 620,
+        "wires": [
+            [
+                "df88cc3ab6abb4d0"
+            ],
+            [
+                "2de2a6659e717060"
+            ]
+        ]
+    },
+    {
+        "id": "df88cc3ab6abb4d0",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "CPU 2",
+        "group": "ui_group_sculpture2",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "CPU %",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "x": 890,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "2de2a6659e717060",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Temp 2",
+        "group": "ui_group_sculpture2",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "85",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "60",
+        "seg2": "75",
+        "x": 900,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "5cca820ad2c42a2a",
+        "type": "mqtt in",
+        "z": "6921eea1d7e6134e",
+        "name": "Status 3",
+        "topic": "sculpture/3/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "inputs": 0,
+        "x": 580,
+        "y": 700,
+        "wires": [
+            [
+                "0ed3d26b1f30d62c"
+            ]
+        ]
+    },
+    {
+        "id": "0ed3d26b1f30d62c",
+        "type": "function",
+        "z": "6921eea1d7e6134e",
+        "name": "Parse Status 3",
+        "func": "var data = msg.payload;\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"}\n];",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 740,
+        "y": 700,
+        "wires": [
+            [
+                "608c0bf47f2d60d9"
+            ],
+            [
+                "1b0aa8ba1cfeda5f"
+            ]
+        ]
+    },
+    {
+        "id": "608c0bf47f2d60d9",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "CPU 3",
+        "group": "ui_group_sculpture3",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "CPU %",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "x": 890,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "1b0aa8ba1cfeda5f",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Temp 3",
+        "group": "ui_group_sculpture3",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "85",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "60",
+        "seg2": "75",
+        "x": 900,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "4be72fe1b4716366",
+        "type": "ui_button",
+        "z": "6921eea1d7e6134e",
+        "name": "Emergency Stop",
+        "group": "ui_group_system",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "EMERGENCY STOP",
+        "tooltip": "Stop all audio immediately",
+        "color": "white",
+        "bgcolor": "red",
+        "icon": "fa-stop",
+        "payload": "{\"mode\":\"local\",\"volume\":0}",
+        "payloadType": "json",
+        "topic": "system/broadcast",
+        "x": 420,
+        "y": 360,
+        "wires": [
+            [
+                "ece2b7d81f7249d8"
+            ]
+        ]
+    },
+    {
+        "id": "9dafdfcaafdb924d",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Status",
+        "group": "ui_group_sculpture1",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Status",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "1",
+        "colors": [
+            "#ca3838",
+            "#00b500"
+        ],
+        "seg1": "0.5",
+        "seg2": "1",
+        "x": 150,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "ded60a4b40f63a8c",
+        "type": "ui_button",
+        "z": "6921eea1d7e6134e",
+        "name": "Mute",
+        "group": "ui_group_sculpture1",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Mute",
+        "tooltip": "Mute/Unmute",
+        "color": "white",
+        "bgcolor": "red",
+        "icon": "fa-volume-off",
+        "payload": "{\"mute\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/1/cmd",
+        "x": 810,
+        "y": 60,
+        "wires": [
+            [
+                "77397960cebe17f7"
+            ]
+        ]
+    },
+    {
+        "id": "cc9944cc29a6b695",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Recording",
+        "group": "ui_group_sculpture1",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Recording",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "1",
+        "colors": [
+            "#ca3838",
+            "#00b500"
+        ],
+        "seg1": "0.5",
+        "seg2": "1",
+        "x": 150,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "57d0300d348c457c",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Audio Level",
+        "group": "ui_group_sculpture1",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Audio Level",
+        "label": "dB",
+        "format": "{{value}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 150,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "5f2e393033ac266a",
+        "type": "ui_button",
+        "z": "6921eea1d7e6134e",
+        "name": "Restart",
+        "group": "ui_group_sculpture1",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Restart",
+        "tooltip": "Restart Sculpture",
+        "color": "white",
+        "bgcolor": "blue",
+        "icon": "fa-refresh",
+        "payload": "{\"restart\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/1/cmd",
+        "x": 660,
+        "y": 40,
+        "wires": [
+            [
+                "77397960cebe17f7"
+            ]
+        ]
+    },
+    {
+        "id": "88f799df9ff515ca",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Status",
+        "group": "ui_group_sculpture2",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Status",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "1",
+        "colors": [
+            "#ca3838",
+            "#00b500"
+        ],
+        "seg1": "0.5",
+        "seg2": "1",
+        "x": 130,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "2f8f4a33eaf843eb",
+        "type": "ui_button",
+        "z": "6921eea1d7e6134e",
+        "name": "Mute",
+        "group": "ui_group_sculpture2",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Mute",
+        "tooltip": "Mute/Unmute",
+        "color": "white",
+        "bgcolor": "red",
+        "icon": "fa-volume-off",
+        "payload": "{\"mute\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/2/cmd",
+        "x": 790,
+        "y": 160,
+        "wires": [
+            [
+                "2b980bbe48b509b5"
+            ]
+        ]
+    },
+    {
+        "id": "402352a455b64670",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Recording",
+        "group": "ui_group_sculpture2",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Recording",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "1",
+        "colors": [
+            "#ca3838",
+            "#00b500"
+        ],
+        "seg1": "0.5",
+        "seg2": "1",
+        "x": 130,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "011557f742476aa4",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Audio Level",
+        "group": "ui_group_sculpture2",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Audio Level",
+        "label": "dB",
+        "format": "{{value}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 130,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "4113932feb1e9dd9",
+        "type": "ui_button",
+        "z": "6921eea1d7e6134e",
+        "name": "Restart",
+        "group": "ui_group_sculpture2",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Restart",
+        "tooltip": "Restart Sculpture",
+        "color": "white",
+        "bgcolor": "blue",
+        "icon": "fa-refresh",
+        "payload": "{\"restart\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/2/cmd",
+        "x": 660,
+        "y": 160,
+        "wires": [
+            [
+                "2b980bbe48b509b5"
+            ]
+        ]
+    },
+    {
+        "id": "9e0ffac7a5949e8d",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Status",
+        "group": "ui_group_sculpture3",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Status",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "1",
+        "colors": [
+            "#ca3838",
+            "#00b500"
+        ],
+        "seg1": "0.5",
+        "seg2": "1",
+        "x": 130,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "63c0b89717acbf31",
+        "type": "ui_button",
+        "z": "6921eea1d7e6134e",
+        "name": "Mute",
+        "group": "ui_group_sculpture3",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Mute",
+        "tooltip": "Mute/Unmute",
+        "color": "white",
+        "bgcolor": "red",
+        "icon": "fa-volume-off",
+        "payload": "{\"mute\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/3/cmd",
+        "x": 810,
+        "y": 260,
+        "wires": [
+            [
+                "b9a79529e00ca2de"
+            ]
+        ]
+    },
+    {
+        "id": "dbd7ead3db338866",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Recording",
+        "group": "ui_group_sculpture3",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Recording",
+        "label": "",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "1",
+        "colors": [
+            "#ca3838",
+            "#00b500"
+        ],
+        "seg1": "0.5",
+        "seg2": "1",
+        "x": 130,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "a2f9449721882e55",
+        "type": "ui_gauge",
+        "z": "6921eea1d7e6134e",
+        "name": "Audio Level",
+        "group": "ui_group_sculpture3",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Audio Level",
+        "label": "dB",
+        "format": "{{value}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 130,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "fe50b78a9887235b",
+        "type": "ui_button",
+        "z": "6921eea1d7e6134e",
+        "name": "Restart",
+        "group": "ui_group_sculpture3",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Restart",
+        "tooltip": "Restart Sculpture",
+        "color": "white",
+        "bgcolor": "blue",
+        "icon": "fa-refresh",
+        "payload": "{\"restart\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/3/cmd",
+        "x": 680,
+        "y": 260,
+        "wires": [
+            [
+                "b9a79529e00ca2de"
+            ]
+        ]
+    },
+    {
+        "id": "ui_group_sculpture1",
+        "type": "ui_group",
+        "name": "Sculpture 1",
+        "tab": "ui_tab_main",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "mqtt_broker",
+        "type": "mqtt-broker",
+        "name": "Sculpture MQTT",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "node-red-dashboard",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "ui_group_sculpture2",
+        "type": "ui_group",
+        "name": "Sculpture 2",
+        "tab": "ui_tab_main",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "ui_group_sculpture3",
+        "type": "ui_group",
+        "name": "Sculpture 3",
+        "tab": "ui_tab_main",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "ui_group_system",
+        "type": "ui_group",
+        "name": "System Control",
+        "tab": "ui_tab_main",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "ui_tab_main",
+        "type": "ui_tab",
+        "name": "Sculpture System",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    }
+]

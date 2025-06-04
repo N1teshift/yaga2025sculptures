@@ -6,15 +6,15 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --ao=pulse --cache=yes --demuxer-max-bytes=1M http://192.168.1.100:8000/mix-for-1.ogg
+ExecStart=/usr/bin/mpv --no-video --ao=pulse --cache=yes --demuxer-max-bytes=1M http://192.168.178.79:8000/mix-for-1.ogg
 Restart=always
 RestartSec=5
 User=pi
 Group=audio
 
 # Environment variables
-Environment=SCULPTURE_ID=1
-Environment=CONTROL_HOST=192.168.1.100
+EnvironmentFile=/etc/default/sculpture
+Environment=CONTROL_HOST=192.168.178.79
 
 # Security settings
 NoNewPrivileges=true
