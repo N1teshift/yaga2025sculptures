@@ -55,7 +55,7 @@ to3 = ref(silence)
 # Function to create mixes based on plan
 # Returns: (to1, to2, to3)
 def get_mixes(plan)
-  log("info", "Getting plan: #{x['title']} mix")
+  log("info", "Getting plan: #{plan} mix")
   if plan == "A1" then
     # 1 hears 2, 2 hears 3, 3 hears 1
     [s2_proc, s3_proc, s1_proc]
