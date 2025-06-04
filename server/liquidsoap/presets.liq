@@ -39,7 +39,7 @@ let sculpture_crossfade = crossfade(
 
 # Smart fallback with logging when fallback sources become active
 def sculpture_fallback(id, sources) =
-  def rec wrap(idx, items) =
+  def wrap(idx, items) =
     if items == [] then []
     else
       src  = list.hd(items)
