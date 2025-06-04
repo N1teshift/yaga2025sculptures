@@ -126,33 +126,16 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
-## Step 9.5: Install Node.js and Node-RED Dashboard prerequisites (Control Node)
+## Step 9.5: Install Node-RED Dashboard prerequisites (Control Node)
 
-Node-RED (installed in the next step by Ansible) requires a modern version of Node.js (e.g., v18 LTS or newer). The default Node.js in Ubuntu repositories might be too old. Additionally, the Node-RED dashboard UI components need to be installed.
-
-**1. Install/Verify Node.js Version:**
-It's recommended to install Node.js using NodeSource for a system-wide compatible version.
+Node-RED (installed in the next step by Ansible) requires a modern version of Node.js. The playbook now installs Node.js automatically using the NodeSource repository, so manual installation is optional. You can still verify the version after the playbook completes:
 
 ```bash
-# In WSL Ubuntu terminal
-sudo apt update
-sudo apt install -y curl # Ensure curl is installed
-# Install Node.js (e.g., v22.x - choose a current LTS or recent version)
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-# Or for Node.js 20.x (another good LTS choice):
-# curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-# Verify installation (should show the new version, e.g., v22.x.x)
-echo "Node version: $(node -v)"
-echo "Node path: $(which node)" # Should be /usr/bin/node
+node -v   # Should print a recent LTS version (18+)
 ```
-**Note:** If `sudo apt-get install -y nodejs` fails due to file conflicts (e.g., with `libnode-dev` or `common.gypi`), you may need to remove older Node.js-related packages first:
-`sudo apt-get remove --purge libnode-dev nodejs-doc npm node-gyp` (and others if listed)
-`sudo apt autoremove -y && sudo apt clean`
-Then retry the `sudo apt-get install -y nodejs` command. If a specific file conflict persists, a forced overwrite might be needed as a last resort for the `.deb` package, followed by `sudo apt-get install -f -y`.
 
-**2. Prepare for Node-RED Dashboard Module:**
-(The actual module will be installed after Node-RED itself is set up by Ansible).
+**Prepare for Node-RED Dashboard Module:**
+(The actual module will be installed after Node-RED itself is set up by Ansible.)
 
 ## Step 10: Install Control Node Services
 
