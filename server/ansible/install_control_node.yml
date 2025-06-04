@@ -12,6 +12,12 @@
         update_cache: yes
         cache_valid_time: 3600
 
+    - name: Add NodeSource Node.js repository
+      ansible.builtin.shell: |
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+
     - name: Install required packages
       apt:
         name:
@@ -20,7 +26,6 @@
           - mosquitto
           - mosquitto-clients
           - nodejs
-          - npm
         state: present
 
     - name: Install Node-RED globally
