@@ -384,7 +384,7 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Format Plan Command",
-        "func": "var plan = msg.payload;\nmsg.payload = {\"plan\": plan};\nreturn msg;",
+        "func": "var plan = msg.payload;\nvar mode = (plan === 'D') ? 'local' : 'live';\nmsg.payload = {\"plan\": plan, \"mode\": mode};\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -767,7 +767,7 @@
         "gtype": "gage",
         "title": "Mode",
         "label": "",
-        "format": "{{value}}",
+        "format": "{{value === 1 ? 'Live' : 'Local'}}",
         "min": 0,
         "max": "1",
         "colors": [
@@ -895,7 +895,7 @@
         "gtype": "gage",
         "title": "Mode",
         "label": "",
-        "format": "{{value}}",
+        "format": "{{value === 1 ? 'Live' : 'Local'}}",
         "min": 0,
         "max": "1",
         "colors": [
@@ -1023,7 +1023,7 @@
         "gtype": "gage",
         "title": "Mode",
         "label": "",
-        "format": "{{value}}",
+        "format": "{{value === 1 ? 'Live' : 'Local'}}",
         "min": 0,
         "max": "1",
         "colors": [
