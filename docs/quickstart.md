@@ -255,6 +255,10 @@ telnet YOUR_WSL_IP 8000  # Icecast
 ### WSL 2 Service Issues
 ```bash
 # Check WSL services
+sudo systemctl restart icecast2
+sudo systemctl restart mosquitto
+sudo systemctl restart liquidsoap
+sudo systemctl restart node-red
 sudo systemctl status icecast2
 sudo systemctl status mosquitto
 sudo systemctl status liquidsoap
