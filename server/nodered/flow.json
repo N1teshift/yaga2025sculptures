@@ -767,7 +767,7 @@
         "gtype": "gage",
         "title": "Mode",
         "label": "",
-        "format": "{{value}}",
+        "format": "{{value === 1 ? 'Live' : 'Local'}}",
         "min": 0,
         "max": "1",
         "colors": [
@@ -895,7 +895,7 @@
         "gtype": "gage",
         "title": "Mode",
         "label": "",
-        "format": "{{value}}",
+        "format": "{{value === 1 ? 'Live' : 'Local'}}",
         "min": 0,
         "max": "1",
         "colors": [
@@ -1023,7 +1023,7 @@
         "gtype": "gage",
         "title": "Mode",
         "label": "",
-        "format": "{{value}}",
+        "format": "{{value === 1 ? 'Live' : 'Local'}}",
         "min": 0,
         "max": "1",
         "colors": [
