@@ -197,7 +197,7 @@ sudo journalctl -u liquidsoap -f
 **From Windows:**
 1. Open web browser. The Node-RED dashboard is often at `http://YOUR_WSL_IP:1880/ui`. If this path does not work, try `http://YOUR_WSL_IP:1880/dashboard` or `http://YOUR_WSL_IP:1880/api/ui/`. The Node-RED flow editor (usually at `http://YOUR_WSL_IP:1880/` or `http://YOUR_WSL_IP:1880/admin/`) typically has a sidebar tab for 'dashboard' with a direct launch button.
 2. You should see the sculpture control dashboard.
-3. Test volume sliders and mode/plan switches
+3. Test volume sliders and mode/plan switches. Selecting plans A1–C now sends `{"mode":"live"}` and Plan D sends `{"mode":"local"}` so the players automatically switch modes.
 
 **From WSL:**
 ```bash
