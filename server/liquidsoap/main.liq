@@ -44,7 +44,7 @@ s3_proc = sculpture_process(s3_safe)
 # Prerecorded file for local mode (replace with actual file path when available)
 prerecorded = sine(440.0)
 
-# Reference to current plan (default: B1)
+# Reference to current plan (default: B)
 current_plan = ref "B1"
 
 # Mix output references updated when the plan changes
@@ -52,10 +52,10 @@ to1 = ref(silence)
 to2 = ref(silence)
 to3 = ref(silence)
 
+
 # Function to create mixes based on plan
 # Returns: (to1, to2, to3)
 def get_mixes(plan)
-  log("info", "Getting plan: #{plan} mix")
   if plan == "A1" then
     # 1 hears 2, 2 hears 3, 3 hears 1
     [s2_proc, s3_proc, s1_proc]
@@ -98,7 +98,6 @@ server.register("set_plan", set_plan)
 
 # Update mix references based on the current plan
 def update_mixes()
-  log("info", "Mixes getting updated")
   mixes = get_mixes(!current_plan)
   to1 := list.hd(mixes)
   to2 := list.hd(list.tl(mixes))
@@ -107,9 +106,6 @@ end
 
 # Initialize mixes
 update_mixes()
-
-def get_plan(_) = !current_plan  # ignore arg, return value
-server.register("get_plan", get_plan)
 
 # Apply final processing to mixes
 to1_final = to_mono(sculpture_process(!to1))
@@ -152,3 +148,8 @@ output.icecast(
 
 # Log startup
 log("Sculpture system Liquidsoap configuration loaded (dynamic plans)")
+log("Default plan: C (all-to-all except self)")
+log("Creating personalized mixes:")
+log("  - mix-for-1.ogg: sculptures 2+3 for sculpture 1")
+log("  - mix-for-2.ogg: sculptures 1+3 for sculpture 2") 
+log("  - mix-for-3.ogg: sculptures 1+2 for sculpture 3") 
