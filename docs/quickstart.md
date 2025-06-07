@@ -6,9 +6,7 @@ This guide will help you deploy the complete sculpture audio system with three R
 
 - 3x Raspberry Pi Zero W with SD cards (16GB+)
 - 1x Laptop/PC running **Windows 10/11 with WSL 2** (control node)
-- HAT audio interfaces for each Pi
-- Network connectivity between all devices
-- SSH access configured on all Pis
+- HAT IQaudIO Pi-Codec Zero audio interfaces for each Pi
 
 ## Step 1: Setup WSL 2 (Windows Control Node)
 

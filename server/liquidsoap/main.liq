@@ -44,8 +44,8 @@ s3_proc = sculpture_process(s3_safe)
 # Prerecorded file for local mode (replace with actual file path when available)
 prerecorded = sine(440.0)
 
-# Reference to current plan (default: B)
-current_plan = ref "B1"
+# Reference to current plan (default: B1)
+current_plan = ref("B1")
 
 # Mix output references updated when the plan changes
 to1 = ref(silence)
@@ -54,7 +54,7 @@ to3 = ref(silence)
 
 
 # Function to create mixes based on plan
-# Returns: (to1, to2, to3)
+# Returns: [to1, to2, to3]
 def get_mixes(plan)
   if plan == "A1" then
     # 1 hears 2, 2 hears 3, 3 hears 1
@@ -83,6 +83,14 @@ def get_mixes(plan)
   end
 end
 
+# Update mix references based on the current plan
+def update_mixes()
+  mixes = get_mixes(!current_plan)
+  to1 := list.hd(mixes)
+  to2 := list.hd(list.tl(mixes))
+  to3 := list.hd(list.tl(list.tl(mixes)))
+end
+
 # Telnet command to set plan
 def set_plan(arg)
   if arg == "" then
@@ -95,14 +103,6 @@ def set_plan(arg)
   end
 end
 server.register("set_plan", set_plan)
-
-# Update mix references based on the current plan
-def update_mixes()
-  mixes = get_mixes(!current_plan)
-  to1 := list.hd(mixes)
-  to2 := list.hd(list.tl(mixes))
-  to3 := list.hd(list.tl(list.tl(mixes)))
-end
 
 # Initialize mixes
 update_mixes()
