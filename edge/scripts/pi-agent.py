@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 import random
 
 # Configuration
-MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.178.79')
+MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.8.153')
 MQTT_PORT = 1883
 SCULPTURE_ID = os.environ.get('SCULPTURE_ID', '1')
 SCULPTURE_DIR = '/opt/sculpture-system'
@@ -160,32 +160,43 @@ WantedBy=multi-user.target
             logger.error(f"Failed to update loop service: {e}")
             
     def get_system_status(self):
-        """Get CPU, temperature, audio level, and online status"""
+        """Get CPU, temperature, audio levels, and online status"""
         try:
             # Get CPU usage
-            cpu_result = subprocess.run(['top', '-bn1'], capture_output=True, text=True)
+            cpu_result = subprocess.run(['top', '-bn1'], capture_output=True, text=True, check=True)
             cpu_line = [line for line in cpu_result.stdout.split('\n') if 'Cpu(s)' in line][0]
             cpu_usage = float(cpu_line.split()[1].replace('%us,', ''))
             
             # Get temperature
-            temp_result = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True)
+            temp_result = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True, check=True)
             temp_str = temp_result.stdout.strip().replace('temp=', '').replace("'C", '')
             temperature = float(temp_str)
             
-            # Placeholder for audio level (simulate with random value between -50 and 0 dB)
-            audio_level = random.uniform(-50, 0)
-            
-            # Always online if running
-            online = 1
-            
+            # Get microphone input level (peak)
+            # This is a simplified approach. A more robust solution might use a dedicated audio library.
+            mic_level = -60.0 # Default to silence
+            try:
+                mic_output = subprocess.check_output("parec --raw --monitor-stream=sculpture_source | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'", shell=True, timeout=0.5, stderr=subprocess.DEVNULL)
+                mic_level = float(mic_output.strip())
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+                pass # Keep default on error
+
+            # Get speaker output level (peak)
+            output_level = -60.0 # Default to silence
+            try:
+                output_output = subprocess.check_output("parec --raw --monitor-stream=sculpture_sink.monitor | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'", shell=True, timeout=0.5, stderr=subprocess.DEVNULL)
+                output_level = float(output_output.strip())
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+                pass # Keep default on error
+
             return {
                 'sculpture_id': self.sculpture_id,
                 'cpu_usage': cpu_usage,
                 'temperature': temperature,
-                'audio_level': audio_level,
+                'mic_level': mic_level,
+                'output_level': output_level,
                 'mode': self.current_mode,
                 'is_muted': self.is_muted,
-                'online': online,
                 'timestamp': time.time()
             }
         except Exception as e:
@@ -194,10 +205,10 @@ WantedBy=multi-user.target
                 'sculpture_id': self.sculpture_id,
                 'cpu_usage': 0,
                 'temperature': 0,
-                'audio_level': -60,
+                'mic_level': -60,
+                'output_level': -60,
                 'mode': self.current_mode,
                 'is_muted': self.is_muted,
-                'online': 1,
                 'timestamp': time.time(),
                 'error': str(e)
             }

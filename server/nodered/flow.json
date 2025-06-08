@@ -7,1103 +7,6 @@
         "info": ""
     },
     {
-        "id": "volume_slider_1",
-        "type": "ui_slider",
-        "z": "sculpture_dashboard",
-        "name": "Volume 1",
-        "label": "Volume",
-        "tooltip": "",
-        "group": "ui_group_sculpture1",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": true,
-        "outs": "all",
-        "topic": "sculpture/1/cmd",
-        "min": 0,
-        "max": 1,
-        "step": 0.01,
-        "x": 120,
-        "y": 100,
-        "wires": [
-            [
-                "volume_format_1"
-            ]
-        ]
-    },
-    {
-        "id": "volume_format_1",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Format Volume Command",
-        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 290,
-        "y": 100,
-        "wires": [
-            [
-                "mqtt_out_1"
-            ]
-        ]
-    },
-    {
-        "id": "mqtt_out_1",
-        "type": "mqtt out",
-        "z": "sculpture_dashboard",
-        "name": "Send to Sculpture 1",
-        "topic": "sculpture/1/cmd",
-        "qos": "0",
-        "retain": "false",
-        "broker": "mqtt_broker",
-        "x": 490,
-        "y": 100,
-        "wires": []
-    },
-    {
-        "id": "volume_slider_2",
-        "type": "ui_slider",
-        "z": "sculpture_dashboard",
-        "name": "Volume 2",
-        "label": "Volume",
-        "tooltip": "",
-        "group": "ui_group_sculpture2",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": true,
-        "outs": "all",
-        "topic": "sculpture/2/cmd",
-        "min": 0,
-        "max": 1,
-        "step": 0.01,
-        "x": 120,
-        "y": 320,
-        "wires": [
-            [
-                "volume_format_2"
-            ]
-        ]
-    },
-    {
-        "id": "volume_format_2",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Format Volume Command",
-        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 290,
-        "y": 320,
-        "wires": [
-            [
-                "mqtt_out_2"
-            ]
-        ]
-    },
-    {
-        "id": "mqtt_out_2",
-        "type": "mqtt out",
-        "z": "sculpture_dashboard",
-        "name": "Send to Sculpture 2",
-        "topic": "sculpture/2/cmd",
-        "qos": "0",
-        "retain": "false",
-        "broker": "mqtt_broker",
-        "x": 490,
-        "y": 320,
-        "wires": []
-    },
-    {
-        "id": "volume_slider_3",
-        "type": "ui_slider",
-        "z": "sculpture_dashboard",
-        "name": "Volume 3",
-        "label": "Volume",
-        "tooltip": "",
-        "group": "ui_group_sculpture3",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": true,
-        "outs": "all",
-        "topic": "sculpture/3/cmd",
-        "min": 0,
-        "max": 1,
-        "step": 0.01,
-        "x": 120,
-        "y": 220,
-        "wires": [
-            [
-                "volume_format_3"
-            ]
-        ]
-    },
-    {
-        "id": "volume_format_3",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Format Volume Command",
-        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 290,
-        "y": 220,
-        "wires": [
-            [
-                "mqtt_out_3"
-            ]
-        ]
-    },
-    {
-        "id": "mqtt_out_3",
-        "type": "mqtt out",
-        "z": "sculpture_dashboard",
-        "name": "Send to Sculpture 3",
-        "topic": "sculpture/3/cmd",
-        "qos": "0",
-        "retain": "false",
-        "broker": "mqtt_broker",
-        "x": 490,
-        "y": 220,
-        "wires": []
-    },
-    {
-        "id": "ui_ui_control_dashboard",
-        "type": "ui_ui_control",
-        "z": "sculpture_dashboard",
-        "name": "Dashboard Connect Listener",
-        "x": 80,
-        "y": 360,
-        "wires": [["plan_dashboard_connect"]]
-    },
-    {
-        "id": "plan_dashboard_connect",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Send Plan Highlight on Connect",
-        "func": "// On dashboard connect, re-broadcast the current plan highlight\nif (msg.payload && msg.payload.event === 'connect') {\n    var plans = [\n        {id: 'plan_btn_a1', value: 'A1'},\n        {id: 'plan_btn_a2', value: 'A2'},\n        {id: 'plan_btn_b1', value: 'B1'},\n        {id: 'plan_btn_b2', value: 'B2'},\n        {id: 'plan_btn_b3', value: 'B3'},\n        {id: 'plan_btn_c', value: 'C'},\n        {id: 'plan_btn_d', value: 'D'}\n    ];\n    var currentPlan = flow.get('currentPlan') || 'A1';\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.value === currentPlan) ? 'deepskyblue' : 'lightgray',\n                color: (p.value === currentPlan) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    return uiControlMsgs;\n}\nreturn null;\n",
-        "outputs": 5,
-        "x": 320,
-        "y": 360,
-        "wires": [["plan_btn_a1"], ["plan_btn_a2"], ["plan_btn_b1"], ["plan_btn_b2"], ["plan_btn_b3"]]
-    },
-    {
-        "id": "plan_button_logic",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Plan Button Logic",
-        "func": "// Plan button IDs and their labels\nvar plans = [\n    {id: 'plan_btn_a1', value: 'A1'},\n    {id: 'plan_btn_a2', value: 'A2'},\n    {id: 'plan_btn_b1', value: 'B1'},\n    {id: 'plan_btn_b2', value: 'B2'},\n    {id: 'plan_btn_b3', value: 'B3'},\n    {id: 'plan_btn_c', value: 'C'},\n    {id: 'plan_btn_d', value: 'D'}\n];\n\n// Find which button was pressed\nvar selectedPlan = plans.find(p => p.value === msg.payload);\nif (selectedPlan) {\n    // Store the current plan in flow context\n    flow.set('currentPlan', selectedPlan.value);\n    // Send plan to plan_format\n    var planMsg = {payload: selectedPlan.value};\n    // Update button highlights\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.id === selectedPlan.id) ? 'deepskyblue' : 'lightgray',\n                color: (p.id === selectedPlan.id) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    // Output: [planMsg, ...uiControlMsgs]\n    return [planMsg, ...uiControlMsgs];\n}\nreturn [null, null, null, null, null, null, null];\n",
-        "outputs": 7,
-        "x": 400,
-        "y": 480,
-        "wires": [["plan_format"], ["plan_btn_a1"], ["plan_btn_a2"], ["plan_btn_b1"], ["plan_btn_b2"], ["plan_btn_b3"], ["plan_btn_c"], ["plan_btn_d"]]
-    },
-    {
-        "id": "plan_btn_a1",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Plan A1 Button",
-        "group": "ui_group_system",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Plan A1 (1->2, 2->3, 3->1)",
-        "tooltip": "Select Plan A1",
-        "color": "black",
-        "bgcolor": "lightgray",
-        "icon": "fa-circle",
-        "payload": "A1",
-        "payloadType": "str",
-        "topic": "A1",
-        "x": 200,
-        "y": 400,
-        "wires": [["plan_button_logic"]]
-    },
-    {
-        "id": "plan_btn_a2",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Plan A2 Button",
-        "group": "ui_group_system",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Plan A2 (1->3, 3->2, 2->1)",
-        "tooltip": "Select Plan A2",
-        "color": "black",
-        "bgcolor": "lightgray",
-        "icon": "fa-circle",
-        "payload": "A2",
-        "payloadType": "str",
-        "topic": "A2",
-        "x": 200,
-        "y": 440,
-        "wires": [["plan_button_logic"]]
-    },
-    {
-        "id": "plan_btn_b1",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Plan B1 Button",
-        "group": "ui_group_system",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Plan B1 (1<->2, 3 silent)",
-        "tooltip": "Select Plan B1",
-        "color": "black",
-        "bgcolor": "lightgray",
-        "icon": "fa-circle",
-        "payload": "B1",
-        "payloadType": "str",
-        "topic": "B1",
-        "x": 200,
-        "y": 480,
-        "wires": [["plan_button_logic"]]
-    },
-    {
-        "id": "plan_btn_b2",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Plan B2 Button",
-        "group": "ui_group_system",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Plan B2 (2<->3, 1 silent)",
-        "tooltip": "Select Plan B2",
-        "color": "black",
-        "bgcolor": "lightgray",
-        "icon": "fa-circle",
-        "payload": "B2",
-        "payloadType": "str",
-        "topic": "B2",
-        "x": 200,
-        "y": 520,
-        "wires": [["plan_button_logic"]]
-    },
-    {
-        "id": "plan_btn_b3",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Plan B3 Button",
-        "group": "ui_group_system",
-        "order": 5,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Plan B3 (3<->1, 2 silent)",
-        "tooltip": "Select Plan B3",
-        "color": "black",
-        "bgcolor": "lightgray",
-        "icon": "fa-circle",
-        "payload": "B3",
-        "payloadType": "str",
-        "topic": "B3",
-        "x": 200,
-        "y": 560,
-        "wires": [["plan_button_logic"]]
-    },
-    {
-        "id": "plan_btn_c",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Plan C Button",
-        "group": "ui_group_system",
-        "order": 6,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Plan C (All to All Others)",
-        "tooltip": "Select Plan C",
-        "color": "black",
-        "bgcolor": "lightgray",
-        "icon": "fa-circle",
-        "payload": "C",
-        "payloadType": "str",
-        "topic": "C",
-        "x": 200,
-        "y": 520,
-        "wires": [["plan_button_logic"]]
-    },
-    {
-        "id": "plan_btn_d",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Plan D Button",
-        "group": "ui_group_system",
-        "order": 7,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Plan D (Prerecorded)",
-        "tooltip": "Select Plan D",
-        "color": "black",
-        "bgcolor": "lightgray",
-        "icon": "fa-circle",
-        "payload": "D",
-        "payloadType": "str",
-        "topic": "D",
-        "x": 200,
-        "y": 560,
-        "wires": [["plan_button_logic"]]
-    },
-    {
-        "id": "emergency_stop",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Emergency Stop",
-        "group": "ui_group_system",
-        "order": 8,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "EMERGENCY STOP",
-        "tooltip": "Stop all audio immediately",
-        "color": "white",
-        "bgcolor": "red",
-        "icon": "fa-stop",
-        "payload": "{\"mode\":\"local\",\"volume\":0}",
-        "payloadType": "json",
-        "topic": "system/broadcast",
-        "x": 200,
-        "y": 600,
-        "wires": [
-            [
-                "mqtt_broadcast"
-            ]
-        ]
-    },
-    {
-        "id": "plan_format",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Format Plan Command",
-        "func": "var plan = msg.payload;\nvar mode = (plan === 'D') ? 'local' : 'live';\nmsg.payload = {\"plan\": plan, \"mode\": mode};\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "x": 970,
-        "y": 200,
-        "wires": [
-            [
-                "mqtt_broadcast"
-            ]
-        ]
-    },
-    {
-        "id": "mqtt_broadcast",
-        "type": "mqtt out",
-        "z": "sculpture_dashboard",
-        "name": "Broadcast Mode",
-        "topic": "system/broadcast",
-        "qos": "0",
-        "retain": "false",
-        "broker": "mqtt_broker",
-        "x": 1200,
-        "y": 200,
-        "wires": []
-    },
-    {
-        "id": "status_in_1",
-        "type": "mqtt in",
-        "z": "sculpture_dashboard",
-        "name": "Status 1",
-        "topic": "sculpture/1/status",
-        "qos": "0",
-        "datatype": "json",
-        "broker": "mqtt_broker",
-        "inputs": 0,
-        "x": 120,
-        "y": 560,
-        "wires": [
-            [
-                "status_parse_1"
-            ]
-        ]
-    },
-    {
-        "id": "status_parse_1",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Parse Status 1",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local'; // Output 'Live' or 'Local'\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level; // Default to -60dB if undefined\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
-        "outputs": 6,
-        "noerr": 0,
-        "x": 260,
-        "y": 560,
-        "wires": [
-            [
-                "cpu_gauge_1"
-            ],
-            [
-                "temp_gauge_1"
-            ],
-            [
-                "sculpture1_status"
-            ],
-            [
-                "sculpture1_mode"
-            ],
-            [
-                "sculpture1_audio_level"
-            ],
-            [
-                "sculpture1_mute_state"
-            ]
-        ]
-    },
-    {
-        "id": "cpu_gauge_1",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "CPU 1",
-        "group": "ui_group_sculpture1",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "CPU %",
-        "label": "%",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "100",
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": "50",
-        "seg2": "80",
-        "x": 430,
-        "y": 500,
-        "wires": []
-    },
-    {
-        "id": "temp_gauge_1",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Temp 1",
-        "group": "ui_group_sculpture1",
-        "order": 5,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Temperature",
-        "label": "°C",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "85",
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": "60",
-        "seg2": "75",
-        "x": 420,
-        "y": 540,
-        "wires": []
-    },
-    {
-        "id": "status_in_2",
-        "type": "mqtt in",
-        "z": "sculpture_dashboard",
-        "name": "Status 2",
-        "topic": "sculpture/2/status",
-        "qos": "0",
-        "datatype": "json",
-        "broker": "mqtt_broker",
-        "inputs": 0,
-        "x": 560,
-        "y": 560,
-        "wires": [
-            [
-                "status_parse_2"
-            ]
-        ]
-    },
-    {
-        "id": "status_parse_2",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Parse Status 2",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
-        "outputs": 6,
-        "noerr": 0,
-        "x": 700,
-        "y": 560,
-        "wires": [
-            [
-                "cpu_gauge_2"
-            ],
-            [
-                "temp_gauge_2"
-            ],
-            [
-                "sculpture2_status"
-            ],
-            [
-                "sculpture2_mode"
-            ],
-            [
-                "sculpture2_audio_level"
-            ],
-            [
-                "sculpture2_mute_state"
-            ]
-        ]
-    },
-    {
-        "id": "cpu_gauge_2",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "CPU 2",
-        "group": "ui_group_sculpture2",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "CPU %",
-        "label": "%",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "100",
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": "50",
-        "seg2": "80",
-        "x": 870,
-        "y": 500,
-        "wires": []
-    },
-    {
-        "id": "temp_gauge_2",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Temp 2",
-        "group": "ui_group_sculpture2",
-        "order": 5,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Temperature",
-        "label": "°C",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "85",
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": "60",
-        "seg2": "75",
-        "x": 860,
-        "y": 540,
-        "wires": []
-    },
-    {
-        "id": "status_in_3",
-        "type": "mqtt in",
-        "z": "sculpture_dashboard",
-        "name": "Status 3",
-        "topic": "sculpture/3/status",
-        "qos": "0",
-        "datatype": "json",
-        "broker": "mqtt_broker",
-        "inputs": 0,
-        "x": 1000,
-        "y": 560,
-        "wires": [
-            [
-                "status_parse_3"
-            ]
-        ]
-    },
-    {
-        "id": "status_parse_3",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Parse Status 3",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online;\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
-        "outputs": 6,
-        "noerr": 0,
-        "x": 1140,
-        "y": 560,
-        "wires": [
-            [
-                "cpu_gauge_3"
-            ],
-            [
-                "temp_gauge_3"
-            ],
-            [
-                "sculpture3_status"
-            ],
-            [
-                "sculpture3_mode"
-            ],
-            [
-                "sculpture3_audio_level"
-            ],
-            [
-                "sculpture3_mute_state"
-            ]
-        ]
-    },
-    {
-        "id": "cpu_gauge_3",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "CPU 3",
-        "group": "ui_group_sculpture3",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "CPU %",
-        "label": "%",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "100",
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": "50",
-        "seg2": "80",
-        "x": 1310,
-        "y": 500,
-        "wires": []
-    },
-    {
-        "id": "temp_gauge_3",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Temp 3",
-        "group": "ui_group_sculpture3",
-        "order": 5,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Temperature",
-        "label": "°C",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "85",
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": "60",
-        "seg2": "75",
-        "x": 1300,
-        "y": 540,
-        "wires": []
-    },
-    {
-        "id": "sculpture1_status",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Status",
-        "group": "ui_group_sculpture1",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Status",
-        "label": "",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "1",
-        "colors": [
-            "#ca3838",
-            "#00b500"
-        ],
-        "seg1": "0.5",
-        "seg2": "1",
-        "x": 430,
-        "y": 580,
-        "wires": []
-    },
-    {
-        "id": "sculpture1_mute_state",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Mute State 1",
-        "func": "// Store the mute state in a flow variable so the template can access it.\nflow.set('sculpture1_is_muted', msg.payload);\n\n// Pass the message on to the template to trigger a refresh.\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 450,
-        "y": 700,
-        "wires": [
-            [
-                "sculpture1_mute_button"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture1_mute_button",
-        "type": "ui_template",
-        "z": "sculpture_dashboard",
-        "group": "ui_group_sculpture1",
-        "name": "Mute/Unmute Button 1",
-        "order": 7,
-        "width": 0,
-        "height": 0,
-        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture1_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "templateScope": "local",
-        "x": 650,
-        "y": 700,
-        "wires": [
-            [
-                "mqtt_out_1"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture1_mode",
-        "type": "ui_text",
-        "z": "sculpture_dashboard",
-        "group": "ui_group_sculpture1",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "name": "Mode",
-        "label": "Mode",
-        "format": "{{msg.payload}}",
-        "layout": "row-spread",
-        "x": 410,
-        "y": 620,
-        "wires": []
-    },
-    {
-        "id": "sculpture1_audio_level",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Audio Level",
-        "group": "ui_group_sculpture1",
-        "order": 6,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Audio Level",
-        "label": "dB",
-        "format": "{{value}}",
-        "min": -60,
-        "max": 0,
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": -20,
-        "seg2": -10,
-        "x": 410,
-        "y": 660,
-        "wires": []
-    },
-    {
-        "id": "sculpture1_restart",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Restart",
-        "group": "ui_group_sculpture1",
-        "order": 8,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Restart",
-        "tooltip": "Restart Sculpture",
-        "color": "white",
-        "bgcolor": "blue",
-        "icon": "fa-refresh",
-        "payload": "{\"restart\": true}",
-        "payloadType": "json",
-        "topic": "sculpture/1/cmd",
-        "x": 340,
-        "y": 60,
-        "wires": [
-            [
-                "mqtt_out_1"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture2_status",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Status",
-        "group": "ui_group_sculpture2",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Status",
-        "label": "",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "1",
-        "colors": [
-            "#ca3838",
-            "#00b500"
-        ],
-        "seg1": "0.5",
-        "seg2": "1",
-        "x": 870,
-        "y": 580,
-        "wires": []
-    },
-    {
-        "id": "sculpture2_mute_state",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Mute State 2",
-        "func": "flow.set('sculpture2_is_muted', msg.payload);\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 890,
-        "y": 700,
-        "wires": [
-            [
-                "sculpture2_mute_button"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture2_mute_button",
-        "type": "ui_template",
-        "z": "sculpture_dashboard",
-        "group": "ui_group_sculpture2",
-        "name": "Mute/Unmute Button 2",
-        "order": 7,
-        "width": 0,
-        "height": 0,
-        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture2_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "templateScope": "local",
-        "x": 1090,
-        "y": 700,
-        "wires": [
-            [
-                "mqtt_out_2"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture2_mode",
-        "type": "ui_text",
-        "z": "sculpture_dashboard",
-        "group": "ui_group_sculpture2",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "name": "Mode",
-        "label": "Mode",
-        "format": "{{msg.payload}}",
-        "layout": "row-spread",
-        "x": 850,
-        "y": 620,
-        "wires": []
-    },
-    {
-        "id": "sculpture2_audio_level",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Audio Level",
-        "group": "ui_group_sculpture2",
-        "order": 6,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Audio Level",
-        "label": "dB",
-        "format": "{{value}}",
-        "min": -60,
-        "max": 0,
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": -20,
-        "seg2": -10,
-        "x": 850,
-        "y": 660,
-        "wires": []
-    },
-    {
-        "id": "sculpture2_restart",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Restart",
-        "group": "ui_group_sculpture2",
-        "order": 8,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Restart",
-        "tooltip": "Restart Sculpture",
-        "color": "white",
-        "bgcolor": "blue",
-        "icon": "fa-refresh",
-        "payload": "{\"restart\": true}",
-        "payloadType": "json",
-        "topic": "sculpture/2/cmd",
-        "x": 340,
-        "y": 280,
-        "wires": [
-            [
-                "mqtt_out_2"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture3_status",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Status",
-        "group": "ui_group_sculpture3",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Status",
-        "label": "",
-        "format": "{{value}}",
-        "min": 0,
-        "max": "1",
-        "colors": [
-            "#ca3838",
-            "#00b500"
-        ],
-        "seg1": "0.5",
-        "seg2": "1",
-        "x": 1310,
-        "y": 580,
-        "wires": []
-    },
-    {
-        "id": "sculpture3_mute_state",
-        "type": "function",
-        "z": "sculpture_dashboard",
-        "name": "Mute State 3",
-        "func": "flow.set('sculpture3_is_muted', msg.payload);\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 1330,
-        "y": 700,
-        "wires": [
-            [
-                "sculpture3_mute_button"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture3_mute_button",
-        "type": "ui_template",
-        "z": "sculpture_dashboard",
-        "group": "ui_group_sculpture3",
-        "name": "Mute/Unmute Button 3",
-        "order": 7,
-        "width": 0,
-        "height": 0,
-        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture3_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "templateScope": "local",
-        "x": 1530,
-        "y": 700,
-        "wires": [
-            [
-                "mqtt_out_3"
-            ]
-        ]
-    },
-    {
-        "id": "sculpture3_mode",
-        "type": "ui_text",
-        "z": "sculpture_dashboard",
-        "group": "ui_group_sculpture3",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "name": "Mode",
-        "label": "Mode",
-        "format": "{{msg.payload}}",
-        "layout": "row-spread",
-        "x": 1290,
-        "y": 620,
-        "wires": []
-    },
-    {
-        "id": "sculpture3_audio_level",
-        "type": "ui_gauge",
-        "z": "sculpture_dashboard",
-        "name": "Audio Level",
-        "group": "ui_group_sculpture3",
-        "order": 6,
-        "width": 0,
-        "height": 0,
-        "gtype": "gage",
-        "title": "Audio Level",
-        "label": "dB",
-        "format": "{{value}}",
-        "min": -60,
-        "max": 0,
-        "colors": [
-            "#00b500",
-            "#e6e600",
-            "#ca3838"
-        ],
-        "seg1": -20,
-        "seg2": -10,
-        "x": 1290,
-        "y": 660,
-        "wires": []
-    },
-    {
-        "id": "sculpture3_restart",
-        "type": "ui_button",
-        "z": "sculpture_dashboard",
-        "name": "Restart",
-        "group": "ui_group_sculpture3",
-        "order": 8,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Restart",
-        "tooltip": "Restart Sculpture",
-        "color": "white",
-        "bgcolor": "blue",
-        "icon": "fa-refresh",
-        "payload": "{\"restart\": true}",
-        "payloadType": "json",
-        "topic": "sculpture/3/cmd",
-        "x": 340,
-        "y": 180,
-        "wires": [
-            [
-                "mqtt_out_3"
-            ]
-        ]
-    },
-    {
         "id": "ui_group_sculpture1",
         "type": "ui_group",
         "name": "Sculpture 1",
@@ -1172,5 +75,1186 @@
         "order": 1,
         "disabled": false,
         "hidden": false
+    },
+    {
+        "id": "volume_slider_1",
+        "type": "ui_slider",
+        "z": "sculpture_dashboard",
+        "name": "Volume 1",
+        "label": "Volume",
+        "tooltip": "",
+        "group": "ui_group_sculpture1",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "sculpture/1/cmd",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "x": 120,
+        "y": 100,
+        "wires": [
+            [
+                "volume_format_1"
+            ]
+        ]
+    },
+    {
+        "id": "volume_format_1",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Volume Command",
+        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 290,
+        "y": 100,
+        "wires": [
+            [
+                "mqtt_out_1"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_1",
+        "type": "mqtt out",
+        "z": "sculpture_dashboard",
+        "name": "Send to Sculpture 1",
+        "topic": "sculpture/1/cmd",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 490,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "status_in_1",
+        "type": "mqtt in",
+        "z": "sculpture_dashboard",
+        "name": "Status 1",
+        "topic": "sculpture/1/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "inputs": 0,
+        "x": 120,
+        "y": 560,
+        "wires": [
+            [
+                "status_parse_1"
+            ]
+        ]
+    },
+    {
+        "id": "status_parse_1",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Parse Status 1",
+        "func": "var data = msg.payload;\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic_level, topic: \"mic_level\"},\n    {payload: data.output_level, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
+        "outputs": 6,
+        "noerr": 0,
+        "x": 260,
+        "y": 560,
+        "wires": [
+            [
+                "cpu_gauge_1"
+            ],
+            [
+                "temp_gauge_1"
+            ],
+            [
+                "sculpture1_mode"
+            ],
+            [
+                "sculpture1_mic_level"
+            ],
+            [
+                "sculpture1_output_level"
+            ],
+            [
+                "sculpture1_mute_state"
+            ]
+        ]
+    },
+    {
+        "id": "cpu_gauge_1",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "CPU 1",
+        "group": "ui_group_sculpture1",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "CPU %",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "x": 430,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "temp_gauge_1",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Temp 1",
+        "group": "ui_group_sculpture1",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "85",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "60",
+        "seg2": "75",
+        "x": 420,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "sculpture1_output_level",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Output Level",
+        "group": "ui_group_sculpture1",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Output Level",
+        "label": "dB",
+        "format": "{{value | number:1}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 410,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "sculpture1_mic_level",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Microphone Level",
+        "group": "ui_group_sculpture1",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Microphone Level",
+        "label": "dB",
+        "format": "{{value | number:1}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 410,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture2_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture1_mute_state",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Mute State 1",
+        "func": "// Store the mute state in a flow variable so the template can access it.\nflow.set('sculpture1_is_muted', msg.payload);\n\n// Pass the message on to the template to trigger a refresh.\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 450,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture1_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture1_mute_button",
+        "type": "ui_template",
+        "z": "sculpture_dashboard",
+        "group": "ui_group_sculpture1",
+        "name": "Mute/Unmute Button 1",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture1_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 650,
+        "y": 700,
+        "wires": [
+            [
+                "mqtt_out_1"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture1_mode",
+        "type": "ui_text",
+        "z": "sculpture_dashboard",
+        "group": "ui_group_sculpture1",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "Mode",
+        "label": "Mode",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 410,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "sculpture1_restart",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Restart",
+        "group": "ui_group_sculpture1",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Restart",
+        "tooltip": "Restart Sculpture",
+        "color": "white",
+        "bgcolor": "blue",
+        "icon": "fa-refresh",
+        "payload": "{\"restart\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/1/cmd",
+        "x": 340,
+        "y": 60,
+        "wires": [
+            [
+                "mqtt_out_1"
+            ]
+        ]
+    },
+    {
+        "id": "volume_slider_2",
+        "type": "ui_slider",
+        "z": "sculpture_dashboard",
+        "name": "Volume 2",
+        "label": "Volume",
+        "tooltip": "",
+        "group": "ui_group_sculpture2",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "sculpture/2/cmd",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "x": 120,
+        "y": 320,
+        "wires": [
+            [
+                "volume_format_2"
+            ]
+        ]
+    },
+    {
+        "id": "volume_format_2",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Volume Command",
+        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 290,
+        "y": 320,
+        "wires": [
+            [
+                "mqtt_out_2"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_2",
+        "type": "mqtt out",
+        "z": "sculpture_dashboard",
+        "name": "Send to Sculpture 2",
+        "topic": "sculpture/2/cmd",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 490,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "status_in_2",
+        "type": "mqtt in",
+        "z": "sculpture_dashboard",
+        "name": "Status 2",
+        "topic": "sculpture/2/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "inputs": 0,
+        "x": 560,
+        "y": 560,
+        "wires": [
+            [
+                "status_parse_2"
+            ]
+        ]
+    },
+    {
+        "id": "status_parse_2",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Parse Status 2",
+        "func": "var data = msg.payload;\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic_level, topic: \"mic_level\"},\n    {payload: data.output_level, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
+        "outputs": 6,
+        "noerr": 0,
+        "x": 700,
+        "y": 560,
+        "wires": [
+            [
+                "cpu_gauge_2"
+            ],
+            [
+                "temp_gauge_2"
+            ],
+            [
+                "sculpture2_mode"
+            ],
+            [
+                "sculpture2_mic_level"
+            ],
+            [
+                "sculpture2_output_level"
+            ],
+            [
+                "sculpture2_mute_state"
+            ]
+        ]
+    },
+    {
+        "id": "cpu_gauge_2",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "CPU 2",
+        "group": "ui_group_sculpture2",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "CPU %",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "x": 870,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "temp_gauge_2",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Temp 2",
+        "group": "ui_group_sculpture2",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "85",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "60",
+        "seg2": "75",
+        "x": 860,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "sculpture2_output_level",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Output Level",
+        "group": "ui_group_sculpture2",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Output Level",
+        "label": "dB",
+        "format": "{{value | number:1}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 850,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "sculpture2_mic_level",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Microphone Level",
+        "group": "ui_group_sculpture2",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Microphone Level",
+        "label": "dB",
+        "format": "{{value | number:1}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 850,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture3_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture2_mute_state",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Mute State 2",
+        "func": "flow.set('sculpture2_is_muted', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 890,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture2_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture2_mute_button",
+        "type": "ui_template",
+        "z": "sculpture_dashboard",
+        "group": "ui_group_sculpture2",
+        "name": "Mute/Unmute Button 2",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture2_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 1090,
+        "y": 700,
+        "wires": [
+            [
+                "mqtt_out_2"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture2_mode",
+        "type": "ui_text",
+        "z": "sculpture_dashboard",
+        "group": "ui_group_sculpture2",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "Mode",
+        "label": "Mode",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 850,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "sculpture2_restart",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Restart",
+        "group": "ui_group_sculpture2",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Restart",
+        "tooltip": "Restart Sculpture",
+        "color": "white",
+        "bgcolor": "blue",
+        "icon": "fa-refresh",
+        "payload": "{\"restart\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/2/cmd",
+        "x": 340,
+        "y": 280,
+        "wires": [
+            [
+                "mqtt_out_2"
+            ]
+        ]
+    },
+    {
+        "id": "volume_slider_3",
+        "type": "ui_slider",
+        "z": "sculpture_dashboard",
+        "name": "Volume 3",
+        "label": "Volume",
+        "tooltip": "",
+        "group": "ui_group_sculpture3",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "all",
+        "topic": "sculpture/3/cmd",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "x": 120,
+        "y": 220,
+        "wires": [
+            [
+                "volume_format_3"
+            ]
+        ]
+    },
+    {
+        "id": "volume_format_3",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Volume Command",
+        "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 290,
+        "y": 220,
+        "wires": [
+            [
+                "mqtt_out_3"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_3",
+        "type": "mqtt out",
+        "z": "sculpture_dashboard",
+        "name": "Send to Sculpture 3",
+        "topic": "sculpture/3/cmd",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 490,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "status_in_3",
+        "type": "mqtt in",
+        "z": "sculpture_dashboard",
+        "name": "Status 3",
+        "topic": "sculpture/3/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "inputs": 0,
+        "x": 1000,
+        "y": 560,
+        "wires": [
+            [
+                "status_parse_3"
+            ]
+        ]
+    },
+    {
+        "id": "status_parse_3",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Parse Status 3",
+        "func": "var data = msg.payload;\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic_level, topic: \"mic_level\"},\n    {payload: data.output_level, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
+        "outputs": 6,
+        "noerr": 0,
+        "x": 1140,
+        "y": 560,
+        "wires": [
+            [
+                "cpu_gauge_3"
+            ],
+            [
+                "temp_gauge_3"
+            ],
+            [
+                "sculpture3_mode"
+            ],
+            [
+                "sculpture3_mic_level"
+            ],
+            [
+                "sculpture3_output_level"
+            ],
+            [
+                "sculpture3_mute_state"
+            ]
+        ]
+    },
+    {
+        "id": "cpu_gauge_3",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "CPU 3",
+        "group": "ui_group_sculpture3",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "CPU %",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "x": 1310,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "temp_gauge_3",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Temp 3",
+        "group": "ui_group_sculpture3",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "85",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "60",
+        "seg2": "75",
+        "x": 1300,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "sculpture3_output_level",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Output Level",
+        "group": "ui_group_sculpture3",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Output Level",
+        "label": "dB",
+        "format": "{{value | number:1}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 1290,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "sculpture3_mic_level",
+        "type": "ui_gauge",
+        "z": "sculpture_dashboard",
+        "name": "Microphone Level",
+        "group": "ui_group_sculpture3",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Microphone Level",
+        "label": "dB",
+        "format": "{{value | number:1}}",
+        "min": -60,
+        "max": 0,
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": -20,
+        "seg2": -10,
+        "x": 1290,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "sculpture3_mute_state",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Mute State 3",
+        "func": "flow.set('sculpture3_is_muted', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1330,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture3_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture3_mute_button",
+        "type": "ui_template",
+        "z": "sculpture_dashboard",
+        "group": "ui_group_sculpture3",
+        "name": "Mute/Unmute Button 3",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture3_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 1530,
+        "y": 700,
+        "wires": [
+            [
+                "mqtt_out_3"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture3_mode",
+        "type": "ui_text",
+        "z": "sculpture_dashboard",
+        "group": "ui_group_sculpture3",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "Mode",
+        "label": "Mode",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 1290,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "sculpture3_restart",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Restart",
+        "group": "ui_group_sculpture3",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Restart",
+        "tooltip": "Restart Sculpture",
+        "color": "white",
+        "bgcolor": "blue",
+        "icon": "fa-refresh",
+        "payload": "{\"restart\": true}",
+        "payloadType": "json",
+        "topic": "sculpture/3/cmd",
+        "x": 340,
+        "y": 180,
+        "wires": [
+            [
+                "mqtt_out_3"
+            ]
+        ]
+    },
+    {
+        "id": "ui_ui_control_dashboard",
+        "type": "ui_ui_control",
+        "z": "sculpture_dashboard",
+        "name": "Dashboard Connect Listener",
+        "x": 80,
+        "y": 360,
+        "wires": [
+            [
+                "plan_dashboard_connect"
+            ]
+        ]
+    },
+    {
+        "id": "plan_dashboard_connect",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Send Plan Highlight on Connect",
+        "func": "// On dashboard connect, re-broadcast the current plan highlight\nif (msg.payload && msg.payload.event === 'connect') {\n    var plans = [\n        {id: 'plan_btn_a1', value: 'A1'},\n        {id: 'plan_btn_a2', value: 'A2'},\n        {id: 'plan_btn_b1', value: 'B1'},\n        {id: 'plan_btn_b2', value: 'B2'},\n        {id: 'plan_btn_b3', value: 'B3'},\n        {id: 'plan_btn_c', value: 'C'},\n        {id: 'plan_btn_d', value: 'D'}\n    ];\n    var currentPlan = flow.get('currentPlan') || 'A1';\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.value === currentPlan) ? 'deepskyblue' : 'lightgray',\n                color: (p.value === currentPlan) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    return uiControlMsgs;\n}\nreturn null;\n",
+        "outputs": 5,
+        "x": 320,
+        "y": 360,
+        "wires": [
+            [
+                "plan_btn_a1"
+            ],
+            [
+                "plan_btn_a2"
+            ],
+            [
+                "plan_btn_b1"
+            ],
+            [
+                "plan_btn_b2"
+            ],
+            [
+                "plan_btn_b3"
+            ]
+        ]
+    },
+    {
+        "id": "plan_button_logic",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Plan Button Logic",
+        "func": "// Plan button IDs and their labels\nvar plans = [\n    {id: 'plan_btn_a1', value: 'A1'},\n    {id: 'plan_btn_a2', value: 'A2'},\n    {id: 'plan_btn_b1', value: 'B1'},\n    {id: 'plan_btn_b2', value: 'B2'},\n    {id: 'plan_btn_b3', value: 'B3'},\n    {id: 'plan_btn_c', value: 'C'},\n    {id: 'plan_btn_d', value: 'D'}\n];\n\n// Find which button was pressed\nvar selectedPlan = plans.find(p => p.value === msg.payload);\nif (selectedPlan) {\n    // Store the current plan in flow context\n    flow.set('currentPlan', selectedPlan.value);\n    // Send plan to plan_format\n    var planMsg = {payload: selectedPlan.value};\n    // Update button highlights\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.id === selectedPlan.id) ? 'deepskyblue' : 'lightgray',\n                color: (p.id === selectedPlan.id) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    // Output: [planMsg, ...uiControlMsgs]\n    return [planMsg, ...uiControlMsgs];\n}\nreturn [null, null, null, null, null, null, null];\n",
+        "outputs": 7,
+        "x": 400,
+        "y": 480,
+        "wires": [
+            [
+                "plan_format"
+            ],
+            [
+                "plan_btn_a1"
+            ],
+            [
+                "plan_btn_a2"
+            ],
+            [
+                "plan_btn_b1"
+            ],
+            [
+                "plan_btn_b2"
+            ],
+            [
+                "plan_btn_b3"
+            ],
+            [
+                "plan_btn_c"
+            ],
+            [
+                "plan_btn_d"
+            ]
+        ]
+    },
+    {
+        "id": "plan_btn_a1",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Plan A1 Button",
+        "group": "ui_group_system",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Plan A1 (1->2, 2->3, 3->1)",
+        "tooltip": "Select Plan A1",
+        "color": "black",
+        "bgcolor": "lightgray",
+        "icon": "fa-circle",
+        "payload": "A1",
+        "payloadType": "str",
+        "topic": "A1",
+        "x": 200,
+        "y": 400,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ]
+    },
+    {
+        "id": "plan_btn_a2",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Plan A2 Button",
+        "group": "ui_group_system",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Plan A2 (1->3, 3->2, 2->1)",
+        "tooltip": "Select Plan A2",
+        "color": "black",
+        "bgcolor": "lightgray",
+        "icon": "fa-circle",
+        "payload": "A2",
+        "payloadType": "str",
+        "topic": "A2",
+        "x": 200,
+        "y": 440,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ]
+    },
+    {
+        "id": "plan_btn_b1",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Plan B1 Button",
+        "group": "ui_group_system",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Plan B1 (1<->2, 3 silent)",
+        "tooltip": "Select Plan B1",
+        "color": "black",
+        "bgcolor": "lightgray",
+        "icon": "fa-circle",
+        "payload": "B1",
+        "payloadType": "str",
+        "topic": "B1",
+        "x": 200,
+        "y": 480,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ]
+    },
+    {
+        "id": "plan_btn_b2",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Plan B2 Button",
+        "group": "ui_group_system",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Plan B2 (2<->3, 1 silent)",
+        "tooltip": "Select Plan B2",
+        "color": "black",
+        "bgcolor": "lightgray",
+        "icon": "fa-circle",
+        "payload": "B2",
+        "payloadType": "str",
+        "topic": "B2",
+        "x": 200,
+        "y": 520,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ]
+    },
+    {
+        "id": "plan_btn_b3",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Plan B3 Button",
+        "group": "ui_group_system",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Plan B3 (3<->1, 2 silent)",
+        "tooltip": "Select Plan B3",
+        "color": "black",
+        "bgcolor": "lightgray",
+        "icon": "fa-circle",
+        "payload": "B3",
+        "payloadType": "str",
+        "topic": "B3",
+        "x": 200,
+        "y": 560,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ]
+    },
+    {
+        "id": "plan_btn_c",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Plan C Button",
+        "group": "ui_group_system",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Plan C (All to All Others)",
+        "tooltip": "Select Plan C",
+        "color": "black",
+        "bgcolor": "lightgray",
+        "icon": "fa-circle",
+        "payload": "C",
+        "payloadType": "str",
+        "topic": "C",
+        "x": 200,
+        "y": 520,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ]
+    },
+    {
+        "id": "plan_btn_d",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Plan D Button",
+        "group": "ui_group_system",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Plan D (Prerecorded)",
+        "tooltip": "Select Plan D",
+        "color": "black",
+        "bgcolor": "lightgray",
+        "icon": "fa-circle",
+        "payload": "D",
+        "payloadType": "str",
+        "topic": "D",
+        "x": 200,
+        "y": 560,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ]
+    },
+    {
+        "id": "emergency_stop",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Emergency Stop",
+        "group": "ui_group_system",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "EMERGENCY STOP",
+        "tooltip": "Stop all audio immediately",
+        "color": "white",
+        "bgcolor": "red",
+        "icon": "fa-stop",
+        "payload": "{\"mode\":\"local\",\"volume\":0}",
+        "payloadType": "json",
+        "topic": "system/broadcast",
+        "x": 200,
+        "y": 600,
+        "wires": [
+            [
+                "mqtt_broadcast"
+            ]
+        ]
+    },
+    {
+        "id": "plan_format",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Plan Command",
+        "func": "var plan = msg.payload;\nvar mode = (plan === 'D') ? 'local' : 'live';\nmsg.payload = {\"plan\": plan, \"mode\": mode};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 970,
+        "y": 200,
+        "wires": [
+            [
+                "mqtt_broadcast"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_broadcast",
+        "type": "mqtt out",
+        "z": "sculpture_dashboard",
+        "name": "Broadcast Mode",
+        "topic": "system/broadcast",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 1200,
+        "y": 200,
+        "wires": []
     }
 ]
