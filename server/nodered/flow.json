@@ -988,7 +988,7 @@
         "z": "sculpture_dashboard",
         "name": "Plan Button Logic",
         "func": "// Plan button IDs and their labels\nvar plans = [\n    {id: 'plan_btn_a1', value: 'A1'},\n    {id: 'plan_btn_a2', value: 'A2'},\n    {id: 'plan_btn_b1', value: 'B1'},\n    {id: 'plan_btn_b2', value: 'B2'},\n    {id: 'plan_btn_b3', value: 'B3'},\n    {id: 'plan_btn_c', value: 'C'},\n    {id: 'plan_btn_d', value: 'D'}\n];\n\n// Find which button was pressed\nvar selectedPlan = plans.find(p => p.value === msg.payload);\nif (selectedPlan) {\n    // Store the current plan in flow context\n    flow.set('currentPlan', selectedPlan.value);\n    // Send plan to plan_format\n    var planMsg = {payload: selectedPlan.value};\n    // Update button highlights\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.id === selectedPlan.id) ? 'deepskyblue' : 'lightgray',\n                color: (p.id === selectedPlan.id) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    // Output: [planMsg, ...uiControlMsgs]\n    return [planMsg, ...uiControlMsgs];\n}\nreturn [null, null, null, null, null, null, null];\n",
-        "outputs": 7,
+        "outputs": 8,
         "x": 400,
         "y": 480,
         "wires": [

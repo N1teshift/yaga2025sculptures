@@ -218,7 +218,7 @@ ip addr show eth0
 
 ## License
 
-This project is open source. See individual component licenses for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Support
 
