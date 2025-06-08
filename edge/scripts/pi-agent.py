@@ -184,6 +184,7 @@ WantedBy=multi-user.target
                 'temperature': temperature,
                 'audio_level': audio_level,
                 'mode': self.current_mode,
+                'is_muted': self.is_muted,
                 'online': online,
                 'timestamp': time.time()
             }
@@ -195,6 +196,7 @@ WantedBy=multi-user.target
                 'temperature': 0,
                 'audio_level': -60,
                 'mode': self.current_mode,
+                'is_muted': self.is_muted,
                 'online': 1,
                 'timestamp': time.time(),
                 'error': str(e)

@@ -14,7 +14,7 @@
         "label": "Volume",
         "tooltip": "",
         "group": "ui_group_sculpture1",
-        "order": 1,
+        "order": 2,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -68,7 +68,7 @@
         "label": "Volume",
         "tooltip": "",
         "group": "ui_group_sculpture2",
-        "order": 1,
+        "order": 2,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -122,7 +122,7 @@
         "label": "Volume",
         "tooltip": "",
         "group": "ui_group_sculpture3",
-        "order": 1,
+        "order": 2,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -433,8 +433,8 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status 1",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 1 : 0; // 1=live,0=local\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level; // Default to -60dB if undefined\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
-        "outputs": 5,
+        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local'; // Output 'Live' or 'Local'\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level; // Default to -60dB if undefined\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
+        "outputs": 6,
         "noerr": 0,
         "x": 260,
         "y": 560,
@@ -453,6 +453,9 @@
             ],
             [
                 "sculpture1_audio_level"
+            ],
+            [
+                "sculpture1_mute_state"
             ]
         ]
     },
@@ -462,7 +465,7 @@
         "z": "sculpture_dashboard",
         "name": "CPU 1",
         "group": "ui_group_sculpture1",
-        "order": 2,
+        "order": 4,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -488,7 +491,7 @@
         "z": "sculpture_dashboard",
         "name": "Temp 1",
         "group": "ui_group_sculpture1",
-        "order": 3,
+        "order": 5,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -531,8 +534,8 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status 2",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 1 : 0;\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
-        "outputs": 5,
+        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online; // Default to 0 (offline) if undefined\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
+        "outputs": 6,
         "noerr": 0,
         "x": 700,
         "y": 560,
@@ -551,6 +554,9 @@
             ],
             [
                 "sculpture2_audio_level"
+            ],
+            [
+                "sculpture2_mute_state"
             ]
         ]
     },
@@ -560,7 +566,7 @@
         "z": "sculpture_dashboard",
         "name": "CPU 2",
         "group": "ui_group_sculpture2",
-        "order": 2,
+        "order": 4,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -586,7 +592,7 @@
         "z": "sculpture_dashboard",
         "name": "Temp 2",
         "group": "ui_group_sculpture2",
-        "order": 3,
+        "order": 5,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -629,8 +635,8 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status 3",
-        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online;\nvar mode_val = data.mode === 'live' ? 1 : 0;\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"}\n];",
-        "outputs": 5,
+        "func": "var data = msg.payload;\nvar online = data.online === undefined ? 0 : data.online;\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar audio_level = data.audio_level === undefined ? -60 : data.audio_level;\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: online, topic: \"online_status\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: audio_level, topic: \"audio_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
+        "outputs": 6,
         "noerr": 0,
         "x": 1140,
         "y": 560,
@@ -649,6 +655,9 @@
             ],
             [
                 "sculpture3_audio_level"
+            ],
+            [
+                "sculpture3_mute_state"
             ]
         ]
     },
@@ -658,7 +667,7 @@
         "z": "sculpture_dashboard",
         "name": "CPU 3",
         "group": "ui_group_sculpture3",
-        "order": 2,
+        "order": 4,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -684,7 +693,7 @@
         "z": "sculpture_dashboard",
         "name": "Temp 3",
         "group": "ui_group_sculpture3",
-        "order": 3,
+        "order": 5,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -710,7 +719,7 @@
         "z": "sculpture_dashboard",
         "name": "Status",
         "group": "ui_group_sculpture1",
-        "order": 4,
+        "order": 3,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -730,25 +739,36 @@
         "wires": []
     },
     {
-        "id": "sculpture1_mute",
-        "type": "ui_button",
+        "id": "sculpture1_mute_state",
+        "type": "function",
         "z": "sculpture_dashboard",
-        "name": "Mute",
+        "name": "Mute State 1",
+        "func": "// Store the mute state in a flow variable so the template can access it.\nflow.set('sculpture1_is_muted', msg.payload);\n\n// Pass the message on to the template to trigger a refresh.\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 450,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture1_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture1_mute_button",
+        "type": "ui_template",
+        "z": "sculpture_dashboard",
         "group": "ui_group_sculpture1",
-        "order": 5,
+        "name": "Mute/Unmute Button 1",
+        "order": 7,
         "width": 0,
         "height": 0,
-        "passthru": false,
-        "label": "Mute",
-        "tooltip": "Mute/Unmute",
-        "color": "white",
-        "bgcolor": "red",
-        "icon": "fa-volume-off",
-        "payload": "{\"mute\": true}",
-        "payloadType": "json",
-        "topic": "sculpture/1/cmd",
-        "x": 230,
-        "y": 60,
+        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture1_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 650,
+        "y": 700,
         "wires": [
             [
                 "mqtt_out_1"
@@ -757,25 +777,16 @@
     },
     {
         "id": "sculpture1_mode",
-        "type": "ui_gauge",
+        "type": "ui_text",
         "z": "sculpture_dashboard",
-        "name": "Mode",
         "group": "ui_group_sculpture1",
-        "order": 6,
+        "order": 1,
         "width": 0,
         "height": 0,
-        "gtype": "gage",
-        "title": "Mode",
-        "label": "",
-        "format": "{{value === 1 ? 'Live' : 'Local'}}",
-        "min": 0,
-        "max": "1",
-        "colors": [
-            "#ca3838",
-            "#00b500"
-        ],
-        "seg1": "0.5",
-        "seg2": "1",
+        "name": "Mode",
+        "label": "Mode",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
         "x": 410,
         "y": 620,
         "wires": []
@@ -786,7 +797,7 @@
         "z": "sculpture_dashboard",
         "name": "Audio Level",
         "group": "ui_group_sculpture1",
-        "order": 7,
+        "order": 6,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -838,7 +849,7 @@
         "z": "sculpture_dashboard",
         "name": "Status",
         "group": "ui_group_sculpture2",
-        "order": 4,
+        "order": 3,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -858,25 +869,36 @@
         "wires": []
     },
     {
-        "id": "sculpture2_mute",
-        "type": "ui_button",
+        "id": "sculpture2_mute_state",
+        "type": "function",
         "z": "sculpture_dashboard",
-        "name": "Mute",
+        "name": "Mute State 2",
+        "func": "flow.set('sculpture2_is_muted', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 890,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture2_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture2_mute_button",
+        "type": "ui_template",
+        "z": "sculpture_dashboard",
         "group": "ui_group_sculpture2",
-        "order": 5,
+        "name": "Mute/Unmute Button 2",
+        "order": 7,
         "width": 0,
         "height": 0,
-        "passthru": false,
-        "label": "Mute",
-        "tooltip": "Mute/Unmute",
-        "color": "white",
-        "bgcolor": "red",
-        "icon": "fa-volume-off",
-        "payload": "{\"mute\": true}",
-        "payloadType": "json",
-        "topic": "sculpture/2/cmd",
-        "x": 230,
-        "y": 280,
+        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture2_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 1090,
+        "y": 700,
         "wires": [
             [
                 "mqtt_out_2"
@@ -885,25 +907,16 @@
     },
     {
         "id": "sculpture2_mode",
-        "type": "ui_gauge",
+        "type": "ui_text",
         "z": "sculpture_dashboard",
-        "name": "Mode",
         "group": "ui_group_sculpture2",
-        "order": 6,
+        "order": 1,
         "width": 0,
         "height": 0,
-        "gtype": "gage",
-        "title": "Mode",
-        "label": "",
-        "format": "{{value === 1 ? 'Live' : 'Local'}}",
-        "min": 0,
-        "max": "1",
-        "colors": [
-            "#ca3838",
-            "#00b500"
-        ],
-        "seg1": "0.5",
-        "seg2": "1",
+        "name": "Mode",
+        "label": "Mode",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
         "x": 850,
         "y": 620,
         "wires": []
@@ -914,7 +927,7 @@
         "z": "sculpture_dashboard",
         "name": "Audio Level",
         "group": "ui_group_sculpture2",
-        "order": 7,
+        "order": 6,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -966,7 +979,7 @@
         "z": "sculpture_dashboard",
         "name": "Status",
         "group": "ui_group_sculpture3",
-        "order": 4,
+        "order": 3,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -986,25 +999,36 @@
         "wires": []
     },
     {
-        "id": "sculpture3_mute",
-        "type": "ui_button",
+        "id": "sculpture3_mute_state",
+        "type": "function",
         "z": "sculpture_dashboard",
-        "name": "Mute",
+        "name": "Mute State 3",
+        "func": "flow.set('sculpture3_is_muted', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1330,
+        "y": 700,
+        "wires": [
+            [
+                "sculpture3_mute_button"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture3_mute_button",
+        "type": "ui_template",
+        "z": "sculpture_dashboard",
         "group": "ui_group_sculpture3",
-        "order": 5,
+        "name": "Mute/Unmute Button 3",
+        "order": 7,
         "width": 0,
         "height": 0,
-        "passthru": false,
-        "label": "Mute",
-        "tooltip": "Mute/Unmute",
-        "color": "white",
-        "bgcolor": "red",
-        "icon": "fa-volume-off",
-        "payload": "{\"mute\": true}",
-        "payloadType": "json",
-        "topic": "sculpture/3/cmd",
-        "x": 230,
-        "y": 180,
+        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture3_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "templateScope": "local",
+        "x": 1530,
+        "y": 700,
         "wires": [
             [
                 "mqtt_out_3"
@@ -1013,25 +1037,16 @@
     },
     {
         "id": "sculpture3_mode",
-        "type": "ui_gauge",
+        "type": "ui_text",
         "z": "sculpture_dashboard",
-        "name": "Mode",
         "group": "ui_group_sculpture3",
-        "order": 6,
+        "order": 1,
         "width": 0,
         "height": 0,
-        "gtype": "gage",
-        "title": "Mode",
-        "label": "",
-        "format": "{{value === 1 ? 'Live' : 'Local'}}",
-        "min": 0,
-        "max": "1",
-        "colors": [
-            "#ca3838",
-            "#00b500"
-        ],
-        "seg1": "0.5",
-        "seg2": "1",
+        "name": "Mode",
+        "label": "Mode",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
         "x": 1290,
         "y": 620,
         "wires": []
@@ -1042,7 +1057,7 @@
         "z": "sculpture_dashboard",
         "name": "Audio Level",
         "group": "ui_group_sculpture3",
-        "order": 7,
+        "order": 6,
         "width": 0,
         "height": 0,
         "gtype": "gage",

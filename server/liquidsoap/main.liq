@@ -93,16 +93,28 @@ end
 
 # Telnet command to set plan
 def set_plan(arg)
-  if arg == "" then
-    "Usage: set_plan <A1|A2|B1|B2|B3|C|D>"
-  else
+  # Allowed plans
+  plans = ["A1", "A2", "B1", "B2", "B3", "C", "D"]
+  
+  if list.mem(arg, plans) then
+    log("Setting plan to #{arg}...")
+    # Update the reference
     current_plan := arg
+    # Reload the mixes with the new plan
     update_mixes()
     log("Plan changed to #{arg}")
     "Plan set to #{arg}"
+  else
+    "Unknown plan: #{arg}"
   end
 end
 server.register("set_plan", set_plan)
+
+# Telnet command to get the current plan
+def get_plan(_)
+  !current_plan
+end
+server.register("get_plan", get_plan, description="Get the current plan.")
 
 # Initialize mixes
 update_mixes()
