@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=unix_user
-WorkingDirectory=/c/Users/user/source/repos/yaga2025sculptures/server/liquidsoap
-ExecStart=/usr/bin/python3 /c/Users/user/source/repos/yaga2025sculptures/server/liquidsoap/mqtt_to_telnet_bridge.py
+WorkingDirectory=/opt/sculpture-system/liquidsoap
+ExecStart=/usr/bin/python3 /opt/sculpture-system/liquidsoap/mqtt_to_telnet_bridge.py
 Restart=on-failure
 RestartSec=5
 

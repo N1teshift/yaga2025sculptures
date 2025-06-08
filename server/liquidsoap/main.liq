@@ -48,9 +48,15 @@ prerecorded = sine(440.0)
 current_plan = ref("B1")
 
 # Mix output references updated when the plan changes
-to1 = ref(silence)
-to2 = ref(silence)
-to3 = ref(silence)
+# These hold the current audio mix for each sculpture.
+to1_ref = ref(silence)
+to2_ref = ref(silence)
+to3_ref = ref(silence)
+
+# Dynamic sources that will follow the value stored in the refs above
+to1 = source.of_ref(to1_ref)
+to2 = source.of_ref(to2_ref)
+to3 = source.of_ref(to3_ref)
 
 
 # Function to create mixes based on plan
@@ -86,9 +92,9 @@ end
 # Update mix references based on the current plan
 def update_mixes()
   mixes = get_mixes(!current_plan)
-  to1 := list.hd(mixes)
-  to2 := list.hd(list.tl(mixes))
-  to3 := list.hd(list.tl(list.tl(mixes)))
+  to1_ref := list.hd(mixes)
+  to2_ref := list.hd(list.tl(mixes))
+  to3_ref := list.hd(list.tl(list.tl(mixes)))
 end
 
 # Telnet command to set plan
@@ -132,7 +138,7 @@ output.icecast(
   mount="mix-for-1.ogg",
   name="Mix for Sculpture 1",
   description="Personalized audio mix",
-  !to1
+  to1
 )
 
 output.icecast(
@@ -143,7 +149,7 @@ output.icecast(
   mount="mix-for-2.ogg",
   name="Mix for Sculpture 2",
   description="Personalized audio mix",
-  !to2
+  to2
 )
 
 output.icecast(
@@ -154,7 +160,7 @@ output.icecast(
   mount="mix-for-3.ogg",
   name="Mix for Sculpture 3",
   description="Personalized audio mix",
-  !to3
+  to3
 )
 
 # Log startup
