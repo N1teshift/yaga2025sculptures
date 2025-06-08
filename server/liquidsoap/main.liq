@@ -7,16 +7,16 @@
 %include "presets.liq"
 
 # Set log level
-set("log.level", 4)
+settings.log.level.set(4)
 
 # Enable telnet server for control
-set("server.telnet", true)
-set("server.telnet.bind_addr", "0.0.0.0")
-set("server.telnet.port", 1234)
+settings.server.telnet.set(true)
+settings.server.telnet.bind_addr.set("0.0.0.0")
+settings.server.telnet.port.set(1234)
 
 # Audio settings
-set("frame.audio.samplerate", 48000)
-set("frame.audio.channels", 1)
+settings.frame.audio.samplerate.set(48000)
+# settings.frame.audio.channels.set(1) # Let liquidsoap handle channels dynamically
 
 # Input sources from sculptures
 # These will be the live microphone feeds from each sculpture
@@ -32,9 +32,9 @@ s3_mono = to_mono(s3_input)
 # Add fallback silence for when inputs are not available
 silence = blank()
 
-s1_safe = fallback(id="s1_fallback", [s1_mono, silence])
-s2_safe = fallback(id="s2_fallback", [s2_mono, silence])
-s3_safe = fallback(id="s3_fallback", [s3_mono, silence])
+s1_safe = fallback(id="s1_fallback", track_sensitive=false, [s1_mono, silence])
+s2_safe = fallback(id="s2_fallback", track_sensitive=false, [s2_mono, silence])
+s3_safe = fallback(id="s3_fallback", track_sensitive=false, [s3_mono, silence])
 
 # Process audio using presets if available
 s1_proc = sculpture_process(s1_safe)
@@ -119,10 +119,9 @@ server.register("get_plan", get_plan, description="Get the current plan.")
 # Initialize mixes
 update_mixes()
 
-# Apply final processing to mixes
-to1_final = to_mono(sculpture_process(!to1))
-to2_final = to_mono(sculpture_process(!to2))
-to3_final = to_mono(sculpture_process(!to3))
+# The !toX refs now hold the final, processed audio.
+# The `sculpture_process` function is already applied to the safe sources,
+# so we can use the refs directly in the output.
 
 # Output to Icecast
 output.icecast(
@@ -133,7 +132,7 @@ output.icecast(
   mount="mix-for-1.ogg",
   name="Mix for Sculpture 1",
   description="Personalized audio mix",
-  to1_final
+  !to1
 )
 
 output.icecast(
@@ -144,7 +143,7 @@ output.icecast(
   mount="mix-for-2.ogg",
   name="Mix for Sculpture 2",
   description="Personalized audio mix",
-  to2_final
+  !to2
 )
 
 output.icecast(
@@ -155,13 +154,13 @@ output.icecast(
   mount="mix-for-3.ogg",
   name="Mix for Sculpture 3",
   description="Personalized audio mix",
-  to3_final
+  !to3
 )
 
 # Log startup
 log("Sculpture system Liquidsoap configuration loaded (dynamic plans)")
-log("Default plan: C (all-to-all except self)")
-log("Creating personalized mixes:")
-log("  - mix-for-1.ogg: sculptures 2+3 for sculpture 1")
-log("  - mix-for-2.ogg: sculptures 1+3 for sculpture 2") 
-log("  - mix-for-3.ogg: sculptures 1+2 for sculpture 3") 
+log("Default plan: #{!current_plan}")
+log("Creating personalized mixes based on default plan:")
+log("  - mix-for-1.ogg: sculpture 2 for sculpture 1 (1<->2)")
+log("  - mix-for-2.ogg: sculpture 1 for sculpture 2 (1<->2)")
+log("  - mix-for-3.ogg: silence")
