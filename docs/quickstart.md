@@ -31,19 +31,7 @@ sudo apt update && sudo apt upgrade -y
 
 1. Flash Raspberry Pi OS Lite to three SD cards
 2. Enable SSH by creating empty `ssh` file in boot partition
-3. Configure WiFi by creating `wpa_supplicant.conf` in boot partition:
-
-```
-country=US
-ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-update_config=1
-
-network={
-    ssid="YourWiFiName"
-    psk="YourWiFiPassword"
-}
-```
-
+3. Configure WiFi 
 4. Boot each Pi and note their IP addresses
 
 ## Step 3: Update and Upgrade Pis
