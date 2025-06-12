@@ -91,12 +91,7 @@ class SculptureAgent:
                         
                 # Start local playback
                 subprocess.run(['sudo', 'systemctl', 'start', 'player-loop.service'], check=True)
-                
-            elif mode == "recording":
-                logger.info("Switching to recording mode")
-                self.current_mode = "recording"
-                # Implement actual recording logic if needed
-                
+
             else:
                 logger.warning(f"Unknown mode: {mode}")
                 
