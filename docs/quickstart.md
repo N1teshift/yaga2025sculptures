@@ -59,7 +59,8 @@ ssh-copy-id pi@YOUR_PI3_IP
 ## Step 5: Audio‑HAT Preparation (required for IQaudIO CODEC / Codec Zero)
 On each Pi:
 
-1. `sudo apt update && sudo apt full-upgrade -y` → reboot
+1. `sudo apt update && sudo apt full-upgrade -y`
+2. `sudo reboot`
 2. `sudo apt install -y git alsa-utils`
 3. Edit `/boot/config.txt` (or could be `/boot/firmware/config.txt`): enable `dtoverlay=iqaudio-codec` and disable `dtparam=audio=on`; reboot
 4. `git clone https://github.com/raspberrypi/Pi-Codec.git && cd Pi-Codec`
@@ -234,6 +235,7 @@ ping YOUR_WSL_IP
 
 # Check if ports are accessible
 # (run on Raspberry Pi)
+# Note: If 'telnet' is not found, install it with: sudo apt update && sudo apt install -y telnet
 telnet YOUR_WSL_IP 1883  # MQTT
 telnet YOUR_WSL_IP 8000  # Icecast
 ```
