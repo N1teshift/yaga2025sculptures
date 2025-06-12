@@ -173,17 +173,7 @@ sudo systemctl status mqtt_to_telnet_bridge
         ```
     4. After restarting, check `sudo systemctl status node-red` again.
 
-## Step 11: Start Audio Processing
-
-```bash
-# Start Liquidsoap for audio mixing
-sudo systemctl start liquidsoap
-
-# Check Liquidsoap logs
-sudo journalctl -u liquidsoap -f
-```
-
-## Step 12: Access Control Dashboard
+## Step 11: Access Control Dashboard
 
 **From Windows:**
 1. Open web browser. The Node-RED dashboard is often at `http://YOUR_WSL_IP:1880/ui`. If this path does not work, try `http://YOUR_WSL_IP:1880/dashboard` or `http://YOUR_WSL_IP:1880/api/ui/`. The Node-RED flow editor (usually at `http://YOUR_WSL_IP:1880/` or `http://YOUR_WSL_IP:1880/admin/`) typically has a sidebar tab for 'dashboard' with a direct launch button.
@@ -196,7 +186,7 @@ sudo journalctl -u liquidsoap -f
 curl http://localhost:1880/ui
 ```
 
-## Step 13: Verify Audio Streams
+## Step 12: Verify Audio Streams
 
 1. **Check Icecast status:** `http://YOUR_WSL_IP:8000`
 2. **Verify sculpture microphone streams are active:**
