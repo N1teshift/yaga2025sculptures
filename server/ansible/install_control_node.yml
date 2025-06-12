@@ -26,6 +26,7 @@
           - mosquitto
           - mosquitto-clients
           - nodejs
+          - python3-pip
         state: present
 
     - name: Install Node-RED globally
@@ -42,6 +43,12 @@
     - name: Create shared loops directory
       file:
         path: "{{ sculpture_dir }}/shared-loops"
+        state: directory
+        mode: '0755'
+
+    - name: Create liquidsoap scripts directory
+      file:
+        path: "{{ sculpture_dir }}/liquidsoap"
         state: directory
         mode: '0755'
 
@@ -153,6 +160,14 @@
         home: /opt/sculpture-system
         create_home: no
 
+    - name: Create unix user for MQTT bridge
+      user:
+        name: unix
+        system: yes
+        shell: /bin/false
+        home: /opt/sculpture-system
+        create_home: no
+
     - name: Copy Node-RED flow configuration
       copy:
         src: ../nodered/flow.json
@@ -210,6 +225,27 @@
         group: node-red
         recurse: yes
 
+    - name: Copy MQTT to Telnet bridge script
+      copy:
+        src: ../liquidsoap/mqtt_to_telnet_bridge.py
+        dest: "{{ sculpture_dir }}/liquidsoap/mqtt_to_telnet_bridge.py"
+        mode: '0755'
+        owner: unix
+        group: unix
+
+    - name: Install MQTT bridge Python dependencies
+      pip:
+        requirements: ../liquidsoap/requirements.txt
+
+    - name: Copy MQTT to Telnet bridge service
+      copy:
+        src: ../liquidsoap/mqtt_to_telnet_bridge.service
+        dest: /etc/systemd/system/mqtt_to_telnet_bridge.service
+        mode: '0644'
+      notify:
+        - reload systemd
+        - restart mqtt_to_telnet_bridge
+
     - name: Enable and start services
       systemd:
         name: "{{ item }}"
@@ -221,6 +257,7 @@
         - mosquitto
         - liquidsoap
         - node-red
+        - mqtt_to_telnet_bridge
 
   handlers:
     - name: reload systemd
@@ -245,4 +282,9 @@
     - name: restart node-red
       systemd:
         name: node-red
-        state: restarted 
+        state: restarted
+
+    - name: restart mqtt_to_telnet_bridge
+      systemd:
+        name: mqtt_to_telnet_bridge
+        state: restarted
