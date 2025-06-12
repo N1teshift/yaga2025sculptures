@@ -71,8 +71,7 @@
           - alsactl
           - --file
           - >-
-            {{ sculpture_dir }}/Pi-Codec/Codec_Zero_OnboardMIC_record_and_
-            SPK_playback.state
+            {{ sculpture_dir }}/Pi-Codec/Codec_Zero_OnboardMIC_record_and_SPK_playback.state
           - restore
           - IQaudIOCODEC
 
