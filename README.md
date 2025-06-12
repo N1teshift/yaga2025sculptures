@@ -119,7 +119,7 @@ Access the web dashboard at `http://CONTROL_SERVER_IP:1880/ui` to:
 
 ### Software
 - **Edge Devices:** Raspberry Pi OS Lite
-- **Control Server:** 
+- **Control Server:**
   - Windows 10/11 with WSL 2 (Ubuntu 22.04 recommended), OR
   - Native Ubuntu/Debian Linux
 - **Deployment:** Ansible (installed in WSL or Linux)
@@ -218,7 +218,7 @@ ip addr show eth0
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE.md) for details.
 
 ## Support
 
@@ -237,4 +237,4 @@ For issues and questions:
 
 ---
 
-**Note:** This system is designed for art installations and may require customization for specific environments and requirements. 
+**Note:** This system is designed for art installations and may require customization for specific environments and requirements.
