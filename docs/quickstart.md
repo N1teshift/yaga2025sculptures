@@ -126,6 +126,9 @@ node -v   # Should print a recent LTS version (18+)
 
 ## Step 10: Install Control Node Services
 
+This playbook also deploys the MQTT-to-Telnet bridge service used for
+dynamic plan switching. The bridge runs under the dedicated `unix` user.
+
 ```bash
 # In WSL Ubuntu terminal, ensure you are in your project directory
 # cd /path/to/your/yaga2025sculptures
@@ -141,6 +144,7 @@ sudo systemctl status icecast2
 sudo systemctl status mosquitto
 sudo systemctl status liquidsoap
 sudo systemctl status node-red
+sudo systemctl status mqtt_to_telnet_bridge
 ```
 
 **Troubleshooting after Ansible Playbook:**

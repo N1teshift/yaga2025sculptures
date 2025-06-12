@@ -4,7 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=unix_user
+User=unix
+Group=unix
 WorkingDirectory=/opt/sculpture-system/liquidsoap
 ExecStart=/usr/bin/python3 /opt/sculpture-system/liquidsoap/mqtt_to_telnet_bridge.py
 Restart=on-failure
