@@ -4,12 +4,16 @@
   become: yes
   vars:
     sculpture_dir: /opt/sculpture-system
-    
+
   tasks:
     - name: Update package cache
       apt:
         update_cache: yes
         cache_valid_time: 3600
+
+    - name: Upgrade installed packages
+      apt:
+        upgrade: dist
 
     - name: Install required packages
       apt:
@@ -21,7 +25,56 @@
           - rsync
           - alsa-utils
           - python3-pip
+          - git
         state: present
+
+    - name: Detect firmware config path
+      stat:
+        path: /boot/firmware/config.txt
+      register: firmware_cfg
+
+    - name: Set boot config path
+      set_fact:
+        boot_cfg: >-
+          {{ '/boot/firmware/config.txt'
+             if firmware_cfg.stat.exists
+             else '/boot/config.txt' }}
+
+    - name: Enable IQaudIO codec overlay
+      lineinfile:
+        path: "{{ boot_cfg }}"
+        regexp: '^dtoverlay=iqaudio-codec'
+        line: 'dtoverlay=iqaudio-codec'
+      register: overlay
+
+    - name: Disable built-in audio
+      lineinfile:
+        path: "{{ boot_cfg }}"
+        regexp: '^dtparam=audio='
+        line: 'dtparam=audio=off'
+      register: audio_off
+
+    - name: Reboot if audio configuration changed
+      reboot:
+        reboot_timeout: 300
+      when: overlay.changed or audio_off.changed
+
+    - name: Clone Pi-Codec repository
+      git:
+        repo: https://github.com/raspberrypi/Pi-Codec.git
+        dest: "{{ sculpture_dir }}/Pi-Codec"
+        version: master
+
+    - name: Restore ALSA state for IQaudIO codec
+      command:
+        argv:
+          - alsactl
+          - --file
+          - >-
+            {{ sculpture_dir }}/Pi-Codec/Codec_Zero_OnboardMIC_record_and_
+            SPK_playback.state
+          - restore
+          - IQaudIOCODEC
 
     - name: Create sculpture system directory
       file:
@@ -95,9 +148,11 @@
         create: yes
       loop:
         - 'load-module module-null-sink sink_name=sculpture_sink'
-        - 'load-module module-alsa-source device=hw:1,0 source_name=sculpture_source'
+        - >-
+          load-module module-alsa-source device=hw:1,0
+          source_name=sculpture_source
 
   handlers:
     - name: reload systemd
       systemd:
-        daemon_reload: yes 
+        daemon_reload: yes
