@@ -42,6 +42,14 @@
         home: /opt/sculpture-system
         create_home: no
 
+    - name: Create sculpture system directory
+      file:
+        path: "{{ sculpture_dir }}"
+        state: directory
+        owner: node-red
+        group: node-red
+        mode: '0755'
+
     - name: Install Node-RED dashboard
       npm:
         name: node-red-dashboard
@@ -52,12 +60,6 @@
       notify:
         - reload systemd
         - restart node-red
-
-    - name: Create sculpture system directory
-      file:
-        path: "{{ sculpture_dir }}"
-        state: directory
-        mode: '0755'
 
     - name: Create shared loops directory
       file:
