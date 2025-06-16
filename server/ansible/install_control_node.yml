@@ -34,6 +34,14 @@
         name: node-red
         global: yes
 
+    - name: Create node-red user
+      user:
+        name: node-red
+        system: yes
+        shell: /bin/false
+        home: /opt/sculpture-system
+        create_home: no
+
     - name: Install Node-RED dashboard
       npm:
         name: node-red-dashboard
@@ -162,14 +170,6 @@
       notify:
         - reload systemd
         - restart node-red
-
-    - name: Create node-red user
-      user:
-        name: node-red
-        system: yes
-        shell: /bin/false
-        home: /opt/sculpture-system
-        create_home: no
 
     - name: Create unix user for MQTT bridge
       user:
