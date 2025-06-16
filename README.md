@@ -138,8 +138,6 @@ Update IP addresses in:
 - `edge/ansible/hosts.ini`
 - Service configuration files
 
-**WSL 2 Users:** Use your WSL IP address (found with `ip addr show eth0`) as the control_host, not your Windows IP.
-
 ### Audio Devices
 Configure ALSA device names in:
 - `edge/ansible/hosts.ini` (alsa_device variable)
@@ -212,12 +210,6 @@ ip addr show eth0
 
 ## Development
 
-### Adding Features
-1. Modify Liquidsoap scripts for audio processing
-2. Update Node-RED flows for dashboard changes
-3. Extend pi-agent for new MQTT commands
-4. Update Ansible playbooks for deployment
-
 ### Testing
 - Use test tones: `speaker-test -c 1 -t sine`
 - Monitor MQTT: `mosquitto_sub -h server -t '#'`
@@ -234,22 +226,3 @@ extension to develop without installing dependencies locally.
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE.md) for details.
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review service logs
-3. Test individual components
-4. Create GitHub issue with logs and configuration
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Test changes thoroughly
-4. Submit pull request with description
-
----
-
-**Note:** This system is designed for art installations and may require customization for specific environments and requirements.
