@@ -154,21 +154,11 @@ sudo systemctl status mqtt_to_telnet_bridge
 *   **Node-RED:** If Node-RED fails to start:
     1.  Check logs: `sudo journalctl -xeu node-red.service`.
     2.  Common issues include incorrect Node.js version (addressed in Step 9.5) or path issues for the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` uses the correct path (usually `/usr/local/bin/node-red` or `/usr/bin/node-red`).
-    3.  **Install `node-red-dashboard` module:** The UI components require this.
+    3.  After resolving issues, restart the service and verify:
         ```bash
-        # In WSL Ubuntu terminal, navigate to Node-RED's working/user directory.
-        # This is often /opt/sculpture-system or a .node-red folder within it,
-        # or /var/lib/node-red, or the home dir of the 'node-red' user.
-        # For this project, /opt/sculpture-system is a good place:
-        cd /opt/sculpture-system
-        sudo npm install node-red-dashboard
-        # Ensure the node-red user owns the installed module:
-        sudo chown -R node-red:node-red /opt/sculpture-system/node_modules
-        # If package-lock.json was created in /opt/sculpture-system:
-        # sudo chown node-red:node-red /opt/sculpture-system/package-lock.json
         sudo systemctl restart node-red
+        sudo systemctl status node-red
         ```
-    4. After restarting, check `sudo systemctl status node-red` again.
 
 ## Step 11: Access Control Dashboard
 
