@@ -3,7 +3,7 @@
 # Update loops script - rsync new WAVs from control server
 # Usage: ./update-loops.sh [control_host]
 
-CONTROL_HOST=${1:-192.168.8.153}
+CONTROL_HOST=${1:-172.24.149.12}
 SCULPTURE_DIR="/opt/sculpture-system"
 LOOPS_DIR="$SCULPTURE_DIR/loops"
 REMOTE_LOOPS_DIR="/opt/sculpture-system/shared-loops"
