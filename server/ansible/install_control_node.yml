@@ -29,21 +29,21 @@
           - python3-pip
         state: present
 
-  - name: Install Node-RED globally
-    npm:
-      name: node-red
-      global: yes
+    - name: Install Node-RED globally
+      npm:
+        name: node-red
+        global: yes
 
-  - name: Install Node-RED dashboard
-    npm:
-      name: node-red-dashboard
-      path: "{{ sculpture_dir }}"
-      global: no
-      production: yes
-    become_user: node-red
-    notify:
-      - reload systemd
-      - restart node-red
+    - name: Install Node-RED dashboard
+      npm:
+        name: node-red-dashboard
+        path: "{{ sculpture_dir }}"
+        global: no
+        production: yes
+      become_user: node-red
+      notify:
+        - reload systemd
+        - restart node-red
 
     - name: Create sculpture system directory
       file:
