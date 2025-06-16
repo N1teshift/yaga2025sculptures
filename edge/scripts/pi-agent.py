@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 import random
 
 # Configuration
-MQTT_BROKER = os.environ.get('CONTROL_HOST', '172.24.149.12')
+MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.8.156')
 MQTT_PORT = 1883
 SCULPTURE_ID = os.environ.get('SCULPTURE_ID', '1')
 SCULPTURE_DIR = '/opt/sculpture-system'
