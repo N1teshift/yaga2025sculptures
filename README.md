@@ -60,7 +60,7 @@ sculpture-system/
 ## System Components
 
 ### Edge Devices (Raspberry Pi)
-- **DarkIce:** Streams microphone audio to Icecast server
+- **DarkIce:** Streams Raspebbry's microphone audio to Icecast server
 - **MPV:** Plays audio streams from control server
 - **Pi-Agent:** MQTT client for remote control and monitoring
 - **PulseAudio:** Audio routing and volume control
@@ -73,21 +73,22 @@ sculpture-system/
 
 ## Audio Flow
 
-1. **Capture:** Each Pi captures audio via USB microphone
+1. **Capture:** Each Pi captures audio via microphone
 2. **Stream:** DarkIce streams audio to Icecast server
-3. **Mix:** Liquidsoap creates personalized mixes (sculpture 1 hears 2+3, etc.)
+3. **Mix:** Liquidsoap creates personalized mixes for sculptures
 4. **Distribute:** Mixed audio streams back to respective sculptures
 5. **Play:** MPV plays the personalized mix through speakers
 
 ## Control Interface
 
-Access the web dashboard at `http://CONTROL_SERVER_IP:1880/ui` to:
+Access the web dashboard at `http://CONTROL_SERVER_IP:1880/api/ui` to:
 - Adjust volume for each sculpture
 - Switch between live and local playback modes
+- Switch between liquidsoap mix routing plans A1, A2, B1, B2, B3, C and D
 - Monitor system status (CPU, temperature)
+- Monitor microphone and output level
 - Emergency stop functionality
-
-**Note:** If using WSL 2, use your WSL IP address, not your Windows IP.
+- Mute functionality
 
 ## MQTT Topics
 
