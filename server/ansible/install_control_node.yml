@@ -235,7 +235,8 @@
 
     - name: Install MQTT bridge Python dependencies
       pip:
-        requirements: ../liquidsoap/requirements.txt
+        requirements: "{{ playbook_dir }}/../liquidsoap/requirements.txt"
+        executable: pip3
 
     - name: Copy MQTT to Telnet bridge service
       copy:
