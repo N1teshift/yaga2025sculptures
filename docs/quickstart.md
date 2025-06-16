@@ -113,6 +113,10 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
+The playbook also installs a set of sample audio loops. The WAV files in
+`samples/loops/` (for example `test1.wav` through `test6.wav`) are copied
+to `/opt/sculpture-system/loops/` on each Raspberry Pi for quick testing.
+
 ## Step 9.5: Install Node-RED Dashboard prerequisites (Control Node)
 
 Node-RED (installed in the next step by Ansible) requires a modern version of Node.js. The playbook now installs Node.js automatically using the NodeSource repository, so manual installation is optional. You can still verify the version after the playbook completes:

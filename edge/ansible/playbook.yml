@@ -77,6 +77,19 @@
         state: directory
         mode: '0755'
 
+    - name: Copy test WAV files
+      copy:
+        src: "{{ playbook_dir }}/../../samples/loops/{{ item }}"
+        dest: "{{ sculpture_dir }}/loops/{{ item }}"
+        mode: '0644'
+      loop:
+        - test1.wav
+        - test2.wav
+        - test3.wav
+        - test4.wav
+        - test5.wav
+        - test6.wav
+
     - name: Template darkice configuration
       template:
         src: ../darkice/darkice.cfg
