@@ -117,16 +117,15 @@ The playbook also installs a set of sample audio loops. The WAV files in
 `samples/loops/` (for example `test1.wav` through `test6.wav`) are copied
 to `/opt/sculpture-system/loops/` on each Raspberry Pi for quick testing.
 
-## Step 9.5: Install Node-RED Dashboard prerequisites (Control Node)
+## Step 9.5: Verify Node.js on the Control Node
 
-Node-RED (installed in the next step by Ansible) requires a modern version of Node.js. The playbook now installs Node.js automatically using the NodeSource repository, so manual installation is optional. You can still verify the version after the playbook completes:
+Node-RED (installed in the next step by Ansible) requires a modern version of Node.js. The playbook installs Node.js automatically using the NodeSource repository, so manual installation is typically unnecessary. You can verify the version after the playbook completes:
 
 ```bash
 node -v   # Should print a recent LTS version (18+)
 ```
 
-**Prepare for Node-RED Dashboard Module:**
-(The actual module will be installed after Node-RED itself is set up by Ansible.)
+The playbook also installs the Node-RED dashboard automatically when configuring services.
 
 ## Step 10: Install Control Node Services
 
@@ -161,21 +160,7 @@ sudo systemctl status mqtt_to_telnet_bridge
 *   **Node-RED:** If Node-RED fails to start:
     1.  Check logs: `sudo journalctl -xeu node-red.service`.
     2.  Common issues include incorrect Node.js version (addressed in Step 9.5) or path issues for the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` uses the correct path (usually `/usr/local/bin/node-red` or `/usr/bin/node-red`).
-    3.  **Install `node-red-dashboard` module:** The UI components require this.
-        ```bash
-        # In WSL Ubuntu terminal, navigate to Node-RED's working/user directory.
-        # This is often /opt/sculpture-system or a .node-red folder within it,
-        # or /var/lib/node-red, or the home dir of the 'node-red' user.
-        # For this project, /opt/sculpture-system is a good place:
-        cd /opt/sculpture-system
-        sudo npm install node-red-dashboard
-        # Ensure the node-red user owns the installed module:
-        sudo chown -R node-red:node-red /opt/sculpture-system/node_modules
-        # If package-lock.json was created in /opt/sculpture-system:
-        # sudo chown node-red:node-red /opt/sculpture-system/package-lock.json
-        sudo systemctl restart node-red
-        ```
-    4. After restarting, check `sudo systemctl status node-red` again.
+    3.  After restarting the service, check `sudo systemctl status node-red` again.
 
 ## Step 11: Access Control Dashboard
 
