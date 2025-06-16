@@ -45,6 +45,10 @@ class SculptureAgent:
             payload = json.loads(msg.payload.decode())
             logger.info(f"Received message on {msg.topic}: {payload}")
             
+            if not isinstance(payload, dict):
+                logger.warning(f"Received message is not a JSON object, ignoring. Payload: {payload}")
+                return
+
             if 'mode' in payload:
                 self.handle_mode_command(payload['mode'], payload.get('track'))
             elif 'volume' in payload:
@@ -57,7 +61,7 @@ class SculptureAgent:
                 logger.warning(f"Unknown command: {payload}")
                 
         except json.JSONDecodeError:
-            logger.error(f"Invalid JSON in message: {msg.payload}")
+            logger.error(f"Invalid JSON in message: {msg.payload.decode()}")
         except Exception as e:
             logger.error(f"Error processing message: {e}")
             

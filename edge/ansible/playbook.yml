@@ -108,17 +108,41 @@
         dest: "{{ sculpture_dir }}/update-loops.sh"
         mode: '0755'
 
-    - name: Install systemd service files
+    - name: Install darkice systemd service
       template:
-        src: "../systemd/{{ item }}.j2"
-        dest: "/etc/systemd/system/{{ item }}"
-        mode: "0644"
-      loop:
-        - darkice.service
-        - player-live.service
-        - player-loop.service
-        - pi-agent.service
-      notify: reload systemd
+        src: ../systemd/darkice.service.j2
+        dest: /etc/systemd/system/darkice.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart darkice
+
+    - name: Install player-live systemd service
+      template:
+        src: ../systemd/player-live.service.j2
+        dest: /etc/systemd/system/player-live.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart player-live
+
+    - name: Install player-loop systemd service
+      template:
+        src: ../systemd/player-loop.service.j2
+        dest: /etc/systemd/system/player-loop.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart player-loop
+
+    - name: Install pi-agent systemd service
+      template:
+        src: ../systemd/pi-agent.service.j2
+        dest: /etc/systemd/system/pi-agent.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart pi-agent
 
     - name: Create default loop file
       copy:
@@ -154,7 +178,52 @@
           load-module module-alsa-source device=hw:1,0
           source_name=sculpture_source
 
+    - name: Ensure pi-agent service is started and enabled
+      systemd:
+        name: pi-agent.service
+        enabled: yes
+        state: started
+
+    - name: Grant pi-agent limited sudo access for service management
+      copy:
+        dest: "/etc/sudoers.d/pi-agent-sudo"
+        content: |
+          # Allow pi user to start/stop/restart services required by pi-agent
+          pi ALL=(ALL) NOPASSWD: /bin/systemctl start darkice.service, /bin/systemctl stop darkice.service, /bin/systemctl restart darkice.service
+          pi ALL=(ALL) NOPASSWD: /bin/systemctl start player-loop.service, /bin/systemctl stop player-loop.service, /bin/systemctl restart player-loop.service
+          pi ALL=(ALL) NOPASSWD: /bin/systemctl start player-live.service, /bin/systemctl stop player-live.service, /bin/systemctl restart player-live.service
+          pi ALL=(ALL) NOPASSWD: /bin/systemctl restart pi-agent.service
+        owner: root
+        group: root
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
   handlers:
-    - name: reload systemd
+    - name: Reboot for audio config
+      reboot:
+        msg: "Rebooting to apply audio configuration changes"
+        reboot_timeout: 3600
+
+    - name: Restart darkice
       systemd:
         daemon_reload: yes
+        name: darkice.service
+        state: restarted
+
+    - name: Restart player-live
+      systemd:
+        daemon_reload: yes
+        name: player-live.service
+        state: restarted
+
+    - name: Restart player-loop
+      systemd:
+        daemon_reload: yes
+        name: player-loop.service
+        state: restarted
+
+    - name: Restart pi-agent
+      systemd:
+        daemon_reload: yes
+        name: pi-agent.service
+        state: restarted

@@ -166,7 +166,7 @@ curl http://localhost:1880/ui
 
 ## Step 12: Verify Audio Streams
 
-1. **Check Icecast status:** `http://YOUR_WSL_IP:8000`
+1. **Check Icecast status:** `http://YOUR_WSL_IP:8000/admin`
 2. **Verify sculpture microphone streams are active:**
    - `http://YOUR_WSL_IP:8000/s1-mic.ogg`
    - `http://YOUR_WSL_IP:8000/s2-mic.ogg`
