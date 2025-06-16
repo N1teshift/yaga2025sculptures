@@ -1,0 +1,11 @@
+{
+    "name": "sculpture-system-dev",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "remoteUser": "vscode"
+}

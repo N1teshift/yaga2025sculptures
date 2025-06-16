@@ -216,6 +216,13 @@ ip addr show eth0
 - Monitor MQTT: `mosquitto_sub -h server -t '#'`
 - Check audio streams in browser or VLC
 
+### Dev Container
+The `.devcontainer` folder provides a ready-to-use VS Code development
+container. It mirrors the control node and Pi simulator packages so Node.js
+20, Liquidsoap, Mosquitto, Node‑RED and the required Python packages are
+available out of the box. Open the project with the **Remote – Containers**
+extension to develop without installing dependencies locally.
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE.md) for details.
