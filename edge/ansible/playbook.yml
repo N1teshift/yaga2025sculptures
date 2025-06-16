@@ -65,16 +65,6 @@
         dest: "{{ sculpture_dir }}/Pi-Codec"
         version: master
 
-    - name: Restore ALSA state for IQaudIO codec
-      command:
-        argv:
-          - alsactl
-          - --file
-          - >-
-            {{ sculpture_dir }}/Pi-Codec/Codec_Zero_OnboardMIC_record_and_SPK_playback.state
-          - restore
-          - IQaudIOCODEC
-
     - name: Create sculpture system directory
       file:
         path: "{{ sculpture_dir }}"
