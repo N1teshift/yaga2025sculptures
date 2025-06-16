@@ -30,7 +30,13 @@ This system creates a network of three sculptures, each equipped with a Raspberr
    cd yaga2025sculptures
    ```
 
-2. **Follow Setup Guide:**
+2. **Install Server Dependencies:**
+   Run the setup script to install Icecast2, Liquidsoap, Mosquitto, Node.js and other requirements.
+   ```bash
+   sudo ./setup.sh
+   ```
+
+3. **Follow Setup Guide:**
    See [docs/quickstart.md](docs/quickstart.md) for detailed deployment instructions.
 
 ## Repository Structure
