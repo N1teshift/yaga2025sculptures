@@ -51,12 +51,9 @@
         mode: '0755'
 
     - name: Install Node-RED dashboard
-      npm:
-        name: node-red-dashboard
-        path: "{{ sculpture_dir }}"
-        global: no
-        production: yes
-      become_user: node-red
+      ansible.builtin.shell:
+        cmd: 'su -s /bin/sh -c "npm install node-red-dashboard --production" node-red'
+        chdir: "{{ sculpture_dir }}"
       notify:
         - reload systemd
         - restart node-red
