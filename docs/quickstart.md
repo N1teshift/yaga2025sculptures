@@ -16,7 +16,7 @@ If using Windows as the control node, set up WSL 2 first:
 # In PowerShell as Administrator
 # Optionally, first check existing WSL distributions: wsl -l -v
 wsl --install -d Ubuntu-22.04
-
+git 
 # After restart, open Ubuntu terminal and update
 sudo apt update && sudo apt upgrade -y
 ```

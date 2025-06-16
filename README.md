@@ -4,7 +4,7 @@ A distributed audio system for interactive sculpture installations using Raspber
 
 ## Overview
 
-This system creates a network of three sculptures, each equipped with a Raspberry Pi, microphone, and speaker. Each sculpture captures audio from its environment and streams it to a central server, which creates personalized audio mixes for each sculpture. Each sculpture hears the audio from the other two sculptures, but not its own.
+This system creates a network of three sculptures, each equipped with a Raspberry Pi, microphone, and speaker. Each sculpture captures audio from its environment and streams it to a central server, which creates personalized audio mixes for each sculpture.
 
 ## Architecture
 
