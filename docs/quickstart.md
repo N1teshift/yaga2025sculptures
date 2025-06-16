@@ -55,22 +55,7 @@ ssh-copy-id pi@YOUR_PI2_IP
 ssh-copy-id pi@YOUR_PI3_IP
 ```
 
-
-## Step 5: Audio‑HAT Preparation (required for IQaudIO CODEC / Codec Zero)
-On each Pi:
-
-1. `sudo apt update && sudo apt full-upgrade -y`
-2. `sudo reboot`
-2. `sudo apt install -y git alsa-utils`
-3. Edit `/boot/config.txt` (or could be `/boot/firmware/config.txt`): enable `dtoverlay=iqaudio-codec` and disable `dtparam=audio=on`; reboot
-4. `git clone https://github.com/raspberrypi/Pi-Codec.git && cd Pi-Codec`
-5. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
-6. *(optional)* `sudo alsactl store`
-7. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 48000 -d 5 test.wav && aplay -D hw:1,0`
-8. Copy to wsl: `scp pi@sculptureX:~/test.wav .` and check for sound
-
-
-## Step 6: Find Your WSL IP Address
+## Step 5: Find Your WSL IP Address
 
 In your WSL Ubuntu terminal:
 
@@ -82,7 +67,7 @@ ip addr show eth0 | grep inet
 # This is what you'll use as YOUR_LAPTOP_IP in the next step
 ```
 
-## Step 7: Update Inventory File
+## Step 6: Update Inventory File
 
 Edit `edge/ansible/hosts.ini` with your actual IP addresses:
 
@@ -95,7 +80,7 @@ sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_WS
 
 **Note:** Use your WSL IP address (from Step 6) as `control_host`, not your Windows IP.
 
-## Step 8: Install Ansible (in WSL)
+## Step 7: Install Ansible (in WSL)
 
 ```bash
 # In WSL Ubuntu terminal
@@ -103,7 +88,7 @@ sudo apt update
 sudo apt install ansible -y
 ```
 
-## Step 9: Deploy to Raspberry Pis
+## Step 8: Deploy to Raspberry Pis
 
 ```bash
 # Run the edge playbook to configure all Pis
@@ -117,7 +102,7 @@ The playbook also installs a set of sample audio loops. The WAV files in
 `samples/loops/` (for example `test1.wav` through `test6.wav`) are copied
 to `/opt/sculpture-system/loops/` on each Raspberry Pi for quick testing.
 
-## Step 9.5: Install Node-RED Dashboard prerequisites (Control Node)
+## Step 9: Install Node-RED Dashboard prerequisites (Control Node)
 
 Node-RED (installed in the next step by Ansible) requires a modern version of Node.js. The playbook now installs Node.js automatically using the NodeSource repository, so manual installation is optional. You can still verify the version after the playbook completes:
 
@@ -128,7 +113,15 @@ node -v   # Should print a recent LTS version (18+)
 **Prepare for Node-RED Dashboard Module:**
 (The actual module will be installed after Node-RED itself is set up by Ansible.)
 
-## Step 10: Install Control Node Services
+## Step 10: Audio‑HAT Preparation (required for IQaudIO CODEC / Codec Zero)
+On each Pi:
+
+1. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
+2. *(optional)* `sudo alsactl store`
+3. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 48000 -d 5 test.wav && aplay -D hw:1,0`
+4. Copy to wsl: `scp pi@sculptureX:~/test.wav .` and check for sound
+
+## Step 11: Install Control Node Services
 
 This playbook also deploys the MQTT-to-Telnet bridge service used for
 dynamic plan switching. The bridge runs under the dedicated `unix` user.

@@ -116,7 +116,7 @@ Access the web dashboard at `http://CONTROL_SERVER_IP:1880/ui` to:
 ## Requirements
 
 ### Hardware
-- 3x Raspberry Pi 4 (4GB recommended)
+- 3x Raspberry Pi Zero W (4GB recommended)
 - 3x USB audio interfaces
 - 3x Microphones
 - 3x Speakers/Amplifiers
