@@ -8,24 +8,24 @@ This guide will help you deploy the complete sculpture audio system with three R
 - 1x Laptop/PC running **Windows 10/11 with WSL 2** (control node)
 - HAT IQaudIO Pi-Codec Zero audio interfaces for each Pi
 
-## Step 1: Setup WSL 2 (Windows Control Node)
+## Step 1: Setup Control Node (WSL 2 and Ansible)
 
-If using Windows as the control node, set up WSL 2 first:
+First, set up the Windows Subsystem for Linux (WSL 2) and install Ansible, which is used to automate the configuration of all devices.
 
-```powershell
-# In PowerShell as Administrator
-# Optionally, first check existing WSL distributions: wsl -l -v
-wsl --install -d Ubuntu-22.04
-git 
-# After restart, open Ubuntu terminal and update
-sudo apt update && sudo apt upgrade -y
-```
+1.  **Install WSL 2:** Open PowerShell as an Administrator and run:
+    ```powershell
+    wsl --install -d Ubuntu-22.04
+    ```
+    This will install Ubuntu 22.04. Your computer will likely need to restart.
+
+2.  **Install Ansible:** After the restart, open your new Ubuntu terminal. It will perform a one-time setup. Once you have a command prompt, run the following commands to update the system and install Ansible:
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install ansible -y
+    ```
 
 **Important WSL 2 Network Notes:**
 - WSL 2 uses a virtual network adapter. If you have multiple WSL distributions (e.g., one for Docker Desktop), ensure you are running subsequent commands in your `Ubuntu-22.04` instance. You can launch it specifically with `wsl -d Ubuntu-22.04` and set it as default with `wsl -s Ubuntu-22.04`.
-- Your WSL IP will be different from your Windows IP
-- Use `ip addr show eth0` in WSL to find your WSL IP address
-- Raspberry Pis should connect to your **WSL IP**, not Windows IP
 
 ## Step 2: Flash Raspberry Pi SD Cards
 
@@ -78,17 +78,7 @@ sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_WS
 sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
 ```
 
-**Note:** Use your WSL IP address (from Step 6) as `control_host`, not your Windows IP.
-
-## Step 7: Install Ansible (in WSL)
-
-```bash
-# In WSL Ubuntu terminal
-sudo apt update
-sudo apt install ansible -y
-```
-
-## Step 8: Deploy to Raspberry Pis
+## Step 7: Deploy to Raspberry Pis
 
 ```bash
 # Run the edge playbook to configure all Pis
@@ -98,22 +88,27 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
-The playbook also installs a set of sample audio loops. The WAV files in
-`samples/loops/` (for example `test1.wav` through `test6.wav`) are copied
-to `/opt/sculpture-system/loops/` on each Raspberry Pi for quick testing.
+## Step 8: Pre-configure Icecast Hostname (Critical)
 
-## Step 9: Install Node-RED Dashboard prerequisites (Control Node)
+Before you install the control node services, you must configure the Icecast server template. This ensures that when Icecast is installed, it's already set up to allow other devices on your network (like the Raspberry Pis) to connect to the audio streams.
 
-Node-RED (installed in the next step by Ansible) requires a modern version of Node.js. The playbook now installs Node.js automatically using the NodeSource repository, so manual installation is optional. You can still verify the version after the playbook completes:
+1.  **Open the Icecast template file** with a text editor. This file is located at `server/templates/icecast.xml`.
+2.  **Find the `<hostname>` tag** and replace `localhost` with the WSL IP address you found in Step 5.
 
-```bash
-node -v   # Should print a recent LTS version (18+)
-```
+    *Before:*
+    ```xml
+    <hostname>localhost</hostname>
+    ```
 
-**Prepare for Node-RED Dashboard Module:**
-(The actual module will be installed after Node-RED itself is set up by Ansible.)
+    *After (example):*
+    ```xml
+    <hostname>172.20.10.2</hostname>
+    ```
+3.  **Save and close the file.**
 
-## Step 10: Audio‑HAT Preparation (required for IQaudIO CODEC / Codec Zero)
+This is a one-time setup. The Ansible playbook will now use your pre-configured file during installation.
+
+## Step 9: Audio‑HAT Preparation (required for IQaudIO CODEC / Codec Zero)
 On each Pi:
 
 1. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
@@ -121,22 +116,18 @@ On each Pi:
 3. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 48000 -d 5 test.wav && aplay -D hw:1,0`
 4. Copy to wsl: `scp pi@sculptureX:~/test.wav .` and check for sound
 
-## Step 11: Install Control Node Services
+## Step 10: Install Control Node Services
 
-This playbook also deploys the MQTT-to-Telnet bridge service used for
-dynamic plan switching. The bridge runs under the dedicated `unix` user.
+Now, run the Ansible playbook that installs and configures all the local services on your WSL machine (Icecast, Liquidsoap, Mosquitto, Node-RED).
 
 ```bash
 # In WSL Ubuntu terminal, ensure you are in your project directory
 # cd /path/to/your/yaga2025sculptures
 # Run the control node playbook
 ansible-playbook server/ansible/install_control_node.yml
+# Note: The older command using "-i inventory" is also valid but less specific.
 
-# OR
-
-ansible-playbook -i inventory --ask-become-pass server/ansible/install_control_node.yml
-
-# Verify services are running
+# Verify services are running (they should start automatically)
 sudo systemctl status icecast2
 sudo systemctl status mosquitto
 sudo systemctl status liquidsoap

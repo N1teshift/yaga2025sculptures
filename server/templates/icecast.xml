@@ -20,7 +20,7 @@
         <admin-password>hackme</admin-password>
     </authentication>
 
-    <hostname>localhost</hostname>
+    <hostname>192.168.8.156</hostname>
 
     <listen-socket>
         <port>8000</port>
