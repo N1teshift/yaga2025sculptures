@@ -221,6 +221,7 @@ ip addr show eth0
 - Use test tones: `speaker-test -c 1 -t sine`
 - Monitor MQTT: `mosquitto_sub -h server -t '#'`
 - Check audio streams in browser or VLC
+- Run the automated unit tests with `./run_tests.sh`
 
 ## License
 
