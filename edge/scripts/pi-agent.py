@@ -161,6 +161,8 @@ WantedBy=multi-user.target
     def get_system_status(self):
         """Get CPU, temperature, audio levels, and online status"""
         try:
+            error_message = None
+
             # Get CPU usage
             cpu_result = subprocess.run(['top', '-bn1'], capture_output=True, text=True, check=True)
             cpu_line = next((line for line in cpu_result.stdout.split('\n') if 'Cpu(s)' in line), None)
@@ -173,7 +175,8 @@ WantedBy=multi-user.target
                     cpu_usage_str = parts[us_index - 1]
                     cpu_usage = float(cpu_usage_str.replace(',', '.'))
                 except (ValueError, IndexError) as e:
-                    logger.warning(f"Could not parse CPU usage from 'top' output: '{cpu_line}'. Error: {e}. Defaulting to 0.")
+                    error_message = f"Could not parse CPU usage from 'top' output: '{cpu_line}'. Error: {e}"
+                    logger.warning(error_message + " Defaulting to 0.")
                     cpu_usage = 0.0
             else:
                 logger.warning("Could not find 'Cpu(s)' line in top output.")
@@ -220,7 +223,7 @@ WantedBy=multi-user.target
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
                 pass # Keep default on error
 
-            return {
+            status = {
                 'sculpture_id': self.sculpture_id,
                 'cpu_usage': cpu_usage,
                 'temperature': temperature,
@@ -230,6 +233,9 @@ WantedBy=multi-user.target
                 'is_muted': self.is_muted,
                 'timestamp': time.time()
             }
+            if error_message:
+                status['error'] = error_message
+            return status
         except Exception as e:
             logger.error(f"Failed to get system status: {e}")
             return {

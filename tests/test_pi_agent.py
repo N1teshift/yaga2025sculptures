@@ -40,3 +40,26 @@ def test_handle_mode_live(monkeypatch):
     assert 'darkice.service' in joined
     assert 'player-live.service' in joined
     assert agent.current_mode == 'live'
+
+
+def test_cpu_parse_error_included(monkeypatch):
+    agent = pi_agent.SculptureAgent()
+
+    def fake_run(cmd, capture_output=True, text=True, check=True):
+        if cmd[0] == 'top':
+            return types.SimpleNamespace(stdout="Cpu(s): us,\n")
+        elif cmd[0] == 'vcgencmd':
+            return types.SimpleNamespace(stdout="temp=45.0'C")
+        return types.SimpleNamespace(stdout="")
+
+    def fake_check_output(*args, **kwargs):
+        return b'0'
+
+    monkeypatch.setattr(pi_agent.subprocess, 'run', fake_run)
+    monkeypatch.setattr(pi_agent.subprocess, 'check_output', fake_check_output)
+
+    status = agent.get_system_status()
+
+    assert status['cpu_usage'] == 0
+    assert 'error' in status
+    assert "Cpu(s): us," in status['error']
