@@ -243,7 +243,7 @@
         "height": 0,
         "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture3_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
         "storeOutMessages": true,
-        "fwdInMessages": true,
+        "fwdInMessages": false,
         "templateScope": "local",
         "x": 600,
         "y": 1080,
