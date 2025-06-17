@@ -4,9 +4,14 @@
         "type": "ui_ui_control",
         "z": "sculpture_dashboard",
         "name": "Dashboard Connect Listener",
-        "x": 80,
-        "y": 360,
-        "wires": [["plan_dashboard_connect"]]
+        "x": 160,
+        "y": 140,
+        "wires": [
+            [
+                "plan_dashboard_connect"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_dashboard_connect",
@@ -15,9 +20,26 @@
         "name": "Send Plan Highlight on Connect",
         "func": "// On dashboard connect, re-broadcast the current plan highlight\nif (msg.payload && msg.payload.event === 'connect') {\n    var plans = [\n        {id: 'plan_btn_a1', value: 'A1'},\n        {id: 'plan_btn_a2', value: 'A2'},\n        {id: 'plan_btn_b1', value: 'B1'},\n        {id: 'plan_btn_b2', value: 'B2'},\n        {id: 'plan_btn_b3', value: 'B3'},\n        {id: 'plan_btn_c', value: 'C'},\n        {id: 'plan_btn_d', value: 'D'}\n    ];\n    var currentPlan = flow.get('currentPlan') || 'A1';\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.value === currentPlan) ? 'deepskyblue' : 'lightgray',\n                color: (p.value === currentPlan) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    return uiControlMsgs;\n}\nreturn null;\n",
         "outputs": 5,
-        "x": 320,
-        "y": 360,
-        "wires": [["plan_btn_a1"], ["plan_btn_a2"], ["plan_btn_b1"], ["plan_btn_b2"], ["plan_btn_b3"]]
+        "x": 410,
+        "y": 140,
+        "wires": [
+            [
+                "plan_btn_a1"
+            ],
+            [
+                "plan_btn_a2"
+            ],
+            [
+                "plan_btn_b1"
+            ],
+            [
+                "plan_btn_b2"
+            ],
+            [
+                "plan_btn_b3"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_button_logic",
@@ -26,9 +48,35 @@
         "name": "Plan Button Logic",
         "func": "// Plan button IDs and their labels\nvar plans = [\n    {id: 'plan_btn_a1', value: 'A1'},\n    {id: 'plan_btn_a2', value: 'A2'},\n    {id: 'plan_btn_b1', value: 'B1'},\n    {id: 'plan_btn_b2', value: 'B2'},\n    {id: 'plan_btn_b3', value: 'B3'},\n    {id: 'plan_btn_c', value: 'C'},\n    {id: 'plan_btn_d', value: 'D'}\n];\n\n// Find which button was pressed\nvar selectedPlan = plans.find(p => p.value === msg.payload);\nif (selectedPlan) {\n    // Store the current plan in flow context\n    flow.set('currentPlan', selectedPlan.value);\n    // Send plan to plan_format\n    var planMsg = {payload: selectedPlan.value};\n    // Update button highlights\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.id === selectedPlan.id) ? 'deepskyblue' : 'lightgray',\n                color: (p.id === selectedPlan.id) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    // Output: [planMsg, ...uiControlMsgs]\n    return [planMsg, ...uiControlMsgs];\n}\nreturn [null, null, null, null, null, null, null];\n",
         "outputs": 7,
-        "x": 400,
-        "y": 480,
-        "wires": [["plan_format"], ["plan_btn_a1"], ["plan_btn_a2"], ["plan_btn_b1"], ["plan_btn_b2"], ["plan_btn_b3"], ["plan_btn_c"], ["plan_btn_d"]]
+        "x": 870,
+        "y": 180,
+        "wires": [
+            [
+                "plan_format"
+            ],
+            [
+                "plan_btn_a1"
+            ],
+            [
+                "plan_btn_a2"
+            ],
+            [
+                "plan_btn_b1"
+            ],
+            [
+                "plan_btn_b2"
+            ],
+            [
+                "plan_btn_b3"
+            ],
+            [
+                "plan_btn_c"
+            ],
+            [
+                "plan_btn_d"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_btn_a1",
@@ -48,9 +96,14 @@
         "payload": "A1",
         "payloadType": "str",
         "topic": "A1",
-        "x": 200,
-        "y": 400,
-        "wires": [["plan_button_logic"]]
+        "x": 640,
+        "y": 60,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_btn_a2",
@@ -70,9 +123,14 @@
         "payload": "A2",
         "payloadType": "str",
         "topic": "A2",
-        "x": 200,
-        "y": 440,
-        "wires": [["plan_button_logic"]]
+        "x": 640,
+        "y": 100,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_btn_b1",
@@ -92,9 +150,14 @@
         "payload": "B1",
         "payloadType": "str",
         "topic": "B1",
-        "x": 200,
-        "y": 480,
-        "wires": [["plan_button_logic"]]
+        "x": 640,
+        "y": 140,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_btn_b2",
@@ -114,9 +177,14 @@
         "payload": "B2",
         "payloadType": "str",
         "topic": "B2",
-        "x": 200,
-        "y": 520,
-        "wires": [["plan_button_logic"]]
+        "x": 640,
+        "y": 180,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_btn_b3",
@@ -136,9 +204,14 @@
         "payload": "B3",
         "payloadType": "str",
         "topic": "B3",
-        "x": 200,
-        "y": 560,
-        "wires": [["plan_button_logic"]]
+        "x": 640,
+        "y": 220,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_btn_c",
@@ -158,9 +231,14 @@
         "payload": "C",
         "payloadType": "str",
         "topic": "C",
-        "x": 200,
-        "y": 520,
-        "wires": [["plan_button_logic"]]
+        "x": 640,
+        "y": 180,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_btn_d",
@@ -180,9 +258,14 @@
         "payload": "D",
         "payloadType": "str",
         "topic": "D",
-        "x": 200,
-        "y": 560,
-        "wires": [["plan_button_logic"]]
+        "x": 640,
+        "y": 220,
+        "wires": [
+            [
+                "plan_button_logic"
+            ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "emergency_stop",
@@ -202,13 +285,14 @@
         "payload": "{\"mode\":\"local\",\"volume\":0}",
         "payloadType": "json",
         "topic": "system/broadcast",
-        "x": 200,
-        "y": 600,
+        "x": 640,
+        "y": 260,
         "wires": [
             [
                 "mqtt_broadcast"
             ]
-        ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "plan_format",
@@ -220,13 +304,14 @@
         "noerr": 0,
         "initialize": "",
         "finalize": "",
-        "x": 970,
-        "y": 200,
+        "x": 1070,
+        "y": 140,
         "wires": [
             [
                 "mqtt_broadcast"
             ]
-        ]
+        ],
+        "g": "6cb6eba07ec4f5f8"
     },
     {
         "id": "mqtt_broadcast",
@@ -237,8 +322,9 @@
         "qos": "0",
         "retain": "false",
         "broker": "mqtt_broker",
-        "x": 1200,
-        "y": 200,
-        "wires": []
+        "x": 1220,
+        "y": 260,
+        "wires": [],
+        "g": "6cb6eba07ec4f5f8"
     }
-] 
+]

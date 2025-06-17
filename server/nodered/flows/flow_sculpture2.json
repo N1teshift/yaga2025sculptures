@@ -16,13 +16,14 @@
         "min": 0,
         "max": 1,
         "step": 0.01,
-        "x": 120,
-        "y": 320,
+        "x": 820,
+        "y": 820,
         "wires": [
             [
                 "volume_format_2"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "volume_format_2",
@@ -32,13 +33,14 @@
         "func": "msg.payload = {\"volume\": msg.payload};\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 290,
-        "y": 320,
+        "x": 990,
+        "y": 820,
         "wires": [
             [
                 "mqtt_out_2"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "mqtt_out_2",
@@ -49,9 +51,10 @@
         "qos": "0",
         "retain": "false",
         "broker": "mqtt_broker",
-        "x": 490,
-        "y": 320,
-        "wires": []
+        "x": 1190,
+        "y": 820,
+        "wires": [],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "status_in_2",
@@ -63,13 +66,14 @@
         "datatype": "json",
         "broker": "mqtt_broker",
         "inputs": 0,
-        "x": 560,
-        "y": 560,
+        "x": 100,
+        "y": 680,
         "wires": [
             [
                 "status_parse_2"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "status_parse_2",
@@ -79,8 +83,8 @@
         "func": "var data = msg.payload;\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic_level, topic: \"mic_level\"},\n    {payload: data.output_level, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
         "outputs": 6,
         "noerr": 0,
-        "x": 700,
-        "y": 560,
+        "x": 240,
+        "y": 680,
         "wires": [
             [
                 "cpu_gauge_2"
@@ -100,7 +104,8 @@
             [
                 "sculpture2_mute_state"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "cpu_gauge_2",
@@ -124,9 +129,10 @@
         ],
         "seg1": "50",
         "seg2": "80",
-        "x": 870,
-        "y": 500,
-        "wires": []
+        "x": 410,
+        "y": 620,
+        "wires": [],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "temp_gauge_2",
@@ -150,9 +156,10 @@
         ],
         "seg1": "60",
         "seg2": "75",
-        "x": 860,
-        "y": 540,
-        "wires": []
+        "x": 420,
+        "y": 660,
+        "wires": [],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "sculpture2_output_level",
@@ -169,12 +176,17 @@
         "format": "{{value | number:1}}",
         "min": -60,
         "max": 0,
-        "colors": ["#00b500", "#e6e600", "#ca3838"],
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
         "seg1": -20,
         "seg2": -10,
-        "x": 850,
-        "y": 700,
-        "wires": []
+        "x": 430,
+        "y": 780,
+        "wires": [],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "sculpture2_mic_level",
@@ -191,16 +203,21 @@
         "format": "{{value | number:1}}",
         "min": -60,
         "max": 0,
-        "colors": ["#00b500", "#e6e600", "#ca3838"],
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
         "seg1": -20,
         "seg2": -10,
-        "x": 850,
-        "y": 700,
+        "x": 450,
+        "y": 740,
         "wires": [
             [
                 "sculpture3_mute_button"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "sculpture2_mute_state",
@@ -210,13 +227,14 @@
         "func": "flow.set('sculpture2_is_muted', msg.payload);\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 890,
-        "y": 700,
+        "x": 430,
+        "y": 820,
         "wires": [
             [
                 "sculpture2_mute_button"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "sculpture2_mute_button",
@@ -231,13 +249,14 @@
         "storeOutMessages": true,
         "fwdInMessages": true,
         "templateScope": "local",
-        "x": 1090,
-        "y": 700,
+        "x": 600,
+        "y": 820,
         "wires": [
             [
                 "mqtt_out_2"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "sculpture2_mode",
@@ -251,9 +270,10 @@
         "label": "Mode",
         "format": "{{msg.payload}}",
         "layout": "row-spread",
-        "x": 850,
-        "y": 620,
-        "wires": []
+        "x": 410,
+        "y": 700,
+        "wires": [],
+        "g": "5997d3cc03a1449f"
     },
     {
         "id": "sculpture2_restart",
@@ -273,12 +293,13 @@
         "payload": "{\"restart\": true}",
         "payloadType": "json",
         "topic": "sculpture/2/cmd",
-        "x": 340,
-        "y": 280,
+        "x": 1040,
+        "y": 780,
         "wires": [
             [
                 "mqtt_out_2"
             ]
-        ]
+        ],
+        "g": "5997d3cc03a1449f"
     }
-] 
+]

@@ -163,8 +163,21 @@ WantedBy=multi-user.target
         try:
             # Get CPU usage
             cpu_result = subprocess.run(['top', '-bn1'], capture_output=True, text=True, check=True)
-            cpu_line = [line for line in cpu_result.stdout.split('\n') if 'Cpu(s)' in line][0]
-            cpu_usage = float(cpu_line.split()[1].replace('%us,', ''))
+            cpu_line = next((line for line in cpu_result.stdout.split('\n') if 'Cpu(s)' in line), None)
+
+            if cpu_line:
+                try:
+                    # Robustly parse CPU by finding the 'us,' label and taking the preceding value
+                    parts = cpu_line.split()
+                    us_index = parts.index('us,')
+                    cpu_usage_str = parts[us_index - 1]
+                    cpu_usage = float(cpu_usage_str.replace(',', '.'))
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"Could not parse CPU usage from 'top' output: '{cpu_line}'. Error: {e}. Defaulting to 0.")
+                    cpu_usage = 0.0
+            else:
+                logger.warning("Could not find 'Cpu(s)' line in top output.")
+                cpu_usage = 0.0
             
             # Get temperature
             temp_result = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True, check=True)
