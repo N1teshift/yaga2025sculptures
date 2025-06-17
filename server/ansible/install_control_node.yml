@@ -178,13 +178,14 @@
         home: /opt/sculpture-system
         create_home: no
 
-    - name: Copy Node-RED flow configuration
-      copy:
-        src: ../nodered/flow.json
+    - name: Generate Node-RED flow configuration from template
+      template:
+        src: ../templates/flow.json.j2
         dest: "{{ sculpture_dir }}/flow.json"
-        mode: '0644'
         owner: node-red
         group: node-red
+        mode: '0644'
+      notify: restart node-red
 
     - name: Create Node-RED settings file
       copy:

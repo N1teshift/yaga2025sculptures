@@ -75,6 +75,8 @@ class SculptureAgent:
                 self.handle_mute_command(payload['mute'])
             elif 'restart' in payload and payload['restart']:
                 self.handle_restart_command()
+            elif 'command' in payload and payload['command'] == 'get_tracks':
+                self.handle_get_tracks()
             else:
                 logger.warning(f"Unknown command: {payload}")
                 
@@ -186,7 +188,7 @@ WantedBy=multi-user.target
             logger.error(f"Failed to update loop service: {e}")
             
     def get_system_status(self):
-        """Get CPU, temperature, audio levels, and online status"""
+        """Get CPU, temperature, microphone level, output level, mute status and mode"""
         try:
             error_message = None
 
@@ -244,7 +246,7 @@ WantedBy=multi-user.target
             try:
                 # Use the special name @DEFAULT_SOURCE@ to listen to the system's default microphone
                 mic_output = subprocess.check_output(
-                    "parec --raw --device=@DEFAULT_SOURCE@ | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'",
+                    "parec --raw --device=@DEFAULT_SOURCE@ | od -N 2 -d | head -n 1 | awk '{ val = $2; if (val < 0) val = -val; print 20*(log( (val+0.0001) / 32767) / log(10)) }'",
                     shell=True,
                     timeout=0.5,
                     stderr=subprocess.PIPE,
@@ -261,7 +263,7 @@ WantedBy=multi-user.target
             try:
                 # Use the special name sculpture_sink.monitor to listen to the sink's output
                 output_output = subprocess.check_output(
-                    "parec --raw --device=sculpture_sink.monitor | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'",
+                    "parec --raw --device=sculpture_sink.monitor | od -N 2 -d | head -n 1 | awk '{ val = $2; if (val < 0) val = -val; print 20*(log( (val+0.0001) / 32767) / log(10)) }'",
                     shell=True,
                     timeout=0.5,
                     stderr=subprocess.PIPE,
@@ -324,6 +326,25 @@ WantedBy=multi-user.target
         finally:
             self.client.loop_stop()
             self.client.disconnect()
+
+    def handle_get_tracks(self):
+        """Scan for local audio files and publish the list."""
+        loops_dir = Path(SCULPTURE_DIR) / 'loops'
+        track_list = []
+        if loops_dir.is_dir():
+            logger.info(f"Scanning for tracks in {loops_dir}")
+            # Scan for common audio file types
+            audio_extensions = ['.wav', '.mp3', '.ogg', '.flac']
+            for f in loops_dir.iterdir():
+                if f.is_file() and f.suffix.lower() in audio_extensions:
+                    track_list.append(f.name)
+            logger.info(f"Found tracks: {track_list}")
+        else:
+            logger.warning(f"Audio loops directory not found: {loops_dir}")
+
+        # Publish the list back to a dedicated topic
+        track_list_topic = f"sculpture/{self.sculpture_id}/track_list"
+        self.client.publish(track_list_topic, json.dumps(track_list))
 
 if __name__ == "__main__":
     agent = SculptureAgent()
