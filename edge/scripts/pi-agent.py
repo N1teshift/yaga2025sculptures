@@ -240,28 +240,37 @@ WantedBy=multi-user.target
                     self._last_mute_error = str(e)
 
             # Get microphone input level (peak)
-            # This is a simplified approach. A more robust solution might use a dedicated audio library.
             mic_level = -60.0 # Default to silence
             try:
-                # Read from the 'sculpture_source' device directly instead of using
-                # --monitor-stream which only works for sink monitors.
-                # Using --device ensures we capture the actual microphone source.
+                # Use the special name @DEFAULT_SOURCE@ to listen to the system's default microphone
                 mic_output = subprocess.check_output(
-                    "parec --raw --device=sculpture_source | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'",
+                    "parec --raw --device=@DEFAULT_SOURCE@ | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'",
                     shell=True,
                     timeout=0.5,
-                    stderr=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    env=get_pactl_env()
                 )
                 mic_level = float(mic_output.strip())
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
+                if isinstance(e, subprocess.CalledProcessError):
+                    logger.warning(f"Mic level check failed with error: {e.stderr.decode('utf-8').strip()}")
                 pass # Keep default on error
 
             # Get speaker output level (peak)
             output_level = -60.0 # Default to silence
             try:
-                output_output = subprocess.check_output("parec --raw --monitor-stream=sculpture_sink.monitor | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'", shell=True, timeout=0.5, stderr=subprocess.DEVNULL)
+                # Use the special name sculpture_sink.monitor to listen to the sink's output
+                output_output = subprocess.check_output(
+                    "parec --raw --device=sculpture_sink.monitor | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'",
+                    shell=True,
+                    timeout=0.5,
+                    stderr=subprocess.PIPE,
+                    env=get_pactl_env()
+                )
                 output_level = float(output_output.strip())
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
+                if isinstance(e, subprocess.CalledProcessError):
+                    logger.warning(f"Output level check failed with error: {e.stderr.decode('utf-8').strip()}")
                 pass # Keep default on error
 
             status = {
