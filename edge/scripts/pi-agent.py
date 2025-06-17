@@ -9,6 +9,8 @@ import logging
 from pathlib import Path
 import paho.mqtt.client as mqtt
 import random
+import pwd
+import re
 
 # Configuration
 MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.8.156')
@@ -19,6 +21,21 @@ SCULPTURE_DIR = '/opt/sculpture-system'
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def get_pactl_env():
+    """Returns a suitable environment for running pactl from a systemd service."""
+    try:
+        # Get the UID of the 'pi' user, which is needed to find the PulseAudio socket
+        pi_uid = pwd.getpwnam('pi').pw_uid
+        env = os.environ.copy()
+        env['XDG_RUNTIME_DIR'] = f'/run/user/{pi_uid}'
+        return env
+    except KeyError:
+        logger.warning("Could not find user 'pi' to set XDG_RUNTIME_DIR for pactl. Audio control will likely fail.")
+        return os.environ.copy()
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while creating pactl environment: {e}")
+        return os.environ.copy()
 
 class SculptureAgent:
     def __init__(self):
@@ -31,6 +48,7 @@ class SculptureAgent:
         self.broadcast_topic = "system/broadcast"
         self.is_muted = False      # Track mute state
         self.current_mode = "live"  # Track current mode (live/local)
+        self._last_mute_error = None
         
     def on_connect(self, client, userdata, flags, rc):
         logger.info(f"Connected to MQTT broker with result code {rc}")
@@ -112,21 +130,23 @@ class SculptureAgent:
             logger.info(f"Setting volume to {volume_percent}%")
             subprocess.run([
                 'pactl', 'set-sink-volume', 'sculpture_sink', f'{volume_percent}%'
-            ], check=True)
+            ], check=True, env=get_pactl_env())
             
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to set volume: {e}")
             
     def handle_mute_command(self, mute):
+        self.is_muted = bool(mute)  # Optimistically update state
         try:
             mute_flag = '1' if mute else '0'
             logger.info(f"Setting mute to {mute_flag} (True={mute})")
             subprocess.run([
                 'pactl', 'set-sink-mute', 'sculpture_sink', mute_flag
-            ], check=True)
-            self.is_muted = bool(mute)
+            ], check=True, env=get_pactl_env())
+            # Clear previous error on success
+            self._last_mute_error = None
         except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to set mute: {e}")
+            logger.error(f"Failed to set mute: {e} - state may not be in sync. Check if 'sculpture_sink' exists with 'pactl list sinks'.")
 
     def handle_restart_command(self):
         try:
@@ -169,11 +189,18 @@ WantedBy=multi-user.target
 
             if cpu_line:
                 try:
-                    # Robustly parse CPU by finding the 'us,' label and taking the preceding value
-                    parts = cpu_line.split()
-                    us_index = parts.index('us,')
-                    cpu_usage_str = parts[us_index - 1]
-                    cpu_usage = float(cpu_usage_str.replace(',', '.'))
+                    # More robust CPU parsing to handle different 'top' formats
+                    match = re.search(r'(\d+[\.,]\d+)\s*us', cpu_line)
+                    if match:
+                        cpu_usage = float(match.group(1).replace(',', '.'))
+                    else:
+                        # Fallback for formats like "2.5% us"
+                        parts = cpu_line.replace(',', ' ').split()
+                        try:
+                            us_index = parts.index('us')
+                            cpu_usage = float(parts[us_index - 1])
+                        except (ValueError, IndexError):
+                            raise ValueError("Could not find 'us' CPU value.")
                 except (ValueError, IndexError) as e:
                     error_message = f"Could not parse CPU usage from 'top' output: '{cpu_line}'. Error: {e}"
                     logger.warning(error_message + " Defaulting to 0.")
@@ -189,14 +216,21 @@ WantedBy=multi-user.target
             
             # Get mute status from pactl
             try:
-                mute_result = subprocess.run(
-                    ['pactl', 'get-sink-mute', 'sculpture_sink'],
-                    capture_output=True, text=True, check=True
-                )
-                # Output is "Mute: yes" or "Mute: no"
-                self.is_muted = 'yes' in mute_result.stdout.lower()
+                # Only check for mute status if we're in a mode that produces audio
+                if self.current_mode != "idle":
+                    mute_result = subprocess.run(
+                        ['pactl', 'get-sink-mute', 'sculpture_sink'],
+                        capture_output=True, text=True, check=True, env=get_pactl_env()
+                    )
+                    # Output is "Mute: yes" or "Mute: no"
+                    self.is_muted = 'yes' in mute_result.stdout.lower()
+                    # Clear previous error on success
+                    self._last_mute_error = None
             except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                logger.warning(f"Could not get mute status: {e}. Using last known value.")
+                # Log warning only once if sink is not found, to avoid spamming logs
+                if self._last_mute_error is None:
+                    logger.warning(f"Could not get mute status: {e}. Using last known value. Further warnings will be suppressed.")
+                    self._last_mute_error = str(e)
 
             # Get microphone input level (peak)
             # This is a simplified approach. A more robust solution might use a dedicated audio library.

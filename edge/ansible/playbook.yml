@@ -167,16 +167,14 @@
         enabled: no
         state: stopped
 
-    - name: Configure PulseAudio for system mode
+    - name: Create dedicated PulseAudio sink for the sculpture
       lineinfile:
-        path: /etc/pulse/system.pa
-        line: "{{ item }}"
+        path: /etc/pulse/default.pa
+        line: 'load-module module-null-sink sink_name=sculpture_sink sink_properties=device.description="Sculpture_Sink"'
+        regexp: '^load-module module-null-sink sink_name=sculpture_sink'
+        state: present
         create: yes
-      loop:
-        - 'load-module module-null-sink sink_name=sculpture_sink'
-        - >-
-          load-module module-alsa-source device=hw:1,0
-          source_name=sculpture_source
+      notify: Restart pulseaudio
 
     - name: Ensure pi-agent service is started and enabled
       systemd:
@@ -199,6 +197,12 @@
         validate: 'visudo -cf %s'
 
   handlers:
+    - name: Restart pulseaudio
+      shell: "pulseaudio -k"
+      become: yes
+      become_user: pi
+      listen: "Restart pulseaudio"
+
     - name: Reboot for audio config
       reboot:
         msg: "Rebooting to apply audio configuration changes"

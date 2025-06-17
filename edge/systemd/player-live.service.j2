@@ -6,13 +6,14 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --ao=pulse --cache=yes --demuxer-max-bytes=1M http://{{ control_host }}:8000/mix-for-{{ id }}.ogg
+ExecStart=/usr/bin/mpv --no-video --ao=pulse --ao-pulse-device=sculpture_sink --cache=yes --demuxer-max-bytes=1M http://{{ control_host }}:8000/mix-for-{{ id }}.ogg
 Restart=always
 RestartSec=5
 User=pi
 Group=audio
 
 # Environment variables
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
 Environment=SCULPTURE_ID={{ id }}
 Environment=CONTROL_HOST={{ control_host }}
 
