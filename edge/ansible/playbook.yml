@@ -144,12 +144,6 @@
         mode: '0644'
       notify: Restart pi-agent
 
-    - name: Create default loop file
-      copy:
-        content: ""
-        dest: "{{ sculpture_dir }}/loops/default.wav"
-        force: no
-
     - name: Enable and start services
       systemd:
         name: "{{ item }}"

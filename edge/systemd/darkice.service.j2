@@ -7,7 +7,7 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/darkice -c /opt/sculpture-system/darkice.cfg
+ExecStart=/usr/bin/darkice -c {{ sculpture_dir }}/darkice.cfg
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=5
@@ -15,6 +15,7 @@ User=pi
 Group=audio
 
 # Environment variables
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
 Environment=SCULPTURE_ID={{ id }}
 Environment=CONTROL_HOST={{ control_host }}
 

@@ -5,7 +5,7 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --loop --no-video --ao=pulse /opt/sculpture-system/loops/default.wav
+ExecStart=/usr/bin/mpv --loop --no-video --ao=pulse /opt/sculpture-system/loops/test1.wav
 Restart=always
 RestartSec=5
 User=pi
