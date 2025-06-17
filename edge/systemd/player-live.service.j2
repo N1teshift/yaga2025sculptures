@@ -6,7 +6,7 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --ao=pulse --ao-pulse-device=sculpture_sink --cache=yes --demuxer-max-bytes=1M http://{{ control_host }}:8000/mix-for-{{ id }}.ogg
+ExecStart=/usr/bin/mpv --no-video --audio-device=pulse/sculpture_sink --cache=yes --demuxer-max-bytes=1M --audio-buffer=0.5 http://{{ control_host }}:8000/mix-for-{{ id }}.ogg
 Restart=always
 RestartSec=5
 User=pi
