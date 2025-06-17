@@ -163,17 +163,24 @@ After=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --loop --no-video --ao=pulse {track_path}
+ExecStart=/usr/bin/mpv --no-video --audio-device=pulse/sculpture_sink --audio-samplerate=44100 --loop {track_path}
 Restart=always
 RestartSec=5
 User=pi
+Group=audio
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
 
 [Install]
 WantedBy=multi-user.target
 """
         try:
-            with open('/etc/systemd/system/player-loop.service', 'w') as f:
+            # It's better to write to a temporary file and then move it to avoid
+            # a race condition where systemd might read an incomplete service file.
+            temp_path = '/tmp/player-loop.service.tmp'
+            with open(temp_path, 'w') as f:
                 f.write(service_content)
+            # Use sudo to move the file into the system directory
+            subprocess.run(['sudo', 'mv', temp_path, '/etc/systemd/system/player-loop.service'], check=True)
             subprocess.run(['sudo', 'systemctl', 'daemon-reload'], check=True)
         except Exception as e:
             logger.error(f"Failed to update loop service: {e}")

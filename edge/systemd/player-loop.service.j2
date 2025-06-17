@@ -5,14 +5,14 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --loop --no-video --ao=pulse /opt/sculpture-system/loops/test1.wav
+ExecStart=/usr/bin/mpv --no-video --audio-device=pulse/sculpture_sink --audio-samplerate=44100 --loop /opt/sculpture-system/loops/test1.wav
 Restart=always
 RestartSec=5
 User=pi
 Group=audio
 
 # Environment variables
-Environment=SCULPTURE_ID={{ id }}
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
 
 # Security settings
 NoNewPrivileges=true
