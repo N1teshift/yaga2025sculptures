@@ -188,7 +188,15 @@ WantedBy=multi-user.target
             # This is a simplified approach. A more robust solution might use a dedicated audio library.
             mic_level = -60.0 # Default to silence
             try:
-                mic_output = subprocess.check_output("parec --raw --monitor-stream=sculpture_source | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'", shell=True, timeout=0.5, stderr=subprocess.DEVNULL)
+                # Read from the 'sculpture_source' device directly instead of using
+                # --monitor-stream which only works for sink monitors.
+                # Using --device ensures we capture the actual microphone source.
+                mic_output = subprocess.check_output(
+                    "parec --raw --device=sculpture_source | od -N 2 -d | head -n 1 | awk '$2 > 0 {print 20*log($2/32767)/log(10)}'",
+                    shell=True,
+                    timeout=0.5,
+                    stderr=subprocess.DEVNULL,
+                )
                 mic_level = float(mic_output.strip())
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
                 pass # Keep default on error
