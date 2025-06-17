@@ -184,6 +184,17 @@ WantedBy=multi-user.target
             temp_str = temp_result.stdout.strip().replace('temp=', '').replace("'C", '')
             temperature = float(temp_str)
             
+            # Get mute status from pactl
+            try:
+                mute_result = subprocess.run(
+                    ['pactl', 'get-sink-mute', 'sculpture_sink'],
+                    capture_output=True, text=True, check=True
+                )
+                # Output is "Mute: yes" or "Mute: no"
+                self.is_muted = 'yes' in mute_result.stdout.lower()
+            except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                logger.warning(f"Could not get mute status: {e}. Using last known value.")
+
             # Get microphone input level (peak)
             # This is a simplified approach. A more robust solution might use a dedicated audio library.
             mic_level = -60.0 # Default to silence
