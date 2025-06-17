@@ -381,6 +381,344 @@
         "g": "5997d3cc03a1449f"
     },
     {
+        "id": "track_selector_1",
+        "type": "ui_dropdown",
+        "z": "sculpture_dashboard",
+        "name": "Local Track",
+        "label": "Local Track",
+        "tooltip": "Select a track to play in local mode",
+        "place": "Select a track",
+        "group": "ui_group_sculpture1",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 130,
+        "y": 620,
+        "wires": [
+            [
+                "save_track_selection_1"
+            ]
+        ]
+    },
+    {
+        "id": "save_track_selection_1",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Save Track Selection",
+        "func": "flow.set('sculpture_1_selected_track', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 330,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "load_track_button_1",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Load Track",
+        "group": "ui_group_sculpture1",
+        "order": 9,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Load Track",
+        "tooltip": "Load the selected track on the sculpture",
+        "color": "",
+        "bgcolor": "",
+        "icon": "fa-upload",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "sculpture/1/cmd",
+        "x": 120,
+        "y": 660,
+        "wires": [
+            [
+                "load_track_logic_1"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_logic_1",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Load Track Command",
+        "func": "var selectedTrack = flow.get('sculpture_1_selected_track');\nif (selectedTrack) {\n    msg.payload = {\n        \"mode\": \"local\",\n        \"track\": selectedTrack\n    };\n    return msg;\n}\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 310,
+        "y": 660,
+        "wires": [
+            [
+                "mqtt_out_1",
+                "load_track_notification_1"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_notification_1",
+        "type": "ui_toast",
+        "z": "sculpture_dashboard",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "topic": "Track Loaded",
+        "name": "Track Load Notification",
+        "x": 530,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "track_list_in_1",
+        "type": "mqtt in",
+        "z": "sculpture_dashboard",
+        "name": "Track List 1",
+        "topic": "sculpture/1/track_list",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "x": 120,
+        "y": 580,
+        "wires": [
+            [
+                "track_list_format_1"
+            ]
+        ]
+    },
+    {
+        "id": "track_list_format_1",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Track List",
+        "func": "// msg.payload is an array of track filenames, e.g., [\"track1.wav\", \"track2.mp3\"]\nvar options = msg.payload.map(function(track) {\n    return { [track]: track };\n});\nmsg.options = options;\n// Also, pre-select the first track if available\nif (msg.payload && msg.payload.length > 0) {\n    msg.payload = msg.payload[0];\n    flow.set('sculpture_1_selected_track', msg.payload);\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 300,
+        "y": 580,
+        "wires": [
+            [
+                "track_selector_1"
+            ]
+        ]
+    },
+    {
+        "id": "track_selector_1_link_in",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "track_selector_1",
+        "links": [],
+        "x": 75,
+        "y": 620,
+        "wires": [
+            [
+                "track_selector_1"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_button_1_link_in",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "load_track_button_1",
+        "links": [],
+        "x": 75,
+        "y": 660,
+        "wires": [
+            [
+                "load_track_button_1"
+            ]
+        ]
+    },
+    {
+        "id": "track_selector_2_link_in",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "track_selector_2",
+        "links": [],
+        "x": 75,
+        "y": 620,
+        "wires": [
+            [
+                "track_selector_2"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_button_2_link_in",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "load_track_button_2",
+        "links": [],
+        "x": 75,
+        "y": 660,
+        "wires": [
+            [
+                "load_track_button_2"
+            ]
+        ]
+    },
+    {
+        "id": "track_selector_2",
+        "type": "ui_dropdown",
+        "z": "sculpture_dashboard",
+        "name": "Local Track",
+        "label": "Local Track",
+        "tooltip": "Select a track to play in local mode",
+        "place": "Select a track",
+        "group": "ui_group_sculpture2",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 130,
+        "y": 620,
+        "wires": [
+            [
+                "save_track_selection_2"
+            ]
+        ]
+    },
+    {
+        "id": "save_track_selection_2",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Save Track Selection",
+        "func": "flow.set('sculpture_2_selected_track', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 330,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "load_track_button_2",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Load Track",
+        "group": "ui_group_sculpture2",
+        "order": 9,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Load Track",
+        "tooltip": "Load the selected track on the sculpture",
+        "color": "",
+        "bgcolor": "",
+        "icon": "fa-upload",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "sculpture/2/cmd",
+        "x": 120,
+        "y": 660,
+        "wires": [
+            [
+                "load_track_logic_2"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_logic_2",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Load Track Command",
+        "func": "var selectedTrack = flow.get('sculpture_2_selected_track');\nif (selectedTrack) {\n    msg.payload = {\n        \"mode\": \"local\",\n        \"track\": selectedTrack\n    };\n    return msg;\n}\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 310,
+        "y": 660,
+        "wires": [
+            [
+                "mqtt_out_2",
+                "load_track_notification_2"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_notification_2",
+        "type": "ui_toast",
+        "z": "sculpture_dashboard",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "topic": "Track Loaded",
+        "name": "Track Load Notification",
+        "x": 530,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "track_list_in_2",
+        "type": "mqtt in",
+        "z": "sculpture_dashboard",
+        "name": "Track List 2",
+        "topic": "sculpture/2/track_list",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "x": 120,
+        "y": 580,
+        "wires": [
+            [
+                "track_list_format_2"
+            ]
+        ]
+    },
+    {
+        "id": "track_list_format_2",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Track List",
+        "func": "// msg.payload is an array of track filenames\nvar options = msg.payload.map(function(track) {\n    return { [track]: track };\n});\nmsg.options = options;\n// Pre-select the first track if available\nif (msg.payload && msg.payload.length > 0) {\n    msg.payload = msg.payload[0];\n    flow.set('sculpture_2_selected_track', msg.payload);\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 300,
+        "y": 580,
+        "wires": [
+            [
+                "track_selector_2"
+            ]
+        ]
+    },
+    {
         "id": "volume_slider_2",
         "type": "ui_slider",
         "z": "sculpture_dashboard",
@@ -605,7 +943,7 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Mute State 2",
-        "func": "flow.set('sculpture2_is_muted', msg.payload);\nreturn msg;",
+        "func": "// Store the mute state in the flow context\nflow.set('sculpture2_is_muted', msg.payload);\n\n// Add the state to the message for the template node\nmsg.isMuted = msg.payload;\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 430,
@@ -614,8 +952,7 @@
             [
                 "sculpture2_mute_button"
             ]
-        ],
-        "g": "5997d3cc03a1449f"
+        ]
     },
     {
         "id": "sculpture2_mute_button",
@@ -623,12 +960,13 @@
         "z": "sculpture_dashboard",
         "group": "ui_group_sculpture2",
         "name": "Mute/Unmute Button 2",
-        "order": 7,
+        "order": 3,
         "width": 0,
         "height": 0,
-        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture2_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "format": "<md-button \n    ng-style=\"{ 'background-color': msg.isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !msg.isMuted } })\">\n    <i class=\"fa {{msg.isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{msg.isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
         "storeOutMessages": true,
         "fwdInMessages": false,
+        "resendOnRefresh": true,
         "templateScope": "local",
         "x": 600,
         "y": 820,
@@ -636,8 +974,7 @@
             [
                 "mqtt_out_2"
             ]
-        ],
-        "g": "5997d3cc03a1449f"
+        ]
     },
     {
         "id": "sculpture2_mode",
@@ -904,7 +1241,7 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Mute State 3",
-        "func": "flow.set('sculpture3_is_muted', msg.payload);\nreturn msg;",
+        "func": "// Store the mute state in the flow context\nflow.set('sculpture3_is_muted', msg.payload);\n\n// Add the state to the message for the template node\nmsg.isMuted = msg.payload;\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 430,
@@ -922,14 +1259,32 @@
         "z": "sculpture_dashboard",
         "group": "ui_group_sculpture3",
         "name": "Mute/Unmute Button 3",
-        "order": 7,
+        "order": 3,
         "width": 0,
         "height": 0,
-        "format": "<md-button \n    ng-init='isMuted = flow.get(\"sculpture3_is_muted\") || false' \n    ng-style=\"{ 'background-color': isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !isMuted } })\">\n    <i class=\"fa {{isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
+        "format": "<md-button \n    ng-style=\"{ 'background-color': msg.isMuted ? '#4CAF50' : '#f44336', 'color': 'white' }\"\n    ng-click=\"send({ payload: { 'mute': !msg.isMuted } })\">\n    <i class=\"fa {{msg.isMuted ? 'fa-volume-up' : 'fa-volume-off'}}\"></i> \n    {{msg.isMuted ? 'Unmute' : 'Mute'}}\n</md-button>",
         "storeOutMessages": true,
         "fwdInMessages": false,
+        "resendOnRefresh": true,
         "templateScope": "local",
         "x": 600,
+        "y": 1080,
+        "wires": [
+            [
+                "mute_format_3"
+            ]
+        ],
+        "g": "5997d3cc03a1449f"
+    },
+    {
+        "id": "mute_format_3",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Mute Format 3",
+        "func": "msg.payload = {\"mute\": msg.payload.mute};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 780,
         "y": 1080,
         "wires": [
             [
@@ -983,6 +1338,175 @@
         "g": "5997d3cc03a1449f"
     },
     {
+        "id": "track_selector_3",
+        "type": "ui_dropdown",
+        "z": "sculpture_dashboard",
+        "name": "Local Track",
+        "label": "Local Track",
+        "tooltip": "Select a track to play in local mode",
+        "place": "Select a track",
+        "group": "ui_group_sculpture3",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 130,
+        "y": 620,
+        "wires": [
+            [
+                "save_track_selection_3"
+            ]
+        ]
+    },
+    {
+        "id": "save_track_selection_3",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Save Track Selection",
+        "func": "flow.set('sculpture_3_selected_track', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 330,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "load_track_button_3",
+        "type": "ui_button",
+        "z": "sculpture_dashboard",
+        "name": "Load Track",
+        "group": "ui_group_sculpture3",
+        "order": 9,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Load Track",
+        "tooltip": "Load the selected track on the sculpture",
+        "color": "",
+        "bgcolor": "",
+        "icon": "fa-upload",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "sculpture/3/cmd",
+        "x": 120,
+        "y": 660,
+        "wires": [
+            [
+                "load_track_logic_3"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_logic_3",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Load Track Command",
+        "func": "var selectedTrack = flow.get('sculpture_3_selected_track');\nif (selectedTrack) {\n    msg.payload = {\n        \"mode\": \"local\",\n        \"track\": selectedTrack\n    };\n    return msg;\n}\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 310,
+        "y": 660,
+        "wires": [
+            [
+                "mqtt_out_3",
+                "load_track_notification_3"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_notification_3",
+        "type": "ui_toast",
+        "z": "sculpture_dashboard",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "topic": "Track Loaded",
+        "name": "Track Load Notification",
+        "x": 530,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "track_list_in_3",
+        "type": "mqtt in",
+        "z": "sculpture_dashboard",
+        "name": "Track List 3",
+        "topic": "sculpture/3/track_list",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "x": 120,
+        "y": 580,
+        "wires": [
+            [
+                "track_list_format_3"
+            ]
+        ]
+    },
+    {
+        "id": "track_list_format_3",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Track List",
+        "func": "// msg.payload is an array of track filenames\nvar options = msg.payload.map(function(track) {\n    return { [track]: track };\n});\nmsg.options = options;\n// Pre-select the first track if available\nif (msg.payload && msg.payload.length > 0) {\n    msg.payload = msg.payload[0];\n    flow.set('sculpture_3_selected_track', msg.payload);\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 300,
+        "y": 580,
+        "wires": [
+            [
+                "track_selector_3"
+            ]
+        ]
+    },
+    {
+        "id": "track_selector_3_link_in",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "track_selector_3",
+        "links": [],
+        "x": 75,
+        "y": 620,
+        "wires": [
+            [
+                "track_selector_3"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_button_3_link_in",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "load_track_button_3",
+        "links": [],
+        "x": 75,
+        "y": 660,
+        "wires": [
+            [
+                "load_track_button_3"
+            ]
+        ]
+    },
+    {
         "id": "ui_ui_control_dashboard",
         "type": "ui_ui_control",
         "z": "sculpture_dashboard",
@@ -995,6 +1519,44 @@
             ]
         ],
         "g": "6cb6eba07ec4f5f8"
+    },
+    {
+        "id": "get_tracks_on_startup",
+        "type": "inject",
+        "z": "sculpture_dashboard",
+        "name": "Get Tracks on Startup",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "{\"command\":\"get_tracks\"}",
+        "payloadType": "json",
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "get_tracks_broadcast"
+            ]
+        ]
+    },
+    {
+        "id": "get_tracks_broadcast",
+        "type": "mqtt out",
+        "z": "sculpture_dashboard",
+        "name": "Broadcast Get Tracks",
+        "topic": "sculpture/+/cmd",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker",
+        "x": 370,
+        "y": 80,
+        "wires": []
     },
     {
         "id": "plan_dashboard_connect",
@@ -1029,8 +1591,8 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Plan Button Logic",
-        "func": "// Plan button IDs and their labels\nvar plans = [\n    {id: 'plan_btn_a1', value: 'A1'},\n    {id: 'plan_btn_a2', value: 'A2'},\n    {id: 'plan_btn_b1', value: 'B1'},\n    {id: 'plan_btn_b2', value: 'B2'},\n    {id: 'plan_btn_b3', value: 'B3'},\n    {id: 'plan_btn_c', value: 'C'},\n    {id: 'plan_btn_d', value: 'D'}\n];\n\n// Find which button was pressed\nvar selectedPlan = plans.find(p => p.value === msg.payload);\nif (selectedPlan) {\n    // Store the current plan in flow context\n    flow.set('currentPlan', selectedPlan.value);\n    // Send plan to plan_format\n    var planMsg = {payload: selectedPlan.value};\n    // Update button highlights\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.id === selectedPlan.id) ? 'deepskyblue' : 'lightgray',\n                color: (p.id === selectedPlan.id) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    // Output: [planMsg, ...uiControlMsgs]\n    return [planMsg, ...uiControlMsgs];\n}\nreturn [null, null, null, null, null, null, null];\n",
-        "outputs": 7,
+        "func": "// Define plans and the new track selector UI elements\nvar plans = [\n    {id: 'plan_btn_a1', value: 'A1'},\n    {id: 'plan_btn_a2', value: 'A2'},\n    {id: 'plan_btn_b1', value: 'B1'},\n    {id: 'plan_btn_b2', value: 'B2'},\n    {id: 'plan_btn_c', value: 'C'},\n    {id: 'plan_btn_d', value: 'D'}\n];\nvar trackControlNodeIds = [\n    'track_selector_1',\n    'load_track_button_1',\n    'track_selector_2',\n    'load_track_button_2',\n    'track_selector_3',\n    'load_track_button_3'\n];\n\n// Find which button was pressed\nvar selectedPlan = plans.find(p => p.value === msg.payload);\nif (selectedPlan) {\n    flow.set('currentPlan', selectedPlan.value);\n\n    // Output 1: The main command message to change the plan\n    var planMsg = {payload: selectedPlan.value};\n\n    // Outputs 2-8: Messages to update the plan button highlights\n    var uiControlMsgs = plans.map(p => ({\n        ui_control: {\n            bgColor: (p.id === selectedPlan.id) ? 'deepskyblue' : 'lightgray',\n            color: (p.id === selectedPlan.id) ? 'white' : 'black'\n        },\n        topic: p.id // Targets the button by its ID\n    }));\n\n    // Outputs 9-14: Messages to enable/disable the track selection UI\n    var isPlanD = (selectedPlan.value === 'D');\n    var trackSelectorControls = trackControlNodeIds.map(id => ({\n        ui_control: { enabled: isPlanD },\n        topic: id // Targets the widget by its ID\n    }));\n\n    // Return messages on their designated outputs\n    return [planMsg, ...uiControlMsgs, ...trackSelectorControls];\n}\n\nreturn null;",
+        "outputs": 14,
         "x": 870,
         "y": 180,
         "wires": [
@@ -1057,9 +1619,118 @@
             ],
             [
                 "plan_btn_d"
+            ],
+            [
+                "track_selector_1_proxy"
+            ],
+            [
+                "load_track_button_1_proxy"
+            ],
+            [
+                "track_selector_2_proxy"
+            ],
+            [
+                "load_track_button_2_proxy"
+            ],
+            [
+                "track_selector_3_proxy"
+            ],
+            [
+                "load_track_button_3_proxy"
             ]
         ],
         "g": "6cb6eba07ec4f5f8"
+    },
+    {
+        "id": "ui_control_router",
+        "type": "split",
+        "z": "sculpture_dashboard",
+        "name": "Route UI Messages",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "outputs": 1,
+        "x": 1090,
+        "y": 220,
+        "wires": [
+            [
+                "plan_btn_a1",
+                "plan_btn_a2",
+                "plan_btn_b1",
+                "plan_btn_b2",
+                "plan_btn_b3",
+                "plan_btn_c",
+                "plan_btn_d",
+                "track_selector_1_proxy",
+                "track_selector_2_proxy",
+                "track_selector_3_proxy",
+                "load_track_button_1_proxy",
+                "load_track_button_2_proxy",
+                "load_track_button_3_proxy"
+            ]
+        ]
+    },
+    {
+        "id": "track_selector_1_proxy",
+        "type": "link out",
+        "z": "sculpture_dashboard",
+        "name": "track_selector_1",
+        "links": [],
+        "x": 1255,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "track_selector_2_proxy",
+        "type": "link out",
+        "z": "sculpture_dashboard",
+        "name": "track_selector_2",
+        "links": [],
+        "x": 1255,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "track_selector_3_proxy",
+        "type": "link out",
+        "z": "sculpture_dashboard",
+        "name": "track_selector_3",
+        "links": [],
+        "x": 1255,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "load_track_button_1_proxy",
+        "type": "link out",
+        "z": "sculpture_dashboard",
+        "name": "load_track_button_1",
+        "links": [],
+        "x": 1255,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "load_track_button_2_proxy",
+        "type": "link out",
+        "z": "sculpture_dashboard",
+        "name": "load_track_button_2",
+        "links": [],
+        "x": 1255,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "load_track_button_3_proxy",
+        "type": "link out",
+        "z": "sculpture_dashboard",
+        "name": "load_track_button_3",
+        "links": [],
+        "x": 1255,
+        "y": 380,
+        "wires": []
     },
     {
         "id": "plan_btn_a1",
