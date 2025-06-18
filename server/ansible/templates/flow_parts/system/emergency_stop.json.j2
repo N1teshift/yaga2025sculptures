@@ -1,0 +1,39 @@
+{
+    "id": "emergency_stop_button",
+    "type": "ui_button",
+    "z": "sculpture_dashboard",
+    "name": "Emergency Stop Button",
+    "group": "ui_group_system",
+    "order": 8,
+    "width": 6,
+    "height": 2,
+    "passthru": false,
+    "label": "EMERGENCY STOP",
+    "tooltip": "Stop all sculptures immediately",
+    "color": "white",
+    "bgcolor": "red",
+    "icon": "fa-warning",
+    "payload": "{\"command\":\"stop\"}",
+    "payloadType": "json",
+    "topic": "emergency_stop",
+    "x": 640,
+    "y": 340,
+    "wires": [
+        [
+            "emergency_stop_mqtt_out"
+        ]
+    ]
+},
+{
+    "id": "emergency_stop_mqtt_out",
+    "type": "mqtt out",
+    "z": "sculpture_dashboard",
+    "name": "Broadcast Emergency Stop",
+    "topic": "sculpture/all/cmd",
+    "qos": "0",
+    "retain": "false",
+    "broker": "mqtt_broker",
+    "x": 890,
+    "y": 340,
+    "wires": []
+} 

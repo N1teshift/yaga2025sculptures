@@ -1,0 +1,72 @@
+{
+    "id": "plan_highlighter",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "Plan Highlighter",
+    "func": "var plans = [\n    {id: 'plan_btn_a1', value: 'A1'},\n    {id: 'plan_btn_a2', value: 'A2'},\n    {id: 'plan_btn_b1', value: 'B1'},\n    {id: 'plan_btn_b2', value: 'B2'},\n    {id: 'plan_btn_b3', value: 'B3'},\n    {id: 'plan_btn_c', value: 'C'},\n    {id: 'plan_btn_d', value: 'D'}\n];\n\n// Extract plan from payload\nvar currentPlan = msg.payload.plan;\nif (!currentPlan) return null; // Exit if no plan in payload\n\n// Store the current plan in flow context for reload persistence\nflow.set('currentPlan', currentPlan);\n\n// Generate UI control messages to highlight the correct button\nvar uiControlMsgs = plans.map(p => {\n    return {\n        ui_control: {\n            background: (p.value === currentPlan) ? 'deepskyblue' : 'lightgray',\n            color: (p.value === currentPlan) ? 'white' : 'black'\n        }\n    };\n});\n\n// Each message is sent to a separate output\nreturn uiControlMsgs;",
+    "outputs": 7,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "x": 370,
+    "y": 200,
+    "wires": [
+        [
+            "plan_btn_a1"
+        ],
+        [
+            "plan_btn_a2"
+        ],
+        [
+            "plan_btn_b1"
+        ],
+        [
+            "plan_btn_b2"
+        ],
+        [
+            "plan_btn_b3"
+        ],
+        [
+            "plan_btn_c"
+        ],
+        [
+            "plan_btn_d"
+        ]
+    ]
+},
+{
+    "id": "plan_dashboard_connect",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "Send Plan Highlight on Connect",
+    "func": "// On dashboard connect, re-broadcast the current plan highlight\nif (msg.payload && msg.payload.event === 'connect') {\n    var currentPlan = flow.get('currentPlan') || 'B1'; // Default to B1\n    return { payload: { plan: currentPlan } };\n}\nreturn null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "x": 410,
+    "y": 140,
+    "wires": [
+        [
+            "plan_highlighter"
+        ]
+    ]
+},
+{
+    "id": "plan_button_logic",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "Plan Button Logic",
+    "func": "// Find which button was pressed from the payload (e.g., 'A1', 'B1', etc.)\nvar selectedPlan = msg.payload;\n\nif (selectedPlan) {\n    // Determine the mode based on the selected plan\n    var mode = (selectedPlan === 'D') ? 'local' : 'live';\n\n    // Create the message for the MQTT broadcast.\n    // The highlighter will listen for this broadcast.\n    msg.payload = { plan: selectedPlan, mode: mode };\n\n    return msg;\n}\n\nreturn null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "x": 870,
+    "y": 180,
+    "wires": [
+        [
+            "plan_mqtt_out"
+        ]
+    ]
+} 

@@ -168,26 +168,9 @@ Default passwords (change for production):
 - **Audio Levels:** Icecast web interface at port 8000
 - **Service Logs:** `journalctl -u service-name -f`
 - **MQTT Traffic:** `mosquitto_sub -h server -t '#'`
+- **sculpture_sink:** `ssh pi@<RASPBERRY_PI_IP> "pacat -r -d sculpture_sink.monitor" | pacat -p`
 
 ## Troubleshooting
-
-### Common Issues
-
-1. **No Audio Capture:**
-   - Check USB audio device connection
-   - Verify ALSA device configuration
-   - Test with `arecord -l` and `aplay -l`
-
-2. **Network Connectivity:**
-   - Verify IP addresses in configuration
-   - **WSL 2:** Ensure using WSL IP, not Windows IP
-   - Test MQTT with `mosquitto_pub/sub`
-   - Check firewall settings
-
-3. **Service Failures:**
-   - Check service status: `systemctl status service-name`
-   - View logs: `journalctl -u service-name -f`
-   - Restart services: `systemctl restart service-name`
 
 ### Debug Commands
 
@@ -212,9 +195,6 @@ ip addr show eth0
 
 ### Testing
 - Use test tones: `speaker-test -c 1 -t sine`
-- Monitor MQTT: `mosquitto_sub -h server -t '#'`
-- Check audio streams in browser or VLC
-- Run the automated unit tests with `./run_tests.sh`
 
 ### Dev Container
 The `.devcontainer` folder provides a ready-to-use VS Code development

@@ -125,14 +125,6 @@ Now, run the Ansible playbook that installs and configures all the local service
 # cd /path/to/your/yaga2025sculptures
 # Run the control node playbook
 ansible-playbook server/ansible/install_control_node.yml
-# Note: The older command using "-i inventory" is also valid but less specific.
-
-# Verify services are running (they should start automatically)
-sudo systemctl status icecast2
-sudo systemctl status mosquitto
-sudo systemctl status liquidsoap
-sudo systemctl status node-red
-sudo systemctl status mqtt_to_telnet_bridge
 ```
 
 **Troubleshooting after Ansible Playbook:**
@@ -151,30 +143,6 @@ sudo systemctl status mqtt_to_telnet_bridge
         sudo systemctl status node-red
         ```
 
-## Step 11: Access Control Dashboard
-
-**From Windows:**
-1. Open web browser. The Node-RED dashboard is often at `http://YOUR_WSL_IP:1880/ui`. If this path does not work, try `http://YOUR_WSL_IP:1880/dashboard` or `http://YOUR_WSL_IP:1880/api/ui/`. The Node-RED flow editor (usually at `http://YOUR_WSL_IP:1880/` or `http://YOUR_WSL_IP:1880/admin/`) typically has a sidebar tab for 'dashboard' with a direct launch button.
-2. You should see the sculpture control dashboard.
-3. Test volume sliders and mode/plan switches. Selecting plans A1–C now sends `{"mode":"live"}` and Plan D sends `{"mode":"local"}` so the players automatically switch modes.
-
-**From WSL:**
-```bash
-# You can also access from within WSL
-curl http://localhost:1880/ui
-```
-
-## Step 12: Verify Audio Streams
-
-1. **Check Icecast status:** `http://YOUR_WSL_IP:8000/admin`
-2. **Verify sculpture microphone streams are active:**
-   - `http://YOUR_WSL_IP:8000/s1-mic.ogg`
-   - `http://YOUR_WSL_IP:8000/s2-mic.ogg`
-   - `http://YOUR_WSL_IP:8000/s3-mic.ogg`
-3. **Verify personalized mixes are available:**
-   - `http://YOUR_WSL_IP:8000/mix-for-1.ogg`
-   - `http://YOUR_WSL_IP:8000/mix-for-2.ogg`
-   - `http://YOUR_WSL_IP:8000/mix-for-3.ogg`
 
 
 ## WSL 2 Specific Considerations
@@ -212,57 +180,6 @@ telnet YOUR_WSL_IP 1883  # MQTT
 telnet YOUR_WSL_IP 8000  # Icecast
 ```
 
-### WSL 2 Service Issues
-```bash
-# Check WSL services
-sudo systemctl restart icecast2
-sudo systemctl restart mosquitto
-sudo systemctl restart liquidsoap
-sudo systemctl restart node-red
-sudo systemctl status icecast2
-sudo systemctl status mosquitto
-sudo systemctl status liquidsoap
-sudo systemctl status node-red
-
-# Restart WSL if needed
-# (from Windows PowerShell)
-wsl --shutdown
-wsl
-```
-
-### Pi Agent Not Starting
-```bash
-# Check pi-agent service on each Pi
-sudo systemctl status pi-agent
-sudo journalctl -u pi-agent -f
-
-# Restart if needed
-sudo systemctl restart pi-agent
-```
-
-### Audio Issues
-```bash
-# Check audio devices
-aplay -l
-arecord -l
-
-# Test audio capture
-arecord -D hw:1,0 -f cd test.wav
-
-# Check DarkIce status
-sudo systemctl status darkice
-```
-
-### Network Issues
-```bash
-# Test MQTT connectivity
-mosquitto_pub -h YOUR_WSL_IP -t test -m "hello"
-mosquitto_sub -h YOUR_WSL_IP -t test
-
-# Check Icecast connectivity
-curl http://YOUR_WSL_IP:8000/status.xsl
-```
-
 ### Liquidsoap Issues
 ```bash
 # Check Liquidsoap logs
@@ -274,46 +191,6 @@ liquidsoap --check /etc/liquidsoap/main.liq
 # Connect to telnet interface
 telnet localhost 1234
 # Password: admin
-```
-
-## System Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Sculpture 1   │    │   Sculpture 2   │    │   Sculpture 3   │
-│                 │    │                 │    │                 │
-│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
-│ │ Microphone  │ │    │ │ Microphone  │ │    │ │ Microphone  │ │
-│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
-│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
-│ │   DarkIce   │ │    │ │   DarkIce   │ │    │ │   DarkIce   │ │
-│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
-│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
-│ │  Pi-Agent   │ │    │ │  Pi-Agent   │ │    │ │  Pi-Agent   │ │
-│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
-│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
-│ │   Speaker   │ │    │ │   Speaker   │ │    │ │   Speaker   │ │
-│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────────────┐
-                    │   Windows + WSL 2       │
-                    │                         │
-                    │ ┌─────────────────────┐ │
-                    │ │      Icecast2       │ │
-                    │ └─────────────────────┘ │
-                    │ ┌─────────────────────┐ │
-                    │ │     Liquidsoap      │ │
-                    │ └─────────────────────┘ │
-                    │ ┌─────────────────────┐ │
-                    │ │     Mosquitto       │ │
-                    │ └─────────────────────┘ │
-                    │ ┌─────────────────────┐ │
-                    │ │      Node-RED       │ │
-                    │ └─────────────────────┘ │
-                    └─────────────────────────┘
 ```
 
 ## Default Credentials
