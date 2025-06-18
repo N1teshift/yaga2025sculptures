@@ -45,6 +45,7 @@ class SculptureAgent:
         self.sculpture_id = SCULPTURE_ID
         self.status_topic = f"sculpture/{self.sculpture_id}/status"
         self.cmd_topic = f"sculpture/{self.sculpture_id}/cmd"
+        self.tracks_topic = f"sculpture/{self.sculpture_id}/tracks"
         self.broadcast_topic = "system/broadcast"
         self.is_muted = False      # Track mute state
         self.current_mode = "live"  # Track current mode (live/local)
@@ -86,6 +87,22 @@ class SculptureAgent:
             logger.error(f"Invalid JSON in message: {msg.payload.decode()}")
         except Exception as e:
             logger.error(f"Error processing message: {e}")
+            
+    def handle_get_tracks(self):
+        """List audio tracks and publish them to the tracks topic."""
+        try:
+            loops_dir = Path(SCULPTURE_DIR) / 'loops'
+            if not loops_dir.is_dir():
+                logger.warning(f"Loops directory not found: {loops_dir}")
+                tracks = []
+            else:
+                tracks = sorted([f.name for f in loops_dir.iterdir() if f.is_file() and f.suffix in ['.wav', '.mp3', '.flac']])
+            
+            logger.info(f"Found tracks: {tracks}")
+            self.client.publish(self.tracks_topic, json.dumps(tracks), retain=True)
+            
+        except Exception as e:
+            logger.error(f"Error getting tracks: {e}")
             
     def handle_mode_command(self, mode, track=None):
         """Handle mode switching between live and local playback"""
@@ -341,25 +358,6 @@ WantedBy=multi-user.target
         finally:
             self.client.loop_stop()
             self.client.disconnect()
-
-    def handle_get_tracks(self):
-        """Scan for local audio files and publish the list."""
-        loops_dir = Path(SCULPTURE_DIR) / 'loops'
-        track_list = []
-        if loops_dir.is_dir():
-            logger.info(f"Scanning for tracks in {loops_dir}")
-            # Scan for common audio file types
-            audio_extensions = ['.wav', '.mp3', '.ogg', '.flac']
-            for f in loops_dir.iterdir():
-                if f.is_file() and f.suffix.lower() in audio_extensions:
-                    track_list.append(f.name)
-            logger.info(f"Found tracks: {track_list}")
-        else:
-            logger.warning(f"Audio loops directory not found: {loops_dir}")
-
-        # Publish the list back to a dedicated topic
-        track_list_topic = f"sculpture/{self.sculpture_id}/track_list"
-        self.client.publish(track_list_topic, json.dumps(track_list))
 
 if __name__ == "__main__":
     agent = SculptureAgent()

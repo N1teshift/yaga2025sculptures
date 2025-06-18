@@ -10,6 +10,115 @@
         "collapse": false
     },
     {
+        "id": "track_selector_{{ sculpture_id }}",
+        "type": "ui_dropdown",
+        "z": "sculpture_dashboard",
+        "name": "Track {{ sculpture_id }}",
+        "label": "Select Track",
+        "tooltip": "Select a track to play on sculpture {{ sculpture_id }}",
+        "place": "Select a track",
+        "group": "ui_group_sculpture{{ sculpture_id }}",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [],
+        "payload": "",
+        "topic": "sculpture/{{ sculpture_id }}/cmd/load_track",
+        "x": 650,
+        "y": 620,
+        "wires": [
+            [
+                "load_track_format_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_format_{{ sculpture_id }}",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Load Track",
+        "func": "msg.payload = { \"load_track\": msg.payload };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 840,
+        "y": 620,
+        "wires": [
+            [
+                "mqtt_out_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
+        "id": "tracks_in_{{ sculpture_id }}",
+        "type": "mqtt in",
+        "z": "sculpture_dashboard",
+        "name": "Tracks for {{ sculpture_id }}",
+        "topic": "sculpture/{{ sculpture_id }}/tracks",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker",
+        "x": 120,
+        "y": 620,
+        "wires": [
+            [
+                "format_tracks_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
+        "id": "format_tracks_{{ sculpture_id }}",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Format Tracks {{ sculpture_id }}",
+        "func": "msg.options = msg.payload.map(track => ({ label: track, value: track, type: 'str' }));\nvar debugMsg = { payload: JSON.stringify(msg.options) };\nreturn [msg, debugMsg];",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 310,
+        "y": 620,
+        "wires": [
+            [
+                "track_selector_{{ sculpture_id }}"
+            ],
+            [
+                "track_debug_text_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
+        "id": "track_debug_text_{{ sculpture_id }}",
+        "type": "ui_text",
+        "z": "sculpture_dashboard",
+        "group": "ui_group_sculpture{{ sculpture_id }}",
+        "order": 15,
+        "width": 0,
+        "height": 0,
+        "name": "Track Debug",
+        "label": "Track Options Payload",
+        "format": "{% raw %}{{msg.payload}}{% endraw %}",
+        "layout": "row-spread",
+        "x": 500,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "track_selector_{{ sculpture_id }}_link",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "track_selector_{{ sculpture_id }}",
+        "links": [
+            "track_selector_{{ sculpture_id }}_proxy"
+        ],
+        "x": 475,
+        "y": 620,
+        "wires": [
+            [
+                "track_selector_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
         "id": "volume_slider_{{ sculpture_id }}",
         "type": "ui_slider",
         "z": "sculpture_dashboard",

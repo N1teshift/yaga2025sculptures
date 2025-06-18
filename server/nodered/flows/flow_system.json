@@ -43,7 +43,7 @@
         "type": "mqtt out",
         "z": "sculpture_dashboard",
         "name": "Broadcast Get Tracks",
-        "topic": "sculpture/+/cmd",
+        "topic": "system/broadcast",
         "qos": "0",
         "retain": "false",
         "broker": "mqtt_broker",
@@ -56,11 +56,14 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Send Plan Highlight on Connect",
-        "func": "// On dashboard connect, re-broadcast the current plan highlight\nif (msg.payload && msg.payload.event === 'connect') {\n    var plans = [\n        {id: 'plan_btn_a1', value: 'A1'},\n        {id: 'plan_btn_a2', value: 'A2'},\n        {id: 'plan_btn_b1', value: 'B1'},\n        {id: 'plan_btn_b2', value: 'B2'},\n        {id: 'plan_btn_b3', value: 'B3'},\n        {id: 'plan_btn_c', value: 'C'},\n        {id: 'plan_btn_d', value: 'D'}\n    ];\n    var currentPlan = flow.get('currentPlan') || 'A1';\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.value === currentPlan) ? 'deepskyblue' : 'lightgray',\n                color: (p.value === currentPlan) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    return uiControlMsgs;\n}\nreturn null;\n",
-        "outputs": 5,
+        "func": "if (msg.payload && msg.payload.event === 'connect') {\n    // On dashboard connect, re-broadcast the current plan highlight\n    var plans = [\n        {id: 'plan_btn_a1', value: 'A1'},\n        {id: 'plan_btn_a2', value: 'A2'},\n        {id: 'plan_btn_b1', value: 'B1'},\n        {id: 'plan_btn_b2', value: 'B2'},\n        {id: 'plan_btn_b3', value: 'B3'},\n        {id: 'plan_btn_c', value: 'C'},\n        {id: 'plan_btn_d', value: 'D'}\n    ];\n    var currentPlan = flow.get('currentPlan') || 'A1';\n    var uiControlMsgs = plans.map(p => {\n        return {\n            ui_control: {\n                bgColor: (p.value === currentPlan) ? 'deepskyblue' : 'lightgray',\n                color: (p.value === currentPlan) ? 'white' : 'black'\n            },\n            payload: p.value,\n            topic: p.id\n        };\n    });\n    \n    // Also trigger a request to get the latest tracks\n    var getTracksMsg = { payload: { \"command\": \"get_tracks\" } };\n\n    // The first output is for the get_tracks broadcast,\n    // the subsequent outputs are for the plan buttons\n    return [getTracksMsg, ...uiControlMsgs];\n}\nreturn null;\n",
+        "outputs": "8",
         "x": 410,
         "y": 140,
         "wires": [
+            [
+                "get_tracks_broadcast"
+            ],
             [
                 "plan_btn_a1"
             ],
@@ -75,6 +78,12 @@
             ],
             [
                 "plan_btn_b3"
+            ],
+            [
+                "plan_btn_c"
+            ],
+            [
+                "plan_btn_d"
             ]
         ],
         "g": "6cb6eba07ec4f5f8"
