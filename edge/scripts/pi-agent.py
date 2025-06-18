@@ -77,6 +77,8 @@ class SculptureAgent:
                 self.handle_restart_command()
             elif 'command' in payload and payload['command'] == 'get_tracks':
                 self.handle_get_tracks()
+            elif 'command' in payload and payload['command'] == 'stop':
+                self.handle_stop_command()
             else:
                 logger.warning(f"Unknown command: {payload}")
                 
@@ -149,6 +151,19 @@ class SculptureAgent:
             self._last_mute_error = None
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to set mute: {e} - state may not be in sync. Check if 'sculpture_sink' exists with 'pactl list sinks'.")
+
+    def handle_stop_command(self):
+        """Stop all audio-related services."""
+        try:
+            logger.info("Stopping all audio services due to emergency stop command.")
+            # Stop both live and local playback services
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
+            # Stop the microphone streaming service
+            subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+            self.current_mode = "idle" # Set mode to idle
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to stop services during emergency stop: {e}")
 
     def handle_restart_command(self):
         try:
