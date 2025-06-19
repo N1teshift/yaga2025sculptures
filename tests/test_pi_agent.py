@@ -45,7 +45,7 @@ def test_handle_mode_live(monkeypatch):
 def test_cpu_parse_error_included(monkeypatch):
     agent = pi_agent.SculptureAgent()
 
-    def fake_run(cmd, capture_output=True, text=True, check=True):
+    def fake_run(cmd, capture_output=True, text=True, check=True, **kwargs):
         if cmd[0] == 'top':
             return types.SimpleNamespace(stdout="Cpu(s): us,\n")
         elif cmd[0] == 'vcgencmd':
