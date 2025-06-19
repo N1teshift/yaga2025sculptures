@@ -15,7 +15,7 @@ settings.server.telnet.bind_addr.set("0.0.0.0")
 settings.server.telnet.port.set(1234)
 
 # Audio settings
-settings.frame.audio.samplerate.set(48000)
+settings.frame.audio.samplerate.set(44100)
 # settings.frame.audio.channels.set(1) # Let liquidsoap handle channels dynamically
 
 # Input sources from sculptures

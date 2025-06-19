@@ -48,7 +48,7 @@ while true; do
     
     # Generate audio and pipe to PulseAudio
     ffmpeg -f lavfi -i "${PATTERN}=frequency=${CURRENT_FREQ}:duration=30" \
-           -f pulse -ac 1 -ar 48000 \
+           -f pulse -ac 1 -ar 44100 \
            sculpture_source 2>/dev/null &
     
     # Wait and add some silence for realism
@@ -56,7 +56,7 @@ while true; do
     
     # Add 5 seconds of quiet (simulating ambient noise)
     ffmpeg -f lavfi -i "anoisesrc=duration=5:color=white:amplitude=0.1" \
-           -f pulse -ac 1 -ar 48000 \
+           -f pulse -ac 1 -ar 44100 \
            sculpture_source 2>/dev/null &
     
     sleep 5
