@@ -209,3 +209,24 @@ telnet localhost 1234
 3. Customize Node-RED dashboard for your installation
 4. Set up monitoring and alerting
 5. Configure firewall rules for production deployment
+
+## Troubleshooting
+
+To verify connectivity between each Raspberry Pi and the control node:
+
+1. **Ping the control node** from every Pi:
+   ```bash
+   ping YOUR_CONTROL_NODE_IP
+   ```
+   This should return replies. If it fails, ensure your control node and Pis are on the same network.
+
+2. **Check firewall rules on the control node** to make sure ICMP (ping) and the Icecast/MQTT ports are allowed:
+   ```bash
+   sudo ufw status
+   ```
+   Look for rules that allow `icmp`, `8000` (Icecast) and `1883` (MQTT). Adjust the firewall if needed:
+   ```bash
+   sudo ufw allow icmp
+   sudo ufw allow 8000/tcp
+   sudo ufw allow 1883/tcp
+   ```
