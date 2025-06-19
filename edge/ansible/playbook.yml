@@ -28,6 +28,17 @@
           - git
         state: present
 
+    - name: Disable WiFi power saving
+      copy:
+        dest: /etc/NetworkManager/conf.d/wifi-powersave.conf
+        content: |
+          [connection]
+          wifi.powersave = 2
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart NetworkManager
+
     - name: Detect firmware config path
       stat:
         path: /boot/firmware/config.txt
@@ -224,4 +235,9 @@
       systemd:
         daemon_reload: yes
         name: pi-agent.service
+        state: restarted
+
+    - name: Restart NetworkManager
+      systemd:
+        name: NetworkManager.service
         state: restarted

@@ -88,6 +88,8 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
+Running this playbook also disables WiFi power saving on each Pi by creating `/etc/NetworkManager/conf.d/wifi-powersave.conf`.
+
 ## Step 8: Pre-configure Icecast Hostname (Critical)
 
 Before you install the control node services, you must configure the Icecast server template. This ensures that when Icecast is installed, it's already set up to allow other devices on your network (like the Raspberry Pis) to connect to the audio streams.
