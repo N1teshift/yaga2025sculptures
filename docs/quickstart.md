@@ -130,22 +130,6 @@ Now, run the Ansible playbook that installs and configures all the local service
 ansible-playbook server/ansible/install_control_node.yml
 ```
 
-**Troubleshooting after Ansible Playbook:**
-
-*   **Mosquitto:** If Mosquitto fails to start (check `sudo systemctl status mosquitto.service`), it might be due to a duplicate `log_dest file` configuration.
-    1.  Confirm error: `/usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf`.
-    2.  If duplicate `log_dest` error, edit `/etc/mosquitto/conf.d/sculpture.conf` (e.g., `sudo nano /etc/mosquitto/conf.d/sculpture.conf`) and comment out the `log_dest file ...` line (add `#` at the beginning).
-    3.  Then: `sudo systemctl restart mosquitto` and check status.
-
-*   **Node-RED:** If Node-RED fails to start:
-    1.  Check logs: `sudo journalctl -xeu node-red.service`.
-    2.  Common issues include incorrect Node.js version (addressed in Step 9.5) or path issues for the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` uses the correct path (usually `/usr/local/bin/node-red` or `/usr/bin/node-red`).
-    3.  After resolving issues, restart the service and verify:
-        ```bash
-        sudo systemctl restart node-red
-        sudo systemctl status node-red
-        ```
-
 
 
 ## WSL 2 Specific Considerations
@@ -165,36 +149,6 @@ ansible-playbook server/ansible/install_control_node.yml
 - Use `sudo systemctl` commands from WSL terminal
 - Services persist across WSL sessions
 
-## Troubleshooting
-
-### WSL 2 Network Issues
-```bash
-# Check WSL IP address
-ip addr show eth0
-
-# Test connectivity from Pi to WSL
-# (run on Raspberry Pi)
-ping YOUR_WSL_IP
-
-# Check if ports are accessible
-# (run on Raspberry Pi)
-# Note: If 'telnet' is not found, install it with: sudo apt update && sudo apt install -y telnet
-telnet YOUR_WSL_IP 1883  # MQTT
-telnet YOUR_WSL_IP 8000  # Icecast
-```
-
-### Liquidsoap Issues
-```bash
-# Check Liquidsoap logs
-sudo journalctl -u liquidsoap -f
-
-# Test Liquidsoap config
-liquidsoap --check /etc/liquidsoap/main.liq
-
-# Connect to telnet interface
-telnet localhost 1234
-# Password: admin
-```
 
 ## Default Credentials
 
@@ -213,21 +167,52 @@ telnet localhost 1234
 
 ## Troubleshooting
 
-To verify connectivity between each Raspberry Pi and the control node:
+### Service Issues After Playbook
 
-1. **Ping the control node** from every Pi:
+* **Mosquitto:** If Mosquitto fails to start (check `sudo systemctl status mosquitto.service`), it might be due to a duplicate `log_dest file` configuration.
+  1. Confirm error: `/usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf`.
+  2. If duplicate `log_dest` error, edit `/etc/mosquitto/conf.d/sculpture.conf` (e.g., `sudo nano /etc/mosquitto/conf.d/sculpture.conf`) and comment out the `log_dest file ...` line.
+  3. Then: `sudo systemctl restart mosquitto` and check status.
+
+* **Node-RED:** If Node-RED fails to start:
+  1. Check logs: `sudo journalctl -xeu node-red.service`.
+  2. Common issues include incorrect Node.js version or wrong path to the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` points to the correct path.
+  3. After resolving issues, restart the service and verify:
+     ```bash
+     sudo systemctl restart node-red
+     sudo systemctl status node-red
+     ```
+
+### Network Connectivity
+
+1. **Identify the WSL IP address** on the control node:
    ```bash
-   ping YOUR_CONTROL_NODE_IP
+   ip addr show eth0
    ```
-   This should return replies. If it fails, ensure your control node and Pis are on the same network.
-
-2. **Check firewall rules on the control node** to make sure ICMP (ping) and the Icecast/MQTT ports are allowed:
+2. **Verify connectivity from each Raspberry Pi:**
+   ```bash
+   ping YOUR_WSL_IP
+   telnet YOUR_WSL_IP 1883  # MQTT
+   telnet YOUR_WSL_IP 8000  # Icecast
+   ```
+3. **Check firewall rules** on the control node if connections fail:
    ```bash
    sudo ufw status
-   ```
-   Look for rules that allow `icmp`, `8000` (Icecast) and `1883` (MQTT). Adjust the firewall if needed:
-   ```bash
    sudo ufw allow icmp
    sudo ufw allow 8000/tcp
    sudo ufw allow 1883/tcp
    ```
+
+### Liquidsoap Issues
+```bash
+# Check Liquidsoap logs
+sudo journalctl -u liquidsoap -f
+
+# Test Liquidsoap config
+liquidsoap --check /etc/liquidsoap/main.liq
+
+# Connect to telnet interface
+telnet localhost 1234
+# Password: admin
+```
+\n
