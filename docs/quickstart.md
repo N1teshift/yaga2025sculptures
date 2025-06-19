@@ -87,7 +87,7 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
-Note: The `player-live` service uses `mpv` with a 10-second cache (`--cache-secs=10`) to reduce network jitter. To increase or decrease this buffer, edit `edge/systemd/player-live.service.j2` and modify the `--cache-secs` value before re-running the playbook.
+Note: The `player-live` service uses `mpv` with a 10-second cache (`--cache-secs=10`) and a 5-second audio buffer (`--audio-buffer=5`). Both values help smooth out playback on the Raspberry Pis. You can tune them by editing `edge/systemd/player-live.service.j2` and adjusting the `--cache-secs` and `--audio-buffer` options before re-running the playbook.
 
 Running this playbook also disables WiFi power saving on each Pi by creating `/etc/NetworkManager/conf.d/wifi-powersave.conf`.
 
