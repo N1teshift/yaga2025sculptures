@@ -113,7 +113,7 @@ On each Pi:
 
 1. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
 2. *(optional)* `sudo alsactl store`
-3. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 48000 -d 5 test.wav && aplay -D hw:1,0`
+3. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 44100 -d 5 test.wav && aplay -D hw:1,0`
 4. Copy to wsl: `scp pi@sculptureX:~/test.wav .` and check for sound
 
 ## Step 10: Install Control Node Services
