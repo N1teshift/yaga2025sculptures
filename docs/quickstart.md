@@ -64,7 +64,6 @@ In your WSL Ubuntu terminal:
 ip addr show eth0 | grep inet
 
 # Note the IP address (e.g., 172.20.10.2)
-# This is what you'll use as YOUR_LAPTOP_IP in the next step
 ```
 
 ## Step 6: Update Inventory File
