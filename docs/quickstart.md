@@ -88,6 +88,8 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 ```
 
+Note: The `player-live` service uses `mpv` with a 10-second cache (`--cache-secs=10`) to reduce network jitter. To increase or decrease this buffer, edit `edge/systemd/player-live.service.j2` and modify the `--cache-secs` value before re-running the playbook.
+
 Running this playbook also disables WiFi power saving on each Pi by creating `/etc/NetworkManager/conf.d/wifi-powersave.conf`.
 
 ## Step 8: Pre-configure Icecast Hostname (Critical)
