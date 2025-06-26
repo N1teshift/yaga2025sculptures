@@ -35,7 +35,7 @@ s2_mono = to_mono(s2_input)
 s3_mono = to_mono(s3_input)
 
 # Add fallback silence for when inputs are not available
-silence = blank()
+silence = amplify(0.0, sine())
 
 s1_safe = fallback(id="s1_fallback", track_sensitive=false, [s1_mono, silence])
 s2_safe = fallback(id="s2_fallback", track_sensitive=false, [s2_mono, silence])

@@ -79,9 +79,6 @@ let sculpture_gate = fun(threshold, s) ->
 let sculpture_fade_in = fade.in(duration=3.0)
 let sculpture_fade_out = fade.out(duration=3.0)
 
-# Emergency silence generator
-let emergency_silence = blank(duration=1.0)
-
 # Test tone generator (for debugging)
 let test_tone = fun(freq) ->
   sine(freq)
