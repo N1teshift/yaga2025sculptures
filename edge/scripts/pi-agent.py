@@ -132,8 +132,8 @@ class SculptureAgent:
                     else:
                         logger.warning(f"Track not found: {track_path}")
                         
-                # Start local playback
-                subprocess.run(['sudo', 'systemctl', 'start', 'player-loop.service'], check=True)
+                # Restart local playback to apply the new track
+                subprocess.run(['sudo', 'systemctl', 'restart', 'player-loop.service'], check=True)
 
             else:
                 logger.warning(f"Unknown mode: {mode}")
@@ -194,15 +194,23 @@ class SculptureAgent:
         service_content = f"""[Unit]
 Description=Sculpture Loop Player
 After=sound.target
+Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --audio-device=pulse/sculpture_sink --audio-samplerate=44100 --loop {track_path}
+ExecStart=/usr/bin/mpv --no-video --audio-device=pulse/sculpture_sink --audio-samplerate=22050 --loop {track_path}
 Restart=always
 RestartSec=5
 User=pi
 Group=audio
+Nice=-10
+
+# Environment variables
 Environment="XDG_RUNTIME_DIR=/run/user/1000"
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

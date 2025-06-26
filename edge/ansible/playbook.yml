@@ -88,18 +88,46 @@
         state: directory
         mode: '0755'
 
-    - name: Copy test WAV files
-      copy:
-        src: "{{ playbook_dir }}/../../samples/loops/{{ item }}"
-        dest: "{{ sculpture_dir }}/loops/{{ item }}"
+    - name: Ensure ffmpeg is installed on the control node (using apt for Debian/Ubuntu)
+      local_action:
+        module: ansible.builtin.apt
+        name: ffmpeg
+        state: present
+        update_cache: yes
+      become: yes
+      become_method: sudo
+      run_once: true # We only need to check this once
+
+    - name: Create a temporary local directory for converted loops
+      local_action:
+        module: ansible.builtin.file
+        path: /tmp/converted_loops
+        state: directory
+      become: no
+      run_once: true
+
+    - name: Convert loop files to the correct format locally
+      local_action:
+        module: ansible.builtin.shell
+        cmd: 'for f in ../../samples/loops/*.wav; do ffmpeg -y -i "$f" -ac 1 -ar 22050 "/tmp/converted_loops/$(basename "$f")"; done'
+      become: no
+      run_once: true
+
+    - name: Copy the CONVERTED loop files to the edge device
+      ansible.builtin.copy:
+        src: /tmp/converted_loops/
+        dest: /opt/sculpture-system/loops/
+        owner: pi
+        group: audio
         mode: '0644'
-      loop:
-        - test1.wav
-        - test2.wav
-        - test3.wav
-        - test4.wav
-        - test5.wav
-        - test6.wav
+
+    - name: Clean up temporary local directory
+      local_action:
+        module: ansible.builtin.file
+        path: /tmp/converted_loops
+        state: absent
+      become: no
+      run_once: true
 
     - name: Template darkice configuration
       template:
@@ -112,12 +140,7 @@
         src: ../scripts/pi-agent.py
         dest: "{{ sculpture_dir }}/pi-agent.py"
         mode: '0755'
-
-    - name: Copy update-loops script
-      copy:
-        src: ../scripts/update-loops.sh
-        dest: "{{ sculpture_dir }}/update-loops.sh"
-        mode: '0755'
+      notify: Restart pi-agent
 
     - name: Install darkice systemd service
       template:

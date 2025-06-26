@@ -166,6 +166,7 @@ Default passwords (change for production):
 - **MQTT Traffic:** `mosquitto_sub -h server -t '#'`
 - **sculpture_sink:** `ssh pi@<RASPBERRY_PI_IP> "pacat -r -d sculpture_sink.monitor" | pacat -p`
 - **CPU:** `htop`
+- **CPU snapshot:** `top -b -n 1 | head -n 20`
 
 ## Troubleshooting
 
