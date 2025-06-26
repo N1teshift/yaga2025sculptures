@@ -111,7 +111,7 @@ Before you install the control node services, you must configure the Icecast ser
 
 This is a one-time setup. The Ansible playbook will now use your pre-configured file during installation.
 
-## Step 9: Audio‑HAT Preparation (required for IQaudIO CODEC / Codec Zero)
+## Step 9: Audio-HAT Preparation (required for IQaudIO CODEC / Codec Zero)
 On each Pi:
 
 1. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
