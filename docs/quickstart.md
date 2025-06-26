@@ -130,8 +130,6 @@ Now, run the Ansible playbook that installs and configures all the local service
 ansible-playbook server/ansible/install_control_node.yml
 ```
 
-
-
 ## WSL 2 Specific Considerations
 
 ### Network Access
@@ -215,4 +213,3 @@ liquidsoap --check /etc/liquidsoap/main.liq
 telnet localhost 1234
 # Password: admin
 ```
-\n

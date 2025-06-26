@@ -72,35 +72,16 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Format Tracks {{ sculpture_id }}",
-        "func": "msg.options = msg.payload.map(track => ({ label: track, value: track, type: 'str' }));\nvar debugMsg = { payload: JSON.stringify(msg.options) };\nreturn [msg, debugMsg];",
-        "outputs": 2,
+        "func": "msg.options = msg.payload;\nreturn msg;",
+        "outputs": 1,
         "noerr": 0,
         "x": 310,
         "y": 620,
         "wires": [
             [
                 "track_selector_{{ sculpture_id }}"
-            ],
-            [
-                "track_debug_text_{{ sculpture_id }}"
             ]
         ]
-    },
-    {
-        "id": "track_debug_text_{{ sculpture_id }}",
-        "type": "ui_text",
-        "z": "sculpture_dashboard",
-        "group": "ui_group_sculpture{{ sculpture_id }}",
-        "order": 15,
-        "width": 0,
-        "height": 0,
-        "name": "Track Debug",
-        "label": "Track Options Payload",
-        "format": "{% raw %}{{msg.payload}}{% endraw %}",
-        "layout": "row-spread",
-        "x": 500,
-        "y": 660,
-        "wires": []
     },
     {
         "id": "track_selector_{{ sculpture_id }}_link",

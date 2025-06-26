@@ -44,17 +44,16 @@ This system creates a network of three sculptures, each equipped with a Raspberr
 ```
 sculpture-system/
 ├── edge/                    # Raspberry Pi configuration
-│   ├── ansible/            # Deployment automation
-│   ├── darkice/            # Audio streaming config
-│   ├── scripts/            # Pi agent and utilities
-│   └── systemd/            # Service definitions
+│   ├── ansible/            #   - Deployment automation
+│   ├── darkice/            #   - Audio streaming config
+│   ├── scripts/            #   - Pi agent and utilities
+│   └── systemd/            #   - Service definitions
 ├── server/                 # Control server setup
-│   ├── ansible/           # Server deployment
-│   ├── liquidsoap/        # Audio mixing engine
-│   ├── nodered/           # Web dashboard
-│   └── templates/         # Configuration templates
+│   ├── ansible/           #   - Server deployment & Node-RED flows
+│   ├── liquidsoap/        #   - Audio mixing engine
+│   └── templates/         #   - Other configuration templates (e.g., Icecast)
 └── docs/                  # Documentation
-    └── quickstart.md      # Deployment guide
+    └── quickstart.md      #   - Deployment guide
 ```
 
 ## System Components
@@ -117,8 +116,7 @@ Access the web dashboard at `http://CONTROL_SERVER_IP:1880/api/ui` to:
 ## Requirements
 
 ### Hardware
-- 3x Raspberry Pi Zero W (4GB recommended)
-- 3x USB audio interfaces
+- 3x Raspberry Pi Zero W
 - 3x Microphones
 - 3x Speakers/Amplifiers
 - 1x Control laptop/PC
@@ -164,11 +162,10 @@ Default passwords (change for production):
 
 ## Monitoring
 
-- **System Status:** Node-RED dashboard shows CPU and temperature
-- **Audio Levels:** Icecast web interface at port 8000
 - **Service Logs:** `journalctl -u service-name -f`
 - **MQTT Traffic:** `mosquitto_sub -h server -t '#'`
 - **sculpture_sink:** `ssh pi@<RASPBERRY_PI_IP> "pacat -r -d sculpture_sink.monitor" | pacat -p`
+- **CPU:** `htop`
 
 ## Troubleshooting
 
@@ -177,9 +174,6 @@ Default passwords (change for production):
 ```bash
 # Test audio capture
 arecord -D hw:1,0 -f cd test.wav
-
-# Test MQTT
-mosquitto_pub -h server -t test -m "hello"
 
 # Check Liquidsoap
 liquidsoap --check /etc/liquidsoap/main.liq

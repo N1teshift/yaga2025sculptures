@@ -8,6 +8,7 @@
 
 # Set log level
 settings.log.level.set(4)
+settings.log.file.path.set("/var/log/liquidsoap/main.log")
 
 # Enable telnet server for control
 settings.server.telnet.set(true)
@@ -15,8 +16,12 @@ settings.server.telnet.bind_addr.set("0.0.0.0")
 settings.server.telnet.port.set(1234)
 
 # Audio settings
-settings.frame.audio.samplerate.set(44100)
-# settings.frame.audio.channels.set(1) # Let liquidsoap handle channels dynamically
+settings.frame.audio.samplerate.set(22050)
+settings.frame.audio.channels.set(1)
+
+# Disable video to prevent it from overriding the audio samplerate
+settings.frame.video.width.set(0)
+settings.frame.video.height.set(0)
 
 # Input sources from sculptures
 # These will be the live microphone feeds from each sculpture
@@ -125,7 +130,7 @@ update_mixes()
 
 # Output to Icecast
 output.icecast(
-  %vorbis(quality=0.5, channels=1),
+  %vorbis(quality=0.3, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
@@ -136,7 +141,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.5, channels=1),
+  %vorbis(quality=0.3, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
@@ -147,7 +152,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.5, channels=1),
+  %vorbis(quality=0.3, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
