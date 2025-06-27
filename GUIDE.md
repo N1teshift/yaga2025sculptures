@@ -55,43 +55,60 @@ ssh-copy-id pi@YOUR_PI2_IP
 ssh-copy-id pi@YOUR_PI3_IP
 ```
 
-## Step 5: Find Your WSL IP Address
-
-In your WSL Ubuntu terminal:
-
-```bash
-# Find your WSL IP address
-ip addr show eth0 | grep inet
-
-# Note the IP address (e.g., 172.20.10.2)
-```
-
-## Step 6: Update Inventory File
+## Step 5: Update Inventory File
 
 Edit `edge/ansible/hosts.ini` with your actual IP addresses:
 
 ```ini
 [sculptures]
-sculpture1 ansible_host=YOUR_PI1_IP id=1 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
-sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
-sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_WSL_IP
+sculpture1 ansible_host=YOUR_PI1_IP id=1 alsa_device=hw:1,0 control_host=YOUR_COMPUTER_IP
+sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_COMPUTER_IP
+sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_COMPUTER_IP
 ```
 
-## Step 7: Deploy to Raspberry Pis
+## Step 6: Deploy to Raspberry Pis
 
 ```bash
 # Run the edge playbook to configure all Pis
 ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
+```
+
+This command runs the main Ansible playbook, which automates the entire configuration process for each Raspberry Pi. The playbook performs the following tasks in order:
+
+*   **1. System Preparation:**
+    *   Updates the package cache and upgrades all installed system packages.
+    *   Installs essential software: `darkice` for audio streaming, `mpv` for audio playback, `paho-mqtt` for communication, and other system utilities.
+    *   Disables WiFi power-saving to ensure a stable network connection.
+
+*   **2. Audio Hardware Setup:**
+    *   Detects the correct boot configuration file (`/boot/config.txt` or `/boot/firmware/config.txt`).
+    *   Enables the `iqaudio-codec` overlay to activate the IQaudIO HAT.
+    *   Disables the Raspberry Pi's built-in audio to prevent conflicts.
+    *   Reboots the Pi if any of these audio settings were changed, which is necessary for them to take effect.
+
+*   **3. Application & Audio Files:**
+    *   Clones the official `Pi-Codec` git repository, which may contain helper scripts for the audio HAT.
+    *   Creates the main application directory at `/opt/sculpture-system`.
+    *   **On your control machine**, it converts all sample `.wav` files from the `samples/loops` directory into the required format using `ffmpeg`.
+    *   Copies the converted audio files from your machine to the `/opt/sculpture-system/loops/` directory on each Pi.
+    *   Copies the main `pi-agent.py` control script to `/opt/sculpture-system/` on each Pi.
+
+*   **4. Configuration:**
+    *   Generates a unique `darkice.cfg` file for each Pi from a template, inserting the correct server IP and sculpture ID.
+    *   Configures PulseAudio with the correct sample rate to match the project's audio settings.
+    *   Creates a `pi-agent` configuration file at `/etc/sculpture/audio.conf`.
+
+*   **5. Service Management:**
+    *   Sets up and installs `systemd` service files for `darkice`, `pi-agent`, `player-live`, and `player-loop`. This allows the applications to run as background services.
+    *   Enables and starts the `darkice`, `player-live`, and `pi-agent` services so they launch on boot.
+    *   Grants the `pi-agent` script passwordless `sudo` permissions to start and stop the other audio-related services, allowing it to control the system autonomously.
+
+The playbook handles all the setup, so you don't have to configure each Pi manually.
 
 # Verify deployment
 ansible sculptures -i edge/ansible/hosts.ini -m ping
-```
 
-Note: The `player-live` service uses `mpv` with a 10-second cache (`--cache-secs=10`) and a 5-second audio buffer (`--audio-buffer=5`). Both values help smooth out playback on the Raspberry Pis. You can tune them by editing `edge/systemd/player-live.service.j2` and adjusting the `--cache-secs` and `--audio-buffer` options before re-running the playbook.
-
-Running this playbook also disables WiFi power saving on each Pi by creating `/etc/NetworkManager/conf.d/wifi-powersave.conf`.
-
-## Step 8: Pre-configure Icecast Hostname (Critical)
+## Step 7: Pre-configure Icecast Hostname (Critical)
 
 Before you install the control node services, you must configure the Icecast server template. This ensures that when Icecast is installed, it's already set up to allow other devices on your network (like the Raspberry Pis) to connect to the audio streams.
 
@@ -111,7 +128,7 @@ Before you install the control node services, you must configure the Icecast ser
 
 This is a one-time setup. The Ansible playbook will now use your pre-configured file during installation.
 
-## Step 9: Audio-HAT Preparation (required for IQaudIO CODEC / Codec Zero)
+## Step 8: Audio-HAT Preparation (required for IQaudIO CODEC / Codec Zero)
 On each Pi:
 
 1. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
@@ -119,7 +136,7 @@ On each Pi:
 3. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 44100 -d 5 test.wav && aplay -D hw:1,0`
 4. Copy to wsl: `scp pi@sculptureX:~/test.wav .` and check for sound
 
-## Step 10: Install Control Node Services
+## Step 9: Install Control Node Services
 
 Now, run the Ansible playbook that installs and configures all the local services on your WSL machine (Icecast, Liquidsoap, Mosquitto, Node-RED).
 
@@ -130,24 +147,6 @@ Now, run the Ansible playbook that installs and configures all the local service
 ansible-playbook server/ansible/install_control_node.yml
 ```
 
-## WSL 2 Specific Considerations
-
-### Network Access
-- **From Windows:** Access services using WSL IP address
-- **From other devices:** Raspberry Pis connect to WSL IP
-- **Port forwarding:** WSL 2 automatically forwards ports to Windows
-
-### File System
-- **WSL files:** Located at `\\wsl$\Ubuntu-22.04\home\username\`
-- **Windows files:** Accessible from WSL at `/mnt/c/`
-- **Performance:** Keep project files in WSL filesystem for better performance
-
-### Service Management
-- All services run inside WSL
-- Use `sudo systemctl` commands from WSL terminal
-- Services persist across WSL sessions
-
-
 ## Default Credentials
 
 - **Icecast Admin:** admin / hackme
@@ -155,13 +154,9 @@ ansible-playbook server/ansible/install_control_node.yml
 - **MQTT:** No authentication (local network only)
 - **Node-RED Dashboard:** No authentication
 
-## Next Steps
+## Testing
 
-1. Configure audio levels and processing in Liquidsoap
-2. Add custom loop files to `/opt/sculpture-system/shared-loops/`
-3. Customize Node-RED dashboard for your installation
-4. Set up monitoring and alerting
-5. Configure firewall rules for production deployment
+
 
 ## Troubleshooting
 
@@ -180,36 +175,3 @@ ansible-playbook server/ansible/install_control_node.yml
      sudo systemctl restart node-red
      sudo systemctl status node-red
      ```
-
-### Network Connectivity
-
-1. **Identify the WSL IP address** on the control node:
-   ```bash
-   ip addr show eth0
-   ```
-2. **Verify connectivity from each Raspberry Pi:**
-   ```bash
-   ping YOUR_WSL_IP
-   telnet YOUR_WSL_IP 1883  # MQTT
-   telnet YOUR_WSL_IP 8000  # Icecast
-   ```
-3. **Check firewall rules** on the control node if connections fail:
-   ```bash
-   sudo ufw status
-   sudo ufw allow icmp
-   sudo ufw allow 8000/tcp
-   sudo ufw allow 1883/tcp
-   ```
-
-### Liquidsoap Issues
-```bash
-# Check Liquidsoap logs
-sudo journalctl -u liquidsoap -f
-
-# Test Liquidsoap config
-liquidsoap --check /etc/liquidsoap/main.liq
-
-# Connect to telnet interface
-telnet localhost 1234
-# Password: admin
-```

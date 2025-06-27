@@ -2,6 +2,9 @@
 - name: Install and Configure Control Node
   hosts: localhost
   become: yes
+  vars_files:
+    - ../../edge/ansible/group_vars/all.yml
+
   vars:
     sculpture_dir: /opt/sculpture-system
     liquidsoap_config_dir: /etc/liquidsoap
@@ -90,8 +93,8 @@
         line: 'ENABLE=true'
       notify: restart icecast2
 
-    - name: Copy Liquidsoap main configuration
-      copy:
+    - name: Template Liquidsoap main configuration
+      template:
         src: ../liquidsoap/main.liq
         dest: "{{ liquidsoap_config_dir }}/main.liq"
         mode: '0644'

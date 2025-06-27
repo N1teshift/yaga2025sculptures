@@ -147,51 +147,22 @@ Default passwords (change for production):
 - Liquidsoap telnet: admin
 - MQTT: no authentication
 
-## Platform-Specific Notes
-
-### Windows + WSL 2
-- All services run inside WSL 2 Ubuntu environment
-- Access dashboard from Windows browser using WSL IP
-- File system performance is best when keeping files in WSL
-- Network: WSL 2 uses NAT, so use WSL IP for inter-device communication
-
-### Native Linux
-- Services run directly on the host system
-- Standard Linux networking applies
-- Use host IP address for inter-device communication
-
 ## Monitoring
 
+- **WSL IP:** `ip addr show eth0`
 - **Service Logs:** `journalctl -u service-name -f`
 - **MQTT Traffic:** `mosquitto_sub -h server -t '#'`
 - **sculpture_sink:** `ssh pi@<RASPBERRY_PI_IP> "pacat -r -d sculpture_sink.monitor" | pacat -p`
 - **CPU:** `htop`
-- **CPU snapshot:** `top -b -n 1 | head -n 20`
+- **CPU Snapshot:** `top -b -n 1 | head -n 20`
+- **Sinks:** `pactl list sinks`
+- **Sink Inputs:** `pactl list sink-inputs`
+- **Liquidsoap Script:** `liquidsoap --check /etc/liquidsoap/main.liq`
+- **Icecast2:** `curl http://server:8000/status.xsl`
+- **Test Tone:** `speaker-test -c 1 -t sine`
+- **Telnet:** `telnet localhost 1234` # Password: admin
 
-## Troubleshooting
-
-### Debug Commands
-
-```bash
-# Test audio capture
-arecord -D hw:1,0 -f cd test.wav
-
-# Check Liquidsoap
-liquidsoap --check /etc/liquidsoap/main.liq
-
-# Monitor network streams
-curl http://server:8000/status.xsl
-
-# WSL 2: Check IP address
-ip addr show eth0
-```
-
-## Development
-
-### Testing
-- Use test tones: `speaker-test -c 1 -t sine`
-
-### Dev Container
+## Dev Container
 The `.devcontainer` folder provides a ready-to-use VS Code development
 container. It mirrors the control node and Pi simulator packages so Node.js
 20, Liquidsoap, Mosquitto, Node‑RED and the required Python packages are

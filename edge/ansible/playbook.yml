@@ -109,7 +109,7 @@
     - name: Convert loop files to the correct format locally
       local_action:
         module: ansible.builtin.shell
-        cmd: 'for f in ../../samples/loops/*.wav; do ffmpeg -y -i "$f" -ac 1 -ar 22050 "/tmp/converted_loops/$(basename "$f")"; done'
+        cmd: 'for f in ../../samples/loops/*.wav; do ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "/tmp/converted_loops/$(basename "$f")"; done'
       become: no
       run_once: true
 
@@ -134,6 +134,30 @@
         src: ../darkice/darkice.cfg
         dest: "{{ sculpture_dir }}/darkice.cfg"
         mode: '0644'
+
+    - name: Create sculpture config directory
+      file:
+        path: /etc/sculpture
+        state: directory
+        mode: '0755'
+
+    - name: Template pi-agent audio configuration
+      template:
+        src: templates/audio.conf.j2
+        dest: /etc/sculpture/audio.conf
+        mode: '0644'
+      notify: Restart pi-agent
+
+    - name: Configure PulseAudio for the target sample rate
+      lineinfile:
+        path: /etc/pulse/daemon.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      with_items:
+        - { regexp: '^; default-sample-rate = .*', line: 'default-sample-rate = {{ audio_sample_rate }}' }
+        - { regexp: '^; alternate-sample-rate = .*', line: 'alternate-sample-rate = {{ audio_sample_rate }}' }
+      notify: Restart pulseaudio
 
     - name: Copy pi-agent script
       copy:
@@ -198,10 +222,9 @@
     - name: Create dedicated PulseAudio sink for the sculpture
       lineinfile:
         path: /etc/pulse/default.pa
-        line: 'load-module module-null-sink sink_name=sculpture_sink sink_properties=device.description="Sculpture_Sink"'
         regexp: '^load-module module-null-sink sink_name=sculpture_sink'
+        line: 'load-module module-null-sink sink_name=sculpture_sink sink_properties=device.description=Sculpture_Sink channel_map={{ "mono" if audio_channels == 1 else "stereo" }}'
         state: present
-        create: yes
       notify: Restart pulseaudio
 
     - name: Ensure pi-agent service is started and enabled

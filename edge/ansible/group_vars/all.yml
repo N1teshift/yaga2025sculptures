@@ -1,0 +1,15 @@
+---
+# All variables in this file will be available to all hosts.
+
+# Audio settings
+audio_sample_rate: 16000
+audio_channels: 1
+audio_bit_depth: 16
+
+# Darkice streaming settings
+darkice_quality: 0.3      # VBR quality (0.1 to 1.0)
+darkice_bitrate: 48       # Fallback bitrate if VBR is not used
+
+# MPV settings
+mpv_audio_device: "pulse/sculpture_sink"
+mpv_audio_format: "s16"

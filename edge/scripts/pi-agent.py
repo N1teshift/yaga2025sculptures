@@ -11,16 +11,38 @@ import paho.mqtt.client as mqtt
 import random
 import pwd
 import re
+import configparser
 
 # Configuration
 MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.8.156')
 MQTT_PORT = 1883
 SCULPTURE_ID = os.environ.get('SCULPTURE_ID', '1')
 SCULPTURE_DIR = '/opt/sculpture-system'
+AUDIO_CONFIG_PATH = '/etc/sculpture/audio.conf'
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def get_audio_config():
+    """Reads audio settings from the config file."""
+    config = configparser.ConfigParser()
+    # Provide default values consistent with the new centralized settings
+    config['audio'] = {
+        'samplerate': '22050',
+        'device': 'pulse/sculpture_sink'
+    }
+    
+    try:
+        if Path(AUDIO_CONFIG_PATH).exists():
+            config.read(AUDIO_CONFIG_PATH)
+            logger.info(f"Loaded audio configuration from {AUDIO_CONFIG_PATH}")
+        else:
+            logger.warning(f"Audio configuration file not found at {AUDIO_CONFIG_PATH}. Using default values.")
+    except Exception as e:
+        logger.error(f"Error reading audio config: {e}. Using default values.")
+        
+    return config['audio']
 
 def get_pactl_env():
     """Returns a suitable environment for running pactl from a systemd service."""
@@ -50,6 +72,7 @@ class SculptureAgent:
         self.is_muted = False      # Track mute state
         self.current_mode = "live"  # Track current mode (live/local)
         self._last_mute_error = None
+        self.audio_config = get_audio_config()
         
     def on_connect(self, client, userdata, flags, rc):
         logger.info(f"Connected to MQTT broker with result code {rc}")
@@ -190,42 +213,44 @@ class SculptureAgent:
             logger.error(f"Failed to restart agent: {e}")
             
     def update_loop_track(self, track_path):
-        """Update the player-loop service to use a different track"""
-        service_content = f"""[Unit]
-Description=Sculpture Loop Player
-After=sound.target
-Requires=sound.target
+        """Update the player-loop service to use a different track via a systemd drop-in file."""
+        service_name = 'player-loop.service'
+        drop_in_dir = Path(f'/etc/systemd/system/{service_name}.d')
+        drop_in_file = drop_in_dir / 'override.conf'
 
-[Service]
-Type=simple
-ExecStart=/usr/bin/mpv --no-video --audio-device=pulse/sculpture_sink --audio-samplerate=22050 --loop {track_path}
-Restart=always
-RestartSec=5
-User=pi
-Group=audio
-Nice=-10
+        samplerate = self.audio_config.get('samplerate', '22050')
+        device = self.audio_config.get('device', 'pulse/sculpture_sink')
+        audio_format = self.audio_config.get('format', 's16')
 
-# Environment variables
-Environment="XDG_RUNTIME_DIR=/run/user/1000"
+        # Ensure the drop-in directory exists
+        try:
+            if not drop_in_dir.exists():
+                logger.info(f"Creating systemd drop-in directory: {drop_in_dir}")
+                subprocess.run(['sudo', 'mkdir', '-p', str(drop_in_dir)], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to create systemd drop-in directory: {e}")
+            return
 
-# Security settings
-NoNewPrivileges=true
-PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target
+        # Create the drop-in file content
+        # This overrides only the ExecStart line of the service
+        override_content = f"""[Service]
+ExecStart=
+ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={samplerate} --audio-format={audio_format} --loop {track_path}
 """
         try:
-            # It's better to write to a temporary file and then move it to avoid
-            # a race condition where systemd might read an incomplete service file.
-            temp_path = '/tmp/player-loop.service.tmp'
+            # Write to a temporary file and then move it to be atomic
+            temp_path = '/tmp/sculpture-override.conf.tmp'
             with open(temp_path, 'w') as f:
-                f.write(service_content)
+                f.write(override_content)
+            
             # Use sudo to move the file into the system directory
-            subprocess.run(['sudo', 'mv', temp_path, '/etc/systemd/system/player-loop.service'], check=True)
+            subprocess.run(['sudo', 'mv', temp_path, str(drop_in_file)], check=True)
+            logger.info(f"Updated systemd drop-in for {service_name} to use track: {track_path}")
+
+            # Reload systemd and restart the service
             subprocess.run(['sudo', 'systemctl', 'daemon-reload'], check=True)
         except Exception as e:
-            logger.error(f"Failed to update loop service: {e}")
+            logger.error(f"Failed to update loop service drop-in: {e}")
             
     def get_system_status(self):
         """Get CPU, temperature, microphone level, output level, mute status and mode"""

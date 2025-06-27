@@ -16,8 +16,8 @@ settings.server.telnet.bind_addr.set("0.0.0.0")
 settings.server.telnet.port.set(1234)
 
 # Audio settings
-settings.frame.audio.samplerate.set(22050)
-settings.frame.audio.channels.set(1)
+settings.frame.audio.samplerate.set({{ audio_sample_rate }})
+settings.frame.audio.channels.set({{ audio_channels }})
 
 # Disable video to prevent it from overriding the audio samplerate
 settings.frame.video.width.set(0)
