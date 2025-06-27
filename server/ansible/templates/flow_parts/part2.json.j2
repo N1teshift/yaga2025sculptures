@@ -176,8 +176,8 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status {{ sculpture_id }}",
-        "func": "var data = msg.payload;\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic_level, topic: \"mic_level\"},\n    {payload: data.output_level, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"}\n];",
-        "outputs": 6,
+        "func": "var data = msg.payload;\nflow.set('sculpture_{{ sculpture_id }}_status', data);\n\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic_level, topic: \"mic_level\"},\n    {payload: data.output_level, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"},\n    {payload: data.mode}\n];",
+        "outputs": 7,
         "noerr": 0,
         "x": 240,
         "y": 420,
@@ -199,6 +199,9 @@
             ],
             [
                 "sculpture{{ sculpture_id }}_mute_state"
+            ],
+            [
+                "load_track_button_state_{{ sculpture_id }}"
             ]
         ]
     },
@@ -425,27 +428,39 @@
     },
     {
         "id": "load_track_button_{{ sculpture_id }}",
-        "type": "ui_button",
+        "type": "ui_template",
         "z": "sculpture_dashboard",
-        "name": "",
         "group": "ui_group_sculpture{{ sculpture_id }}",
+        "name": "Load Track Button",
         "order": 4,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Load Local Track",
-        "tooltip": "Switch to local mode and play the selected track",
-        "color": "",
-        "bgcolor": "",
-        "icon": "fa-play",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "",
+        "width": 6,
+        "height": 1,
+        "format": "{% raw %}<md-button class=\"md-raised\" ng-disabled=\"msg.mode === 'live'\" ng-style=\"{'opacity': msg.mode === 'live' ? 0.4 : 1.0}\" ng-click=\"send({payload: ''})\"><i class=\"fa fa-play\"></i> Load Local Track</md-button>{% endraw %}",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": false,
+        "templateScope": "local",
         "x": 180,
         "y": 700,
         "wires": [
             [
                 "prepare_load_track_cmd_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
+        "id": "load_track_button_state_{{ sculpture_id }}",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Update Load Button State",
+        "func": "msg.mode = msg.payload;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 400,
+        "y": 740,
+        "wires": [
+            [
+                "load_track_button_{{ sculpture_id }}"
             ]
         ]
     },
@@ -462,6 +477,38 @@
         "wires": [
             [
                 "mqtt_out_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
+        "id": "sculpture{{ sculpture_id }}_plan_in",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "plan_broadcast_in",
+        "links": [
+            "plan_broadcast_out"
+        ],
+        "x": 175,
+        "y": 740,
+        "wires": [
+            [
+                "store_plan_and_update_button_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
+        "id": "store_plan_and_update_button_{{ sculpture_id }}",
+        "type": "function",
+        "z": "sculpture_dashboard",
+        "name": "Store Plan & Update Button",
+        "func": "flow.set('system_plan', msg.payload.name);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 420,
+        "y": 740,
+        "wires": [
+            [
+                "load_track_button_state_{{ sculpture_id }}"
             ]
         ]
     }
