@@ -5,12 +5,13 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --audio-device={{ mpv_audio_device }} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --loop /opt/sculpture-system/test1.wav
+ExecStart=/usr/bin/mpv --no-video --audio-device={{ mpv_audio_device }} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --loop /opt/sculpture-system/loops/test1.wav --audio-buffer=5 --log-file=/tmp/mpv-loop-{{ id }}.log
 Restart=always
 RestartSec=5
 User=pi
 Group=audio
 Nice=-10
+SuccessExitStatus=4
 
 # Environment variables
 Environment="XDG_RUNTIME_DIR=/run/user/1000"

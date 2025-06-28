@@ -235,7 +235,7 @@ class SculptureAgent:
         # This overrides only the ExecStart line of the service
         override_content = f"""[Service]
 ExecStart=
-ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={samplerate} --audio-format={audio_format} --loop {track_path}
+ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={samplerate} --audio-format={audio_format} --loop {track_path} --audio-buffer=5
 """
         try:
             # Write to a temporary file and then move it to be atomic
