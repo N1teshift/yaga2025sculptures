@@ -66,11 +66,12 @@
         state: present
       register: i2s_on
 
-    - name: Remove conflicting dtparam=audio=off to prevent I2S sync errors
+    - name: Disable built-in audio to prevent I2S conflicts
       lineinfile:
         path: "{{ boot_cfg }}"
-        regexp: '^dtparam=audio=off'
-        state: absent
+        regexp: '^dtparam=audio='
+        line: 'dtparam=audio=off'
+        state: present
       register: audio_off
 
     - name: Reboot if audio configuration changed
