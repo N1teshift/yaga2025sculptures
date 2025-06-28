@@ -25,6 +25,7 @@
           - alsa-utils
           - python3-pip
           - git
+          - pulsemixer
         state: present
 
     - name: Install PulseAudio (PulseAudio mode only)
