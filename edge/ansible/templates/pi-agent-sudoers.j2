@@ -9,10 +9,12 @@ Defaults!/bin/systemctl,/bin/mkdir,/bin/mv !syslog
 pi ALL=(ALL) NOPASSWD: /bin/systemctl stop player-loop.service, \
                        /bin/systemctl start darkice.service, \
                        /bin/systemctl start player-live.service, \
+                       /bin/systemctl start player-loop.service, \
                        /bin/systemctl stop darkice.service, \
                        /bin/systemctl stop player-live.service, \
                        /bin/systemctl restart player-loop.service, \
                        /bin/systemctl restart darkice.service, \
+                       /bin/systemctl restart pi-agent.service, \
                        /bin/systemctl daemon-reload, \
                        /bin/mkdir -p /etc/systemd/system/player-loop.service.d, \
                        /bin/mv /tmp/sculpture-override.conf.tmp /etc/systemd/system/player-loop.service.d/override.conf 
