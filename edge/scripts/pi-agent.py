@@ -342,13 +342,13 @@ ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={sa
 
             status = {
                 'sculpture_id': self.sculpture_id,
-                'cpu_usage': cpu_usage,
-                'temperature': temperature,
-                'mic_level': mic_level,
-                'output_level': output_level,
+                'cpu_usage': round(cpu_usage),
+                'temperature': round(temperature),
+                'mic_level': round(mic_level),
+                'output_level': round(output_level),
                 'mode': self.current_mode,
                 'is_muted': self.is_muted,
-                'timestamp': time.time()
+                'timestamp': round(time.time())
             }
             if error_message:
                 status['error'] = error_message
@@ -363,7 +363,7 @@ ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={sa
                 'output_level': -60,
                 'mode': self.current_mode,
                 'is_muted': self.is_muted,
-                'timestamp': time.time(),
+                'timestamp': round(time.time()),
                 'error': str(e)
             }
             

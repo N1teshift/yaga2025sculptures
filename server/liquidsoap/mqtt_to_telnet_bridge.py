@@ -53,6 +53,11 @@ def on_message(client, userdata, msg):
     try:
         payload = msg.payload.decode('utf-8')
         data = json.loads(payload)
+
+        # If 'command' key exists, ignore the message
+        if 'command' in data:
+            return
+
         plan = data.get('plan')
         if plan:
             print(f"Received plan: {plan}, sending to Liquidsoap...", file=sys.stderr)
