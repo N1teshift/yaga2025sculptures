@@ -94,8 +94,10 @@ class AudioManager:
         mic_level = -60.0  # Default to silence
         try:
             # Use the special name @DEFAULT_SOURCE@ to listen to the system's default microphone
+            # This command captures a 0.1s audio sample, finds the peak value, and converts it to dB.
+            # This is more stable than measuring a single sample.
             mic_output = subprocess.check_output(
-                "parec --raw --device=@DEFAULT_SOURCE@ | od -N 2 -d | head -n 1 | awk '{ val = $2; if (val < 0) val = -val; print 20*(log( (val+0.0001) / 32767) / log(10)) }'",
+                "timeout 0.1s parec --raw --device=@DEFAULT_SOURCE@ | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
                 shell=True,
                 timeout=0.5,
                 stderr=subprocess.PIPE,
@@ -114,8 +116,9 @@ class AudioManager:
         output_level = -60.0  # Default to silence
         try:
             # Use the special name sculpture_sink.monitor to listen to the sink's output
+            # This command captures a 0.1s audio sample, finds the peak value, and converts it to dB.
             output_output = subprocess.check_output(
-                "parec --raw --device=sculpture_sink.monitor | od -N 2 -d | head -n 1 | awk '{ val = $2; if (val < 0) val = -val; print 20*(log( (val+0.0001) / 32767) / log(10)) }'",
+                "timeout 0.1s parec --raw --device=sculpture_sink.monitor | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
                 shell=True,
                 timeout=0.5,
                 stderr=subprocess.PIPE,
