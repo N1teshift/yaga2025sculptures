@@ -130,7 +130,7 @@ update_mixes()
 
 # Output to Icecast
 output.icecast(
-  %vorbis(quality=0.3, channels=1),
+  %vorbis(quality={{ darkice_quality }}, channels={{ audio_channels }}),
   host="localhost",
   port=8000,
   password="hackme",
@@ -141,7 +141,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.3, channels=1),
+  %vorbis(quality={{ darkice_quality }}, channels={{ audio_channels }}),
   host="localhost",
   port=8000,
   password="hackme",
@@ -152,7 +152,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.3, channels=1),
+  %vorbis(quality={{ darkice_quality }}, channels={{ audio_channels }}),
   host="localhost",
   port=8000,
   password="hackme",
