@@ -60,6 +60,6 @@ def test_cpu_parse_error_included(monkeypatch):
 
     status = agent.get_system_status()
 
-    assert status['cpu_usage'] == 0
+    assert status['cpu'] == 0
     assert 'error' in status
     assert "Cpu(s): us," in status['error']

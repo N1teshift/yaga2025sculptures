@@ -341,14 +341,14 @@ ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={sa
                 pass # Keep default on error
 
             status = {
-                'sculpture_id': self.sculpture_id,
-                'cpu_usage': round(cpu_usage),
-                'temperature': round(temperature),
-                'mic_level': round(mic_level),
-                'output_level': round(output_level),
+                'id': self.sculpture_id,
+                'cpu': round(cpu_usage),
+                'temp': round(temperature),
+                'mic': round(mic_level),
+                'output': round(output_level),
                 'mode': self.current_mode,
                 'is_muted': self.is_muted,
-                'timestamp': round(time.time())
+                'time': round(time.time())
             }
             if error_message:
                 status['error'] = error_message
@@ -356,14 +356,14 @@ ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={sa
         except Exception as e:
             logger.error(f"Failed to get system status: {e}")
             return {
-                'sculpture_id': self.sculpture_id,
-                'cpu_usage': 0,
-                'temperature': 0,
-                'mic_level': -60,
-                'output_level': -60,
+                'id': self.sculpture_id,
+                'cpu': 0,
+                'temp': 0,
+                'mic': -60,
+                'output': -60,
                 'mode': self.current_mode,
                 'is_muted': self.is_muted,
-                'timestamp': round(time.time()),
+                'time': round(time.time()),
                 'error': str(e)
             }
             

@@ -176,7 +176,7 @@
         "type": "function",
         "z": "sculpture_dashboard",
         "name": "Parse Status {{ sculpture_id }}",
-        "func": "var data = msg.payload;\nflow.set('sculpture_{{ sculpture_id }}_status', data);\n\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu_usage, topic: \"cpu\"},\n    {payload: data.temperature, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic_level, topic: \"mic_level\"},\n    {payload: data.output_level, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"},\n    {payload: data.mode}\n];",
+        "func": "var data = msg.payload;\nflow.set('sculpture_{{ sculpture_id }}_status', data);\n\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu, topic: \"cpu\"},\n    {payload: data.temp, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic, topic: \"mic_level\"},\n    {payload: data.output, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"},\n    {payload: data.mode}\n];",
         "outputs": 7,
         "noerr": 0,
         "x": 240,
