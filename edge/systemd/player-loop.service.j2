@@ -5,7 +5,7 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --audio-device={{ mpv_audio_device }} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --loop /opt/sculpture-system/loops/test1.wav
+ExecStart=/usr/bin/mpv --no-video --audio-device={{ mpv_audio_device }} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --loop /opt/sculpture-system/test1.wav
 Restart=always
 RestartSec=5
 User=pi

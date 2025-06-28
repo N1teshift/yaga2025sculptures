@@ -58,17 +58,25 @@
         line: 'dtoverlay=iqaudio-codec'
       register: overlay
 
-    - name: Disable built-in audio
+    - name: Enable I2S for audio HAT
       lineinfile:
         path: "{{ boot_cfg }}"
-        regexp: '^dtparam=audio='
-        line: 'dtparam=audio=off'
+        regexp: '^#? *dtparam=i2s=on'
+        line: 'dtparam=i2s=on'
+        state: present
+      register: i2s_on
+
+    - name: Remove conflicting dtparam=audio=off to prevent I2S sync errors
+      lineinfile:
+        path: "{{ boot_cfg }}"
+        regexp: '^dtparam=audio=off'
+        state: absent
       register: audio_off
 
     - name: Reboot if audio configuration changed
       reboot:
         reboot_timeout: 300
-      when: overlay.changed or audio_off.changed
+      when: overlay.changed or i2s_on.changed or audio_off.changed
 
     - name: Clone Pi-Codec repository
       git:
@@ -79,12 +87,6 @@
     - name: Create sculpture system directory
       file:
         path: "{{ sculpture_dir }}"
-        state: directory
-        mode: '0755'
-
-    - name: Create loops directory
-      file:
-        path: "{{ sculpture_dir }}/loops"
         state: directory
         mode: '0755'
 
@@ -109,14 +111,14 @@
     - name: Convert loop files to the correct format locally
       local_action:
         module: ansible.builtin.shell
-        cmd: 'for f in ../../samples/loops/*.wav; do ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "/tmp/converted_loops/$(basename "$f")"; done'
+        cmd: 'for f in ../../samples/*.wav; do ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "/tmp/converted_loops/$(basename "$f")"; done'
       become: no
       run_once: true
 
     - name: Copy the CONVERTED loop files to the edge device
       ansible.builtin.copy:
         src: /tmp/converted_loops/
-        dest: /opt/sculpture-system/loops/
+        dest: /opt/sculpture-system/
         owner: pi
         group: audio
         mode: '0644'
@@ -234,17 +236,12 @@
         state: started
 
     - name: Grant pi-agent limited sudo access for service management
-      copy:
+      template:
+        src: templates/pi-agent-sudoers.j2
         dest: "/etc/sudoers.d/pi-agent-sudo"
-        content: |
-          # Allow pi user to start/stop/restart services required by pi-agent
-          pi ALL=(ALL) NOPASSWD: /bin/systemctl start darkice.service, /bin/systemctl stop darkice.service, /bin/systemctl restart darkice.service
-          pi ALL=(ALL) NOPASSWD: /bin/systemctl start player-loop.service, /bin/systemctl stop player-loop.service, /bin/systemctl restart player-loop.service
-          pi ALL=(ALL) NOPASSWD: /bin/systemctl start player-live.service, /bin/systemctl stop player-live.service, /bin/systemctl restart player-live.service
-          pi ALL=(ALL) NOPASSWD: /bin/systemctl restart pi-agent.service
         owner: root
         group: root
-        mode: '0440'
+        mode: "0440"
         validate: 'visudo -cf %s'
 
   handlers:

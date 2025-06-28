@@ -89,8 +89,8 @@ This command runs the main Ansible playbook, which automates the entire configur
 *   **3. Application & Audio Files:**
     *   Clones the official `Pi-Codec` git repository, which may contain helper scripts for the audio HAT.
     *   Creates the main application directory at `/opt/sculpture-system`.
-    *   **On your control machine**, it converts all sample `.wav` files from the `samples/loops` directory into the required format using `ffmpeg`.
-    *   Copies the converted audio files from your machine to the `/opt/sculpture-system/loops/` directory on each Pi.
+    *   **On your control machine**, it converts all sample `.wav` files from the `samples` directory into the required format using `ffmpeg`.
+    *   Copies the converted audio files from your machine to the `/opt/sculpture-system/` directory on each Pi.
     *   Copies the main `pi-agent.py` control script to `/opt/sculpture-system/` on each Pi.
 
 *   **4. Configuration:**

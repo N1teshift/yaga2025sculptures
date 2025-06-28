@@ -114,7 +114,7 @@ class SculptureAgent:
     def handle_get_tracks(self):
         """List audio tracks and publish them to the tracks topic."""
         try:
-            loops_dir = Path(SCULPTURE_DIR) / 'loops'
+            loops_dir = Path(SCULPTURE_DIR)
             if not loops_dir.is_dir():
                 logger.warning(f"Loops directory not found: {loops_dir}")
                 tracks = []
@@ -148,7 +148,7 @@ class SculptureAgent:
                 
                 # Update track if specified
                 if track:
-                    track_path = Path(SCULPTURE_DIR) / 'loops' / track
+                    track_path = Path(SCULPTURE_DIR) / track
                     if track_path.exists():
                         # Update the service to use the new track
                         self.update_loop_track(str(track_path))
