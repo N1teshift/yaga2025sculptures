@@ -15,7 +15,6 @@ MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.8.156')
 MQTT_PORT = 1883
 SCULPTURE_ID = os.environ.get('SCULPTURE_ID', '1')
 SCULPTURE_DIR = '/opt/sculpture-system'
-AUDIO_CONFIG_PATH = '/etc/sculpture/audio.conf'
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -31,7 +30,7 @@ class SculptureAgent:
         self.client.on_message = self.on_message
         
         # Initialize components
-        self.audio_manager = AudioManager(AUDIO_CONFIG_PATH)
+        self.audio_manager = AudioManager()
         self.system_manager = SystemManager(SCULPTURE_DIR)
         self.status_collector = StatusCollector(SCULPTURE_ID)
         

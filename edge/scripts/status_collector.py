@@ -57,7 +57,7 @@ class StatusCollector:
             logger.error(f"Failed to get temperature: {e}")
             return 0.0
     
-    def build_status(self, current_mode, is_muted, mic_level, output_level, error_message=None):
+    def build_status(self, current_mode, is_muted, mic_level, output_level, current_plan=None, error_message=None):
         """Build the complete status dictionary."""
         cpu_usage, cpu_error = self.get_cpu_usage()
         temperature = self.get_temperature()
@@ -76,6 +76,10 @@ class StatusCollector:
             'is_muted': is_muted,
             'time': round(time.time())
         }
+        
+        # Include current plan if provided
+        if current_plan:
+            status['plan'] = current_plan
         
         if error_message:
             status['error'] = error_message

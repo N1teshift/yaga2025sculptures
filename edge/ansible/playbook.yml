@@ -138,19 +138,6 @@
         dest: "{{ sculpture_dir }}/darkice.cfg"
         mode: '0644'
 
-    - name: Create sculpture config directory
-      file:
-        path: /etc/sculpture
-        state: directory
-        mode: '0755'
-
-    - name: Template pi-agent audio configuration
-      template:
-        src: templates/audio.conf.j2
-        dest: /etc/sculpture/audio.conf
-        mode: '0644'
-      notify: Restart pi-agent
-
     - name: Configure PulseAudio for the target sample rate
       lineinfile:
         path: /etc/pulse/daemon.conf
@@ -162,11 +149,32 @@
         - { regexp: '^; alternate-sample-rate = .*', line: 'alternate-sample-rate = {{ audio_sample_rate }}' }
       notify: Restart pulseaudio
 
-    - name: Copy pi-agent script
-      copy:
-        src: ../scripts/pi-agent.py
+    - name: Template pi-agent script
+      template:
+        src: templates/pi-agent.py.j2
         dest: "{{ sculpture_dir }}/pi-agent.py"
         mode: '0755'
+      notify: Restart pi-agent
+
+    - name: Template audio manager module
+      template:
+        src: templates/audio_manager.py.j2
+        dest: "{{ sculpture_dir }}/audio_manager.py"
+        mode: '0644'
+      notify: Restart pi-agent
+
+    - name: Template system manager module
+      template:
+        src: templates/system_manager.py.j2
+        dest: "{{ sculpture_dir }}/system_manager.py"
+        mode: '0644'
+      notify: Restart pi-agent
+
+    - name: Copy status collector module
+      copy:
+        src: ../scripts/status_collector.py
+        dest: "{{ sculpture_dir }}/status_collector.py"
+        mode: '0644'
       notify: Restart pi-agent
 
     - name: Install darkice systemd service

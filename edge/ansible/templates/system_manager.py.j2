@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+
+import subprocess
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+class SystemManager:
+    """Handles system service management and mode switching."""
+    
+    def __init__(self, sculpture_dir='/opt/sculpture-system'):
+        self.sculpture_dir = sculpture_dir
+        self.current_mode = "live"
+        
+    def switch_to_live_mode(self):
+        """Switch to live mode - streaming and playback from server."""
+        try:
+            logger.info("Switching to live mode")
+            self.current_mode = "live"
+            # Stop local playback
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
+            # Start live streaming and playback
+            subprocess.run(['sudo', 'systemctl', 'start', 'darkice.service'], check=True)
+            subprocess.run(['sudo', 'systemctl', 'start', 'player-live.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to switch to live mode: {e}")
+            raise
+    
+    def switch_to_local_mode(self, track=None, audio_config=None):
+        """Switch to local mode - playback from local files."""
+        try:
+            logger.info(f"Switching to local mode with track: {track}")
+            self.current_mode = "local"
+            # Stop live services
+            subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
+            
+            # Update track if specified
+            if track:
+                track_path = Path(self.sculpture_dir) / track
+                if track_path.exists():
+                    # Update the service to use the new track
+                    self.update_loop_track(str(track_path), audio_config)
+                else:
+                    logger.warning(f"Track not found: {track_path}")
+                    
+            # Restart local playback to apply the new track
+            subprocess.run(['sudo', 'systemctl', 'restart', 'player-loop.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to switch to local mode: {e}")
+            raise
+    
+    def stop_all_services(self):
+        """Stop all audio-related services (emergency stop)."""
+        try:
+            logger.info("Stopping all audio services due to emergency stop command.")
+            # Stop both live and local playback services
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
+            # Stop the microphone streaming service
+            subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+            self.current_mode = "idle"
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to stop services during emergency stop: {e}")
+            raise
+    
+    def restart_darkice(self):
+        """Restart the darkice service."""
+        try:
+            logger.info("Restarting darkice.service via systemctl")
+            subprocess.run(['sudo', 'systemctl', 'restart', 'darkice.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to restart darkice: {e}")
+            raise
+    
+    def restart_all_services(self):
+        """Restart all sculpture services in the correct order."""
+        try:
+            logger.info("Restarting all sculpture services...")
+            
+            # Step 1: Stop all audio services first (cleanly shut down)
+            logger.info("Stopping all audio services...")
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+            
+            # Step 2: Restart darkice (audio capture/streaming)
+            logger.info("Starting darkice service...")
+            subprocess.run(['sudo', 'systemctl', 'start', 'darkice.service'], check=True)
+            
+            # Step 3: Restart the appropriate player service based on current mode
+            if self.current_mode == "live":
+                logger.info("Starting player-live service (live mode)...")
+                subprocess.run(['sudo', 'systemctl', 'start', 'player-live.service'], check=True)
+            elif self.current_mode == "local":
+                logger.info("Starting player-loop service (local mode)...")
+                subprocess.run(['sudo', 'systemctl', 'start', 'player-loop.service'], check=True)
+            # If mode is "idle", don't start any player services
+            
+            # Step 4: Restart pi-agent service (this will kill the current process)
+            logger.info("Restarting pi-agent service (this will restart the current process)...")
+            subprocess.run(['sudo', 'systemctl', 'restart', 'pi-agent.service'], check=True)
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to restart all services: {e}")
+            raise
+    
+    def get_available_tracks(self):
+        """Get list of available audio tracks."""
+        try:
+            loops_dir = Path(self.sculpture_dir)
+            if not loops_dir.is_dir():
+                logger.warning(f"Loops directory not found: {loops_dir}")
+                return []
+            else:
+                tracks = sorted([f.name for f in loops_dir.iterdir() 
+                               if f.is_file() and f.suffix in ['.wav', '.mp3', '.flac']])
+                logger.info(f"Found tracks: {tracks}")
+                return tracks
+        except Exception as e:
+            logger.error(f"Error getting tracks: {e}")
+            return []
+    
+    def update_loop_track(self, track_path, audio_config=None):
+        """Update the player-loop service to use a different track via a systemd drop-in file."""
+        if audio_config is None:
+            # Default audio config from Ansible all.yml variables
+            audio_config = {
+                'samplerate': '{{ audio_sample_rate }}',
+                'device': '{{ mpv_audio_device }}',
+                'format': '{{ mpv_audio_format }}'
+            }
+            
+        service_name = 'player-loop.service'
+        drop_in_dir = Path(f'/etc/systemd/system/{service_name}.d')
+        drop_in_file = drop_in_dir / 'override.conf'
+
+        samplerate = audio_config.get('samplerate', '{{ audio_sample_rate }}')
+        device = audio_config.get('device', '{{ mpv_audio_device }}')
+        audio_format = audio_config.get('format', '{{ mpv_audio_format }}')
+
+        # Ensure the drop-in directory exists
+        try:
+            if not drop_in_dir.exists():
+                logger.info(f"Creating systemd drop-in directory: {drop_in_dir}")
+                subprocess.run(['sudo', 'mkdir', '-p', str(drop_in_dir)], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to create systemd drop-in directory: {e}")
+            raise
+
+        # Create the drop-in file content
+        # This overrides only the ExecStart line of the service
+        override_content = f"""[Service]
+ExecStart=
+ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={samplerate} --audio-format={audio_format} --loop {track_path} --audio-buffer=5
+"""
+        try:
+            # Write to a temporary file and then move it to be atomic
+            temp_path = '/tmp/sculpture-override.conf.tmp'
+            with open(temp_path, 'w') as f:
+                f.write(override_content)
+            
+            # Use sudo to move the file into the system directory
+            subprocess.run(['sudo', 'mv', temp_path, str(drop_in_file)], check=True)
+            logger.info(f"Updated systemd drop-in for {service_name} to use track: {track_path}")
+
+            # Reload systemd and restart the service
+            subprocess.run(['sudo', 'systemctl', 'daemon-reload'], check=True)
+        except Exception as e:
+            logger.error(f"Failed to update loop service drop-in: {e}")
+            raise 
