@@ -6,7 +6,7 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --audio-device={{ mpv_audio_device }} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --cache=yes --cache-secs=60 --demuxer-max-bytes=20M --audio-buffer=5 --msg-level=all=v --log-file=/tmp/mpv-live-{{ id }}.log --input-ipc-server=/tmp/mpvsocket-{{ id }} http://{{ control_host }}:8000/mix-for-{{ id }}.ogg
+ExecStart=/usr/bin/mpv --no-video --audio-device={% if audio_backend == 'pulse' %}{{ mpv_audio_device }}{% else %}alsa/hw:CARD=IQaudIOCODEC,DEV=0{% endif %} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --cache=yes --cache-secs=60 --demuxer-max-bytes=20M --audio-buffer=5 --msg-level=all=v --log-file=/tmp/mpv-live-{{ id }}.log --input-ipc-server=/tmp/mpvsocket-{{ id }} http://{{ control_host }}:8000/mix-for-{{ id }}.ogg
 Restart=always
 RestartSec=5
 User=pi

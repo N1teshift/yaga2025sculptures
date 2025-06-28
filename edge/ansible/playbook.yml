@@ -21,12 +21,17 @@
           - darkice
           - mpv
           - python3-paho-mqtt
-          - pulseaudio
           - rsync
           - alsa-utils
           - python3-pip
           - git
         state: present
+
+    - name: Install PulseAudio (PulseAudio mode only)
+      apt:
+        name: pulseaudio
+        state: present
+      when: audio_backend == 'pulse'
 
     - name: Disable WiFi power saving
       copy:
@@ -79,27 +84,38 @@
         reboot_timeout: 300
       when: overlay.changed or i2s_on.changed or audio_off.changed
 
-    - name: Clone Pi-Codec repository
-      git:
-        repo: https://github.com/raspberrypi/Pi-Codec.git
-        dest: "{{ sculpture_dir }}/Pi-Codec"
-        version: master
-
     - name: Create sculpture system directory
       file:
         path: "{{ sculpture_dir }}"
         state: directory
         mode: '0755'
 
-    - name: Ensure ffmpeg is installed on the control node (using apt for Debian/Ubuntu)
+    - name: Clone Pi-Codec repository
+      git:
+        repo: https://github.com/raspberrypi/Pi-Codec.git
+        dest: "{{ sculpture_dir }}/Pi-Codec"
+        version: master
+
+    - name: Check if ffmpeg is available on the control node
       local_action:
-        module: ansible.builtin.apt
-        name: ffmpeg
-        state: present
-        update_cache: yes
-      become: yes
-      become_method: sudo
-      run_once: true # We only need to check this once
+        module: ansible.builtin.command
+        cmd: which ffmpeg
+      become: no
+      run_once: true
+      register: ffmpeg_check
+      failed_when: false
+
+    - name: Fail with helpful message if ffmpeg is not installed
+      fail:
+        msg: |
+          ffmpeg is not installed on the control node. Please install it with:
+          
+          On Ubuntu/Debian: sudo apt update && sudo apt install ffmpeg
+          On WSL Ubuntu: sudo apt update && sudo apt install ffmpeg
+          
+          Then re-run the playbook.
+      when: ffmpeg_check.rc != 0
+      run_once: true
 
     - name: Create a temporary local directory for converted loops
       local_action:
@@ -148,6 +164,17 @@
         - { regexp: '^; default-sample-rate = .*', line: 'default-sample-rate = {{ audio_sample_rate }}' }
         - { regexp: '^; alternate-sample-rate = .*', line: 'alternate-sample-rate = {{ audio_sample_rate }}' }
       notify: Restart pulseaudio
+      when: audio_backend == 'pulse'
+
+    - name: Template ALSA state for CodecZero
+      template:
+        src: templates/asound.state.j2
+        dest: /var/lib/alsa/asound.state
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart alsa-restore
+      when: audio_backend == 'alsa'
 
     - name: Template pi-agent script
       template:
@@ -213,6 +240,16 @@
         mode: '0644'
       notify: Restart pi-agent
 
+    - name: Install alsa-restore systemd service (ALSA mode only)
+      template:
+        src: ../systemd/alsa-restore.service.j2
+        dest: /etc/systemd/system/alsa-restore.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart alsa-restore
+      when: audio_backend == 'alsa'
+
     - name: Enable and start services
       systemd:
         name: "{{ item }}"
@@ -223,6 +260,14 @@
         - darkice.service
         - player-live.service
         - pi-agent.service
+
+    - name: Enable and start alsa-restore service (ALSA mode only)
+      systemd:
+        name: alsa-restore.service
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      when: audio_backend == 'alsa'
 
     - name: Ensure player-loop is disabled by default
       systemd:
@@ -237,6 +282,7 @@
         line: 'load-module module-null-sink sink_name=sculpture_sink sink_properties=device.description=Sculpture_Sink channel_map={{ "mono" if audio_channels == 1 else "stereo" }}'
         state: present
       notify: Restart pulseaudio
+      when: audio_backend == 'pulse'
 
     - name: Ensure pi-agent service is started and enabled
       systemd:
@@ -259,6 +305,7 @@
       become: yes
       become_user: pi
       listen: "Restart pulseaudio"
+      when: audio_backend == 'pulse'
 
     - name: Reboot for audio config
       reboot:
@@ -281,6 +328,12 @@
       systemd:
         daemon_reload: yes
         name: player-loop.service
+        state: restarted
+
+    - name: Restart alsa-restore
+      systemd:
+        daemon_reload: yes
+        name: alsa-restore.service
         state: restarted
 
     - name: Restart pi-agent
