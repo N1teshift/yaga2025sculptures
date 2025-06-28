@@ -125,6 +125,22 @@
         ]
     },
     {
+        "id": "set_initial_volume_link_in_{{ sculpture_id }}",
+        "type": "link in",
+        "z": "sculpture_dashboard",
+        "name": "set_initial_volume_link_in_{{ sculpture_id }}",
+        "links": [
+            "set_initial_volume_link_out"
+        ],
+        "x": 620,
+        "y": 520,
+        "wires": [
+            [
+                "volume_slider_{{ sculpture_id }}"
+            ]
+        ]
+    },
+    {
         "id": "volume_format_{{ sculpture_id }}",
         "type": "function",
         "z": "sculpture_dashboard",

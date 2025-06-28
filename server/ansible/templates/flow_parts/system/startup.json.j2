@@ -65,4 +65,43 @@
     "x": 370,
     "y": 80,
     "wires": []
+},
+{
+    "id": "set_initial_volume_inject",
+    "type": "inject",
+    "z": "sculpture_dashboard",
+    "name": "Set Initial Volume on Startup",
+    "props": [
+        {
+            "p": "payload"
+        }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "1.5",
+    "topic": "",
+    "payload": "1",
+    "payloadType": "num",
+    "x": 170,
+    "y": 40,
+    "wires": [
+        [
+            "set_initial_volume_link_out"
+        ]
+    ]
+},
+{
+    "id": "set_initial_volume_link_out",
+    "type": "link out",
+    "z": "sculpture_dashboard",
+    "name": "Set Initial Volume",
+    "links": [
+        "set_initial_volume_link_in_1",
+        "set_initial_volume_link_in_2",
+        "set_initial_volume_link_in_3"
+    ],
+    "x": 370,
+    "y": 40,
+    "wires": []
 } 
