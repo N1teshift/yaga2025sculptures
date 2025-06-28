@@ -16,3 +16,6 @@ darkice_bitrate: 32       # Fallback bitrate if VBR is not used
 # MPV settings
 mpv_audio_device: "pulse/sculpture_sink"
 mpv_audio_format: "s16"
+mpv_audio_buffer_secs: 10
+mpv_cache_secs: 60
+mpv_demuxer_max_bytes: "20M"

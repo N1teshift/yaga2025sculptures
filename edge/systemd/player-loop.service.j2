@@ -5,7 +5,7 @@ Requires=sound.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/mpv --no-video --audio-device={% if audio_backend == 'pulse' %}{{ mpv_audio_device }}{% else %}alsa/hw:CARD=IQaudIOCODEC,DEV=0{% endif %} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --loop /opt/sculpture-system/loops/test1.wav --audio-buffer=5 --log-file=/tmp/mpv-loop-{{ id }}.log
+ExecStart=/usr/bin/mpv --no-video --audio-device={% if audio_backend == 'pulse' %}{{ mpv_audio_device }}{% else %}alsa/hw:CARD=IQaudIOCODEC,DEV=0{% endif %} --audio-samplerate={{ audio_sample_rate }} --audio-format={{ mpv_audio_format }} --loop /opt/sculpture-system/loops/test1.wav --audio-buffer={{ mpv_audio_buffer_secs }} --log-file=/tmp/mpv-loop-{{ id }}.log
 Restart=always
 RestartSec=5
 User=pi
