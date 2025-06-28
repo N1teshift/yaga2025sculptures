@@ -156,6 +156,97 @@ ansible-playbook server/ansible/install_control_node.yml
 
 ## Testing
 
+### 1. Test if WSL services are running
+```bash
+sudo systemctl status icecast2
+sudo systemctl status liquidsoap
+sudo systemctl status mosquitto
+sudo systemctl status mqtt_to_telnet_bridge
+sudo systemctl status node-red
+```
+
+### 2. Check CPU load averages of one of the Pis
+```bash
+htop
+```
+Load averages should be below 1.
+
+### 3. Test Pi services status
+```bash
+sudo systemctl status darkice
+```
+
+```bash
+sudo systemctl status pi-agent
+```
+
+Check if in player-live script mpv player is set to your prefered audio settings.
+
+```bash
+sudo systemctl status player-live
+```
+
+### 4. Check Icecast2 mounts existance
+http://localhost:8000/admin/listmounts.xsl
+
+Should see six mounts: mix-for-1, mix-for-2, mix-for-3, s1-mic, s2-mic, s3-mic.
+
+If you dont see mix-for-1, mix-for-2, mix-for-3 - it means liquidsoap is bad.
+
+If you dont see s1-mic, s2-mic, s3-mic - it means darkice is bad or the microphones. In such case on each Pi execute:
+```bash
+sudo systemctl restart darkice
+```
+
+### 5. Test Icecast2 mounts in VLC
+Check if the desired microphone sound encoding coming from darkice matches the mix stream encoding coming from liquidsoap.
+
+http://localhost:8000/s1-mic.ogg
+http://localhost:8000/s2-mic.ogg
+http://localhost:8000/s3-mic.ogg
+
+http://localhost:8000/mix-for-1.ogg
+http://localhost:8000/mix-for-2.ogg
+http://localhost:8000/mix-for-3.ogg
+
+### 6. Test sculpture_sink.monitor sound
+```bash
+ssh pi@<RASPBERRY_PI_IP> "pacat -r -d sculpture_sink.monitor" | pacat -p
+```
+
+### 7. Test Node-red connection with sculpture_sink.monitor
+1. While listening to stream from sculpture_sink.monitor in your select Pi go to http://localhost:1880/api/ui
+
+2. Check if CPU, Temperature, Microphone Level and Output Level gauges are active.
+
+3. Slide the volume slider, the sound in sculpture_sink.monitur should change accordingly. Also you should see changes live in these:
+
+```bash
+journalctl -u pi-agent -f
+```
+
+```bash
+mosquitto_sub -h localhost -t '#'
+```
+
+4.  Press the red MUTE button - the sculpture_sink.monitor sound should disapear and the red MUTE button should turn to a green UNMUTE button.
+
+5.  Press the green UNMUTE button - the sculpture_sink.monitor sound should reapear and the green UNMUTE button should turn to a red MUTE button.
+
+6. Click PLAN D button to test local tracks playback. The modes of all sculptures should change from LIVE to LOCAL. Listen in the sculpture_sink.monitor if the default test1.wav track is playing.
+
+7. Check if in player-loop script mpv player is set to your prefered audio settings.
+
+```bash
+sudo systemctl restart player-loop
+journalctl -u player-loop.service -f
+```
+
+8. In the Select Track dropdown select a prefered track and then click the LOAD LOCAL TRACK button below. This should change the track in the player-loop script.
+
+9. Change plan back to B1 or A1. This should disable the LOAD LOCAL TRACK buttons and make the live sound come back.
+
+10. 
 
 
 ## Troubleshooting

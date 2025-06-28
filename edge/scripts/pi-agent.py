@@ -207,8 +207,8 @@ class SculptureAgent:
 
     def handle_restart_command(self):
         try:
-            logger.info("Restarting pi-agent.service via systemctl")
-            subprocess.run(['sudo', 'systemctl', 'restart', 'pi-agent.service'], check=True)
+            logger.info("Restarting darkice.service via systemctl")
+            subprocess.run(['sudo', 'systemctl', 'restart', 'darkice.service'], check=True)
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to restart agent: {e}")
             
