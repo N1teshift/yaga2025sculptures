@@ -53,19 +53,8 @@ pcm.monitor {
     slave.pcm "hw:Loopback,1,0"
 }
 
-# Tee device that splits audio to both speaker and monitor
+# Simple efficient output device (just use dmix_playback, monitor separately)
 pcm.tee_output {
-    type multi
-    slaves.a.pcm "dmix_playback"
-    slaves.a.channels 2
-    slaves.b.pcm "hw:Loopback,0,0"
-    slaves.b.channels 2
-    bindings.0.slave a
-    bindings.0.channel 0
-    bindings.1.slave a
-    bindings.1.channel 1
-    bindings.2.slave b
-    bindings.2.channel 0
-    bindings.3.slave b
-    bindings.3.channel 1
+    type plug
+    slave.pcm "dmix_playback"
 } 
