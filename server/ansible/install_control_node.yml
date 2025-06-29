@@ -81,7 +81,7 @@
 
     - name: Configure Icecast2
       template:
-        src: ../templates/icecast.xml
+        src: ../templates/icecast.xml.j2
         dest: /etc/icecast2/icecast.xml
         backup: yes
       notify: restart icecast2

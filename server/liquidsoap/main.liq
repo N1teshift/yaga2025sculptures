@@ -49,8 +49,8 @@ s3_proc = sculpture_process(s3_safe)
 # Prerecorded file for local mode (replace with actual file path when available)
 prerecorded = sine(440.0)
 
-# Reference to current plan (default: B1)
-current_plan = ref("B1")
+# Reference to current plan (default: A1)
+current_plan = ref("A1")
 
 # Mix output references updated when the plan changes
 to1 = ref(silence)

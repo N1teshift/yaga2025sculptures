@@ -91,12 +91,6 @@
         state: directory
         mode: '0755'
 
-    - name: Clone Pi-Codec repository
-      git:
-        repo: https://github.com/raspberrypi/Pi-Codec.git
-        dest: "{{ sculpture_dir }}/Pi-Codec"
-        version: master
-
     - name: Check if ffmpeg is available on the control node
       local_action:
         module: ansible.builtin.command
@@ -176,7 +170,36 @@
         mode: '0644'
       when: audio_backend == 'alsa'
 
-    # ALSA state restoration removed - not needed for this setup
+    - name: Find IQaudIO sound card number
+      ansible.builtin.shell: "grep 'IQaudIOCODEC' /proc/asound/cards | awk '{print $1}'"
+      register: iqaudio_card_num_result
+      changed_when: false
+      failed_when: iqaudio_card_num_result.stdout == ""
+
+    - name: Set IQaudIO card number fact
+      ansible.builtin.set_fact:
+        iqaudio_card_num: "{{ iqaudio_card_num_result.stdout }}"
+
+    - name: Configure ALSA mixer for microphone input
+      ansible.builtin.command: "amixer -c {{ iqaudio_card_num }} sset '{{ item.control }}' {{ item.value }}"
+      loop:
+        - { control: 'Mic 2', value: '5 on' }
+        - { control: 'Mixin Left Mic 2', value: 'on' }
+        - { control: 'Mixin Right Mic 2', value: 'on' }
+        - { control: 'ADC', value: '114 on' }
+        - { control: 'Mixin PGA', value: '7 on' }
+      changed_when: true
+      notify: Save ALSA state
+
+    - name: Configure ALSA mixer for speaker output
+      ansible.builtin.command: "amixer -c {{ iqaudio_card_num }} sset '{{ item.control }}' {{ item.value }}"
+      loop:
+        - { control: 'Lineout', value: 'on' }
+        - { control: 'Headphone', value: 'on' }
+        - { control: 'Mixout Left DAC Left', value: 'on' }
+        - { control: 'Mixout Right DAC Right', value: 'on' }
+      changed_when: true
+      notify: Save ALSA state
 
     - name: Template pi-agent script
       template:
@@ -242,8 +265,6 @@
         mode: '0644'
       notify: Restart pi-agent
 
-    # alsa-restore service installation removed - not needed
-
     - name: Enable and start services
       systemd:
         name: "{{ item }}"
@@ -251,11 +272,10 @@
         state: started
         daemon_reload: yes
       loop:
-        - darkice.service
-        - player-live.service
-        - pi-agent.service
-
-    # alsa-restore service start removed - not needed
+        - darkice
+        - player-live
+        - player-loop
+        - pi-agent
 
     - name: Ensure player-loop is disabled by default
       systemd:
@@ -297,45 +317,37 @@
         validate: 'visudo -cf %s'
 
   handlers:
-    - name: Restart pulseaudio
-      shell: "pulseaudio -k"
-      become: yes
-      become_user: pi
-      listen: "Restart pulseaudio"
-      when: audio_backend == 'pulse'
+    - name: Restart NetworkManager
+      systemd:
+        name: NetworkManager
+        state: restarted
 
-    - name: Reboot for audio config
-      reboot:
-        msg: "Rebooting to apply audio configuration changes"
-        reboot_timeout: 3600
+    - name: Restart pulseaudio
+      systemd:
+        name: pulseaudio
+        state: restarted
+        scope: user
+      become: no
 
     - name: Restart darkice
       systemd:
-        daemon_reload: yes
-        name: darkice.service
+        name: darkice
         state: restarted
 
     - name: Restart player-live
       systemd:
-        daemon_reload: yes
-        name: player-live.service
+        name: player-live
         state: restarted
 
     - name: Restart player-loop
       systemd:
-        daemon_reload: yes
-        name: player-loop.service
+        name: player-loop
         state: restarted
-
-    # alsa-restore handler removed - not needed
 
     - name: Restart pi-agent
       systemd:
-        daemon_reload: yes
-        name: pi-agent.service
+        name: pi-agent
         state: restarted
 
-    - name: Restart NetworkManager
-      systemd:
-        name: NetworkManager.service
-        state: restarted
+    - name: Save ALSA state
+      ansible.builtin.command: alsactl store

@@ -1,12 +1,14 @@
 # Sculpture System - Quick Start Guide
 
-This guide will help you deploy the complete sculpture audio system with three Raspberry Pi sculptures and one control laptop.
+This guide will help you deploy the complete sculpture audio system with three Raspberry Pi and one control laptop.
 
 ## Prerequisites
 
-- 3x Raspberry Pi Zero W with SD cards (16GB+)
 - 1x Laptop/PC running **Windows 10/11 with WSL 2** (control node)
-- HAT IQaudIO Pi-Codec Zero audio interfaces for each Pi
+- 3x Raspberry Pi Zero W (edge devices)
+- 3x HAT IQaudIO Pi-Codec Zero sound cards
+- 3x Transducers
+- 3x microSD cards 16GB+
 
 ## Step 1: Setup Control Node (WSL 2 and Ansible)
 
@@ -29,18 +31,18 @@ First, set up the Windows Subsystem for Linux (WSL 2) and install Ansible, which
 
 ## Step 2: Flash Raspberry Pi SD Cards
 
-1. Flash Raspberry Pi OS Lite to three SD cards
-2. Enable SSH by creating empty `ssh` file in boot partition
-3. Configure WiFi 
-4. Boot each Pi and note their IP addresses
+1. Flash Raspberry Pi OS Lite to three SD cards using Raspberry pi Imager
+2. Before flashing set custom settings to enable SSH and configure WiFi 
+3. Boot each Pi and note their IP addresses
 
 ## Step 3: Update and Upgrade Pis
 
-Run: `sudo apt update`
-Run: `sudo apt upgrade -y`
-(Optional): `sudo apt full-upgrade -y`
-(Optional): sudo `apt autoremove -y`
-(Optional): sudo `apt clean`
+
+```bash
+# In each Pi terminal run
+sudo apt update
+sudo apt upgrade -y
+```
 
 ## Step 4: Configure SSH Keys
 
@@ -61,12 +63,16 @@ Edit `edge/ansible/hosts.ini` with your actual IP addresses:
 
 ```ini
 [sculptures]
-sculpture1 ansible_host=YOUR_PI1_IP id=1 alsa_device=hw:1,0 control_host=YOUR_COMPUTER_IP
-sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_COMPUTER_IP
-sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_COMPUTER_IP
+sculpture1 ansible_host=YOUR_PI1_IP id=1 alsa_device=hw:1,0 control_host=YOUR_CONTROl_NODE_IP
+sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_CONTROl_NODE_IP
+sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_CONTROl_NODE_IP
 ```
 
 ## Step 6: Deploy to Raspberry Pis
+
+Select sculpture system's audio approach by editing in edge/ansible/group_vars/all.yml audio_backend variable value to either `pulse` or `alsa`.
+
+## Step 7: Deploy to Raspberry Pis
 
 ```bash
 # Run the edge playbook to configure all Pis
@@ -75,68 +81,56 @@ ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 
 This command runs the main Ansible playbook, which automates the entire configuration process for each Raspberry Pi. The playbook performs the following tasks in order:
 
-*   **1. System Preparation:**
-    *   Updates the package cache and upgrades all installed system packages.
-    *   Installs essential software: `darkice` for audio streaming, `mpv` for audio playback, `paho-mqtt` for communication, and other system utilities.
-    *   Disables WiFi power-saving to ensure a stable network connection.
+**1. System Preparation:**
 
-*   **2. Audio Hardware Setup:**
-    *   Detects the correct boot configuration file (`/boot/config.txt` or `/boot/firmware/config.txt`).
-    *   Enables the `iqaudio-codec` overlay to activate the IQaudIO HAT.
-    *   Disables the Raspberry Pi's built-in audio to prevent conflicts.
-    *   Reboots the Pi if any of these audio settings were changed, which is necessary for them to take effect.
+1.  **Update package cache:** Updates the list of available packages from the repositories.
+2.  **Upgrade installed packages:** Upgrades all installed system packages to their latest versions.
+3.  **Install required packages:** Installs essential software: `darkice` (for audio streaming), `mpv` (for audio playback), `python3-paho-mqtt` (for MQTT communication), `rsync` (for file synchronization), `alsa-utils`, `python3-pip`, `git`, and `pulsemixer`.
+4.  **Install PulseAudio (PulseAudio mode only):** Conditionally installs `pulseaudio` if the `audio_backend` variable in `group_vars/all.yml` is set to `pulse`.
+5.  **Disable WiFi power saving:** Creates a configuration file to disable WiFi power-saving mode, ensuring a stable network connection for streaming.
 
-*   **3. Application & Audio Files:**
-    *   Clones the official `Pi-Codec` git repository, which may contain helper scripts for the audio HAT.
-    *   Creates the main application directory at `/opt/sculpture-system`.
-    *   **On your control machine**, it converts all sample `.wav` files from the `samples` directory into the required format using `ffmpeg`.
-    *   Copies the converted audio files from your machine to the `/opt/sculpture-system/` directory on each Pi.
-    *   Copies the main `pi-agent.py` control script to `/opt/sculpture-system/` on each Pi.
+**2. Audio Hardware Setup:**
 
-*   **4. Configuration:**
-    *   Generates a unique `darkice.cfg` file for each Pi from a template, inserting the correct server IP and sculpture ID.
-    *   Configures PulseAudio with the correct sample rate to match the project's audio settings.
-    *   Creates a `pi-agent` configuration file at `/etc/sculpture/audio.conf`.
+6.  **Detect & Set Boot Config Path:** Checks for the correct location of the Raspberry Pi's boot configuration file (`/boot/config.txt` or `/boot/firmware/config.txt`) and sets a variable for use in subsequent tasks.
+7.  **Enable IQaudIO Codec & I2S:** Modifies the boot configuration to load the `iqaudio-codec` device tree overlay and ensures the I2S interface (`dtparam=i2s=on`) is enabled. Both are required to activate the IQaudIO sound card HAT.
+8.  **Disable Built-in Audio:** Disables the Raspberry Pi's onboard audio (`dtparam=audio=off`) to prevent conflicts with the IQaudIO HAT.
+9.  **Reboot if Audio Config Changed:** Automatically reboots the Pi if any of the above boot settings were changed, as a reboot is required for them to take effect.
+10. **Find & Set IQaudIO Card Number:** Identifies and saves the system's card number for the IQaudIO sound card for use in mixer configuration.
+11. **Configure ALSA Mixer (Mic & Speaker):** Uses the `amixer` command to set the appropriate controls and volume levels for both the microphone input and speaker output channels.
 
-*   **5. Service Management:**
-    *   Sets up and installs `systemd` service files for `darkice`, `pi-agent`, `player-live`, and `player-loop`. This allows the applications to run as background services.
-    *   Enables and starts the `darkice`, `player-live`, and `pi-agent` services so they launch on boot.
-    *   Grants the `pi-agent` script passwordless `sudo` permissions to start and stop the other audio-related services, allowing it to control the system autonomously.
+**3. Application & Audio Files:**
+
+12. **Create Sculpture System Directory:** Creates the main application directory at `/opt/sculpture-system` where all project files will be stored.
+13. **Check for ffmpeg on Control Node:** Verifies that the `ffmpeg` command-line tool is installed on the control machine (your WSL instance). The playbook will fail with an error if it's not found.
+14. **Convert Loop Files Locally:** On your control machine, it creates a temporary directory, then uses `ffmpeg` to convert all `.wav` files from the `samples/` directory to the sample rate and channel count defined in the Ansible variables.
+15. **Copy Converted Loop Files:** Copies the newly converted audio files from the temporary directory on your control machine to the `/opt/sculpture-system/` directory on each Raspberry Pi.
+16. **Clean Up Temporary Directory:** Removes the temporary directory and its contents from your control machine.
+
+**4. Configuration:**
+
+17. **Template Application Scripts:** Creates the `pi-agent.py`, `audio_manager.py`, and `system_manager.py` scripts from templates, filling in necessary configuration.
+18. **Copy Status Collector:** Copies the `status_collector.py` script to the device.
+19. **Template darkice Configuration:** Generates a `darkice.cfg` file from a template, customized with the control node's IP and the sculpture's ID for streaming audio to the server.
+20. **Configure PulseAudio Rate:** If using PulseAudio, it sets the correct default and alternate sample rates in `/etc/pulse/daemon.conf`.
+21. **Configure ALSA for Shared Access:** If using ALSA, it creates an `/etc/asound.conf` file to allow multiple applications to use the audio device simultaneously.
+22. **Create PulseAudio Sink:** If using PulseAudio, it sets up a special "null sink" which is used for routing and monitoring audio within the system.
+23. **Enable PulseAudio TCP Access:** Allows remote monitoring of PulseAudio streams over the network for debugging.
+
+**5. Service Management:**
+
+24. **Install systemd Services:** Creates and installs `systemd` service files for `darkice`, `pi-agent`, `player-live` (for live playback), and `player-loop` (for local track playback). This allows the applications to run as background services.
+25. **Enable and Start Services:** Enables and starts the `darkice`, `player-live`, `player-loop`, and `pi-agent` services so they launch on boot.
+26. **Disable player-loop by Default:** Immediately disables and stops the `player-loop` service, as it's only intended to be activated on demand by the `pi-agent`.
+27. **Ensure pi-agent is Running:** Double-checks that the main `pi-agent` service is started and enabled.
+28. **Grant Sudo Access to pi-agent:** Adds a `sudoers` file that allows the `pi-agent` script to start and stop the other audio-related services without needing a password, enabling autonomous control.
 
 The playbook handles all the setup, so you don't have to configure each Pi manually.
 
 # Verify deployment
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 
-## Step 7: Pre-configure Icecast Hostname (Critical)
 
-Before you install the control node services, you must configure the Icecast server template. This ensures that when Icecast is installed, it's already set up to allow other devices on your network (like the Raspberry Pis) to connect to the audio streams.
-
-1.  **Open the Icecast template file** with a text editor. This file is located at `server/templates/icecast.xml`.
-2.  **Find the `<hostname>` tag** and replace `localhost` with the WSL IP address you found in Step 5.
-
-    *Before:*
-    ```xml
-    <hostname>localhost</hostname>
-    ```
-
-    *After (example):*
-    ```xml
-    <hostname>172.20.10.2</hostname>
-    ```
-3.  **Save and close the file.**
-
-This is a one-time setup. The Ansible playbook will now use your pre-configured file during installation.
-
-## Step 8: Audio-HAT Preparation (required for IQaudIO CODEC / Codec Zero)
-On each Pi:
-
-1. `sudo alsactl --file Codec_Zero_OnboardMIC_record_and_SPK_playback.state restore IQaudIOCODEC`
-2. *(optional)* `sudo alsactl store`
-3. Test: `arecord -D hw:1,0 -f S16_LE -c 2 -r 44100 -d 5 test.wav && aplay -D hw:1,0`
-4. Copy to wsl: `scp pi@sculptureX:~/test.wav .` and check for sound
-
-## Step 9: Install Control Node Services
+## Step 8: Install Control Node Services
 
 Now, run the Ansible playbook that installs and configures all the local services on your WSL machine (Icecast, Liquidsoap, Mosquitto, Node-RED).
 
