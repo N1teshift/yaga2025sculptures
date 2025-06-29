@@ -49,8 +49,8 @@ s3_proc = sculpture_process(s3_safe)
 # Prerecorded file for local mode (replace with actual file path when available)
 prerecorded = sine(440.0)
 
-# Reference to current plan (default: B1)
-current_plan = ref("B1")
+# Reference to current plan (default: B3)
+current_plan = ref("B3")
 
 # Mix output references updated when the plan changes
 to1 = ref(silence)
@@ -130,7 +130,7 @@ update_mixes()
 
 # Output to Icecast
 output.icecast(
-  %vorbis(quality=0.3, channels=1),
+  %vorbis(quality=0.1, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
@@ -141,7 +141,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.3, channels=1),
+  %vorbis(quality=0.1, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
@@ -152,7 +152,7 @@ output.icecast(
 )
 
 output.icecast(
-  %vorbis(quality=0.3, channels=1),
+  %vorbis(quality=0.1, channels=1),
   host="localhost",
   port=8000,
   password="hackme",
