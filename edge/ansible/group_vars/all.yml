@@ -7,15 +7,15 @@ audio_channels: 1
 audio_bit_depth: 16
 
 # Audio backend mode: 'pulse' for PulseAudio, 'alsa' for direct ALSA
-audio_backend: alsa
+audio_backend: pulse
 
 # Darkice streaming settings
 darkice_quality: 0.1      # VBR quality (0.1 to 1.0)
 darkice_bitrate: 32       # Fallback bitrate if VBR is not used
 
 # MPV settings
-# mpv_audio_device: "pulse/sculpture_sink"
-mpv_audio_device: "alsa"
+mpv_audio_device: "pulse/sculpture_sink"
+# mpv_audio_device: "alsa"
 mpv_audio_device_alsa: "alsa/tee_output"
 mpv_audio_format: "s16"
 mpv_audio_buffer_secs: 10
