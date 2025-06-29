@@ -1,0 +1,71 @@
+# This file is managed by Ansible.
+#
+# It creates a high-quality, shareable ALSA device for the IQaudIO Pi-CodecZero.
+# This allows multiple applications to play and record audio simultaneously
+# without blocking each other, using ALSA's dmix and dsnoop plugins.
+
+pcm.!default {
+    type asym
+    playback.pcm "dmix_playback"
+    capture.pcm "mono_capture"
+}
+
+# Dmix for playback (software mixing)
+pcm.dmix_playback {
+    type dmix
+    ipc_key 1024
+    slave {
+        pcm "hw:CARD=IQaudIOCODEC,DEV=0"
+        format S16_LE
+        rate {{ audio_sample_rate }}
+        channels 2 # Dmix works best with stereo
+    }
+    bindings {
+        0 0
+        1 1
+    }
+}
+
+# Dsnoop for capture (multiple clients) - hardware has 2 channels
+pcm.dsnoop_capture {
+    type dsnoop
+    ipc_key 1025
+    slave {
+        pcm "hw:CARD=IQaudIOCODEC,DEV=0"
+        format S16_LE
+        rate {{ audio_sample_rate }}
+        channels 2
+    }
+}
+
+# Mono capture device that converts stereo to mono
+pcm.mono_capture {
+    type plug
+    slave.pcm "dsnoop_capture"
+    slave.channels 2
+    ttable.0.0 0.5
+    ttable.0.1 0.5
+}
+
+# Loopback device for monitoring output (similar to PulseAudio monitor)
+pcm.monitor {
+    type plug
+    slave.pcm "hw:Loopback,1,0"
+}
+
+# Tee device that splits audio to both speaker and monitor
+pcm.tee_output {
+    type multi
+    slaves.a.pcm "dmix_playback"
+    slaves.a.channels 2
+    slaves.b.pcm "hw:Loopback,0,0"
+    slaves.b.channels 2
+    bindings.0.slave a
+    bindings.0.channel 0
+    bindings.1.slave a
+    bindings.1.channel 1
+    bindings.2.slave b
+    bindings.2.channel 0
+    bindings.3.slave b
+    bindings.3.channel 1
+} 

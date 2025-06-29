@@ -167,15 +167,16 @@
       notify: Restart pulseaudio
       when: audio_backend == 'pulse'
 
-    - name: Template ALSA state for CodecZero
+    - name: Configure ALSA for shared access (ALSA mode only)
       template:
-        src: templates/asound.state.j2
-        dest: /var/lib/alsa/asound.state
+        src: templates/asound.conf.j2
+        dest: /etc/asound.conf
         owner: root
         group: root
         mode: '0644'
-      notify: Restart alsa-restore
       when: audio_backend == 'alsa'
+
+    # ALSA state restoration removed - not needed for this setup
 
     - name: Template pi-agent script
       template:
@@ -241,15 +242,7 @@
         mode: '0644'
       notify: Restart pi-agent
 
-    - name: Install alsa-restore systemd service (ALSA mode only)
-      template:
-        src: ../systemd/alsa-restore.service.j2
-        dest: /etc/systemd/system/alsa-restore.service
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Restart alsa-restore
-      when: audio_backend == 'alsa'
+    # alsa-restore service installation removed - not needed
 
     - name: Enable and start services
       systemd:
@@ -262,13 +255,7 @@
         - player-live.service
         - pi-agent.service
 
-    - name: Enable and start alsa-restore service (ALSA mode only)
-      systemd:
-        name: alsa-restore.service
-        enabled: yes
-        state: started
-        daemon_reload: yes
-      when: audio_backend == 'alsa'
+    # alsa-restore service start removed - not needed
 
     - name: Ensure player-loop is disabled by default
       systemd:
@@ -331,11 +318,7 @@
         name: player-loop.service
         state: restarted
 
-    - name: Restart alsa-restore
-      systemd:
-        daemon_reload: yes
-        name: alsa-restore.service
-        state: restarted
+    # alsa-restore handler removed - not needed
 
     - name: Restart pi-agent
       systemd:

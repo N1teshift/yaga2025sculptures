@@ -26,7 +26,8 @@ def get_pactl_env():
 class AudioManager:
     """Handles all audio-related operations for the sculpture system."""
     
-    def __init__(self, audio_config_path=None):
+    def __init__(self, audio_backend='pulse', audio_config_path=None):
+        self.audio_backend = audio_backend
         # Audio configuration from Ansible templates (all.yml)
         self.audio_config = {
             'samplerate': '{{ audio_sample_rate }}',
@@ -35,37 +36,51 @@ class AudioManager:
         }
         self.is_muted = False
         self._last_mute_error = None
-        logger.info(f"AudioManager initialized with config: {self.audio_config}")
+        logger.info(f"AudioManager initialized in '{self.audio_backend}' mode with config: {self.audio_config}")
         
     def set_volume(self, volume):
-        """Set volume level (0-1 range)."""
+        """Set volume level (0-1 range) using the appropriate backend."""
         try:
-            # Convert to percentage
             volume_percent = int(volume * 100)
             volume_percent = max(0, min(100, volume_percent))  # Clamp to 0-100
             
-            logger.info(f"Setting volume to {volume_percent}%")
-            subprocess.run([
-                'pactl', 'set-sink-volume', 'sculpture_sink', f'{volume_percent}%'
-            ], check=True, env=get_pactl_env())
+            logger.info(f"Setting volume to {volume_percent}% using {self.audio_backend} backend")
+
+            if self.audio_backend == 'pulse':
+                cmd = ['pactl', 'set-sink-volume', 'sculpture_sink', f'{volume_percent}%']
+                env = get_pactl_env()
+            else: # alsa
+                # This assumes 'Lineout' is the correct master volume control for the IQaudIO card.
+                cmd = ['amixer', '-c', '1', 'set', 'Lineout', f'{volume_percent}%']
+                env = os.environ.copy()
+
+            subprocess.run(cmd, check=True, env=env)
             
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to set volume: {e}")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.error(f"Failed to set volume using {self.audio_backend}: {e}")
             raise
     
     def set_mute(self, mute):
-        """Set mute state."""
+        """Set mute state using the appropriate backend."""
         self.is_muted = bool(mute)  # Optimistically update state
         try:
-            mute_flag = '1' if mute else '0'
-            logger.info(f"Setting mute to {mute_flag} (True={mute})")
-            subprocess.run([
-                'pactl', 'set-sink-mute', 'sculpture_sink', mute_flag
-            ], check=True, env=get_pactl_env())
+            logger.info(f"Setting mute to {self.is_muted} using {self.audio_backend} backend")
+
+            if self.audio_backend == 'pulse':
+                mute_flag = '1' if self.is_muted else '0'
+                cmd = ['pactl', 'set-sink-mute', 'sculpture_sink', mute_flag]
+                env = get_pactl_env()
+            else: # alsa
+                mute_flag = 'off' if self.is_muted else 'on'
+                # This assumes 'Lineout' is the correct switch.
+                cmd = ['amixer', '-c', '1', 'set', 'Lineout', mute_flag]
+                env = os.environ.copy()
+
+            subprocess.run(cmd, check=True, env=env)
             # Clear previous error on success
             self._last_mute_error = None
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to set mute: {e} - state may not be in sync. Check if 'sculpture_sink' exists with 'pactl list sinks'.")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.error(f"Failed to set mute using {self.audio_backend}: {e} - state may not be in sync.")
             raise
     
     def get_mute_status(self, current_mode):

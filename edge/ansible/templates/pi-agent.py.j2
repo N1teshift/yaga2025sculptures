@@ -30,8 +30,8 @@ class SculptureAgent:
         self.client.on_message = self.on_message
         
         # Initialize components
-        self.audio_manager = AudioManager()
-        self.system_manager = SystemManager(SCULPTURE_DIR)
+        self.audio_manager = AudioManager(audio_backend='{{ audio_backend }}')
+        self.system_manager = SystemManager()
         self.status_collector = StatusCollector(SCULPTURE_ID)
         
         # MQTT topics
