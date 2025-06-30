@@ -292,6 +292,14 @@
       notify: Restart pulseaudio
       when: audio_backend == 'pulse'
 
+    - name: Remove old sculpture_sink configuration from PulseAudio
+      lineinfile:
+        path: /etc/pulse/default.pa
+        regexp: '^load-module module-null-sink sink_name=sculpture_sink'
+        state: absent
+      notify: Restart pulseaudio
+      when: audio_backend == 'pulse'
+
     - name: Ensure pi-agent service is started and enabled
       systemd:
         name: pi-agent.service
