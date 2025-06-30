@@ -283,15 +283,6 @@
         enabled: no
         state: stopped
 
-    - name: Create dedicated PulseAudio sink for the sculpture
-      lineinfile:
-        path: /etc/pulse/default.pa
-        regexp: '^load-module module-null-sink sink_name=sculpture_sink'
-        line: 'load-module module-null-sink sink_name=sculpture_sink sink_properties=device.description=Sculpture_Sink rate={{ audio_sample_rate }} channels={{ audio_channels }} channel_map={{ "mono" if audio_channels == 1 else "stereo" }}'
-        state: present
-      notify: Restart pulseaudio
-      when: audio_backend == 'pulse'
-
     - name: Enable PulseAudio TCP access for SSH monitoring
       lineinfile:
         path: /etc/pulse/default.pa

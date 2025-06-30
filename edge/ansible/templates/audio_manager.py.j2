@@ -47,7 +47,7 @@ class AudioManager:
             logger.info(f"Setting volume to {volume_percent}% using {self.audio_backend} backend")
 
             if self.audio_backend == 'pulse':
-                cmd = ['pactl', 'set-sink-volume', 'sculpture_sink', f'{volume_percent}%']
+                cmd = ['pactl', 'set-sink-volume', 'alsa_output.platform-soc_sound.stereo-fallback', f'{volume_percent}%']
                 env = get_pactl_env()
             else: # alsa
                 # This assumes 'Lineout' is the correct master volume control for the IQaudIO card.
@@ -68,7 +68,7 @@ class AudioManager:
 
             if self.audio_backend == 'pulse':
                 mute_flag = '1' if self.is_muted else '0'
-                cmd = ['pactl', 'set-sink-mute', 'sculpture_sink', mute_flag]
+                cmd = ['pactl', 'set-sink-mute', 'alsa_output.platform-soc_sound.stereo-fallback', mute_flag]
                 env = get_pactl_env()
             else: # alsa
                 mute_flag = 'off' if self.is_muted else 'on'
@@ -89,7 +89,7 @@ class AudioManager:
             # Only check for mute status if we're in a mode that produces audio
             if current_mode != "idle":
                 mute_result = subprocess.run(
-                    ['pactl', 'get-sink-mute', 'sculpture_sink'],
+                    ['pactl', 'get-sink-mute', 'alsa_output.platform-soc_sound.stereo-fallback'],
                     capture_output=True, text=True, check=True, env=get_pactl_env()
                 )
                 # Output is "Mute: yes" or "Mute: no"
@@ -130,10 +130,10 @@ class AudioManager:
         """Get speaker output level (peak) in dB."""
         output_level = -60.0  # Default to silence
         try:
-            # Use the special name sculpture_sink.monitor to listen to the sink's output
+            # Use the real hardware monitor to listen to the actual speaker output
             # This command captures a 0.1s audio sample, finds the peak value, and converts it to dB.
             output_output = subprocess.check_output(
-                "timeout 0.1s parec --raw --device=sculpture_sink.monitor | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
+                "timeout 0.1s parec --raw --device=alsa_output.platform-soc_sound.stereo-fallback.monitor | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
                 shell=True,
                 timeout=0.5,
                 stderr=subprocess.PIPE,

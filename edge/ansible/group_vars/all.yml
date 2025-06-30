@@ -14,7 +14,7 @@ darkice_quality: 0.1      # VBR quality (0.1 to 1.0)
 darkice_bitrate: 32       # Fallback bitrate if VBR is not used
 
 # MPV settings
-mpv_audio_device: "pulse/sculpture_sink"
+mpv_audio_device: "pulse/alsa_output.platform-soc_sound.stereo-fallback"
 # mpv_audio_device: "alsa"
 mpv_audio_device_alsa: "alsa/tee_output"
 mpv_audio_format: "s16"
