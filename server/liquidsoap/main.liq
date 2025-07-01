@@ -90,6 +90,7 @@ end
 
 # Update mix references based on the current plan
 def update_mixes()
+  log("Updating mixes for plan #{!current_plan}")
   mixes = get_mixes(!current_plan)
   to1 := list.hd(mixes)
   to2 := list.hd(list.tl(mixes))

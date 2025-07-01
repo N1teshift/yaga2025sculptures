@@ -108,9 +108,6 @@ class AudioManager:
         """Get microphone input level (peak) in dB."""
         mic_level = -60.0  # Default to silence
         try:
-            # Use the special name @DEFAULT_SOURCE@ to listen to the system's default microphone
-            # This command captures a 0.1s audio sample, finds the peak value, and converts it to dB.
-            # This is more stable than measuring a single sample.
             mic_output = subprocess.check_output(
                 "timeout 0.1s parec --raw --device=@DEFAULT_SOURCE@ | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
                 shell=True,
@@ -119,30 +116,49 @@ class AudioManager:
                 env=get_pactl_env()
             )
             mic_level = float(mic_output.strip())
+            if mic_level < -60 or mic_level > 0:
+                mic_level = -60.0
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
             if isinstance(e, subprocess.CalledProcessError):
                 logger.warning(f"Mic level check failed with error: {e.stderr.decode('utf-8').strip()}")
             pass  # Keep default on error
-        
         return mic_level
     
     def get_output_level(self):
         """Get speaker output level (peak) in dB."""
         output_level = -60.0  # Default to silence
         try:
-            # Use the real hardware monitor to listen to the actual speaker output
-            # This command captures a 0.1s audio sample, finds the peak value, and converts it to dB.
             output_output = subprocess.check_output(
-                "timeout 0.1s parec --raw --device=alsa_output.platform-soc_sound.stereo-fallback.monitor | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
+                "timeout 1s parec --raw --device=alsa_output.platform-soc_sound.stereo-fallback.monitor | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{if(max>0){print 20*log(max/32767)/log(10)} else {print -60}}'",
                 shell=True,
-                timeout=0.5,
+                timeout=2,
                 stderr=subprocess.PIPE,
                 env=get_pactl_env()
             )
             output_level = float(output_output.strip())
+            if output_level < -60 or output_level > 0:
+                output_level = -60.0
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
             if isinstance(e, subprocess.CalledProcessError):
                 logger.warning(f"Output level check failed with error: {e.stderr.decode('utf-8').strip()}")
             pass  # Keep default on error
-        
-        return output_level 
+        return output_level
+    
+    def set_capture(self, capture):
+        """Set capture (microphone) level (0-1 range) using the appropriate backend."""
+        try:
+            capture_percent = int(capture * 100)
+            capture_percent = max(0, min(100, capture_percent))  # Clamp to 0-100
+            logger.info(f"Setting capture to {capture_percent}% using {self.audio_backend} backend")
+            if self.audio_backend == 'pulse':
+                # This assumes the default source is correct
+                cmd = ['pactl', 'set-source-volume', 'alsa_input.platform-soc_sound.stereo-fallback', f'{capture_percent}%']
+                env = get_pactl_env()
+            else: # alsa
+                # This assumes 'Capture' is the correct control for the IQaudIO card.
+                cmd = ['amixer', '-c', '1', 'set', 'Capture', f'{capture_percent}%']
+                env = os.environ.copy()
+            subprocess.run(cmd, check=True, env=env)
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.error(f"Failed to set capture using {self.audio_backend}: {e}")
+            raise 

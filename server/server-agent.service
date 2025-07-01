@@ -1,0 +1,13 @@
+[Unit]
+Description=Server Agent for Sculpture System
+After=network.target
+
+[Service]
+Type=simple
+User=unix
+Group=unix
+ExecStart=/usr/bin/python3 /opt/sculpture-system/server-agent.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target 

@@ -20,6 +20,22 @@
     "y": 340,
     "wires": [
         [
+            "emergency_stop_fanout"
+        ]
+    ]
+},
+{
+    "id": "emergency_stop_fanout",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "Fanout Emergency Stop",
+    "func": "var ids = [1, 2, 3]; // Add all your sculpture IDs here\nvar msgs = [];\nfor (var i = 0; i < ids.length; i++) {\n    msgs.push({\n        topic: 'sculpture/' + ids[i] + '/cmd',\n        payload: msg.payload\n    });\n}\nreturn [msgs];",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 800,
+    "y": 340,
+    "wires": [
+        [
             "emergency_stop_mqtt_out"
         ]
     ]
@@ -28,12 +44,12 @@
     "id": "emergency_stop_mqtt_out",
     "type": "mqtt out",
     "z": "sculpture_dashboard",
-    "name": "Broadcast Emergency Stop",
-    "topic": "sculpture/all/cmd",
+    "name": "Send Emergency Stop to All",
+    "topic": "",
     "qos": "0",
     "retain": "false",
     "broker": "mqtt_broker",
-    "x": 890,
+    "x": 1000,
     "y": 340,
     "wires": []
 } 

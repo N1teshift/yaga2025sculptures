@@ -147,7 +147,7 @@ Default passwords (change for production):
 - Liquidsoap telnet: admin
 - MQTT: no authentication
 
-## Monitoring
+## Usefull commands
 
 - **WSL IP:** `ip addr show eth0`
 - **Service Logs:** `journalctl -u service-name -f`
@@ -159,8 +159,15 @@ Default passwords (change for production):
 - **Sink Inputs:** `pactl list sink-inputs`
 - **Liquidsoap Script:** `liquidsoap --check /etc/liquidsoap/main.liq`
 - **Icecast2:** `curl http://server:8000/status.xsl`
-- **Test Tone:** `speaker-test -c 1 -t sine`
+- **Test Tone:** `timeout 3s speaker-test -c 1 -t sine`
 - **Telnet:** `telnet localhost 1234` # Password: admin
+- **Alsamixer:** `alsamixer`
+
+```
+ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.154"
+ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.157" 
+ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.158"
+```
 
 ## Dev Container
 The `.devcontainer` folder provides a ready-to-use VS Code development

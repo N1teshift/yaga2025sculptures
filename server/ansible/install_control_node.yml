@@ -181,6 +181,17 @@
         home: /opt/sculpture-system
         create_home: no
 
+    - name: Add unix user to sudoers for service management
+      copy:
+        dest: /etc/sudoers.d/unix-service-management
+        content: |
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart icecast2
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart liquidsoap
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl status icecast2
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl status liquidsoap
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
     - name: Generate Node-RED flow configuration from template
       template:
         src: ../templates/flow.json.j2
@@ -261,6 +272,31 @@
         - reload systemd
         - restart mqtt_to_telnet_bridge
 
+    - name: Copy server-agent script
+      copy:
+        src: ../server-agent.py
+        dest: /opt/sculpture-system/server-agent.py
+        mode: '0755'
+        owner: unix
+        group: unix
+      notify: restart server-agent
+
+    - name: Copy server-agent systemd service
+      copy:
+        src: ../server-agent.service
+        dest: /etc/systemd/system/server-agent.service
+        mode: '0644'
+      notify:
+        - reload systemd
+        - restart server-agent
+
+    - name: Enable and start server-agent service
+      systemd:
+        name: server-agent
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
     - name: Enable and start services
       systemd:
         name: "{{ item }}"
@@ -302,4 +338,9 @@
     - name: restart mqtt_to_telnet_bridge
       systemd:
         name: mqtt_to_telnet_bridge
+        state: restarted
+
+    - name: restart server-agent
+      systemd:
+        name: server-agent
         state: restarted

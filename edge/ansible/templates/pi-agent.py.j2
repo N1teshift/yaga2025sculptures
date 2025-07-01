@@ -21,8 +21,8 @@ from system_manager import SystemManager
 from status_collector import StatusCollector
 
 # GPIO Definitions
-LED_GREEN = 23
-LED_RED = 24
+LED_GREEN = 23  # Will remain off
+LED_RED = 24    # Used for all status indications
 BUTTON_SHUTDOWN = 27
 
 # Configuration
@@ -55,6 +55,10 @@ class SculptureAgent:
         self.cmd_topic = f"sculpture/{self.sculpture_id}/cmd"
         self.tracks_topic = f"sculpture/{self.sculpture_id}/tracks"
         self.broadcast_topic = "system/broadcast"
+
+        # Set LWT payload
+        lwt_payload = json.dumps({"status": "offline"})
+        self.client.will_set(self.status_topic, lwt_payload, retain=True)
         
         # Initialize hardware
         self._init_hardware()
@@ -67,12 +71,9 @@ class SculptureAgent:
             GPIO.setup(LED_RED, GPIO.OUT)
             GPIO.setup(BUTTON_SHUTDOWN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-            # Add button press event
-            GPIO.add_event_detect(BUTTON_SHUTDOWN, GPIO.FALLING, 
-                                  callback=self.handle_shutdown_button, 
-                                  bouncetime=300)
             logger.info("GPIO initialized successfully.")
             self.set_led_off() # Start with LEDs off
+            GPIO.output(LED_GREEN, GPIO.LOW)  # Ensure green is off
         except Exception as e:
             logger.error(f"Could not initialize GPIO. Running without hardware support. Error: {e}")
 
@@ -81,12 +82,16 @@ class SculptureAgent:
         if pin:
             GPIO.output(pin, GPIO.LOW)
         else:
-            GPIO.output(LED_GREEN, GPIO.LOW)
             GPIO.output(LED_RED, GPIO.LOW)
+            GPIO.output(LED_GREEN, GPIO.LOW)  # Always keep green off
 
     def set_led_on(self, pin):
         """Turn on a specific LED."""
-        GPIO.output(pin, GPIO.HIGH)
+        if pin == LED_GREEN:
+            # Do not turn on green LED
+            GPIO.output(LED_GREEN, GPIO.LOW)
+        else:
+            GPIO.output(pin, GPIO.HIGH)
 
     def handle_shutdown_button(self, channel):
         """Handle button press for shutting down the Pi."""
@@ -119,7 +124,7 @@ class SculptureAgent:
         # Default to live mode on connect
         self.handle_mode_command("live")
         # Signal successful connection
-        self.set_led_on(LED_GREEN)
+        self.set_led_on(LED_RED)
         
     def on_message(self, client, userdata, msg):
         """Handle incoming MQTT messages."""
@@ -136,10 +141,27 @@ class SculptureAgent:
                 self.handle_mode_command(payload['mode'], payload.get('track'))
             elif 'volume' in payload:
                 self.handle_volume_command(payload['volume'])
+            elif 'capture' in payload:
+                self.audio_manager.set_capture(payload['capture'])
             elif 'mute' in payload:
                 self.handle_mute_command(payload['mute'])
+            elif 'reboot' in payload and payload['reboot']:
+                logger.info('Rebooting Raspberry Pi by command')
+                subprocess.run(['sudo', 'reboot'], check=True)
             elif 'restart' in payload and payload['restart']:
-                self.handle_restart_command()
+                restart_target = payload['restart']
+                if restart_target == 'darkice':
+                    logger.info('Restarting darkice service by command')
+                    self.system_manager.restart_darkice()
+                elif restart_target == 'pi-agent':
+                    logger.info('Restarting pi-agent service by command')
+                    subprocess.run(['sudo', 'systemctl', 'restart', 'pi-agent.service'], check=True)
+                elif restart_target == 'player-live':
+                    logger.info('Restarting player-live service by command')
+                    subprocess.run(['sudo', 'systemctl', 'restart', 'player-live.service'], check=True)
+                else:
+                    logger.info('Restarting all services by command')
+                    self.handle_restart_command()
             elif 'command' in payload and payload['command'] == 'get_tracks':
                 self.handle_get_tracks()
             elif 'command' in payload and payload['command'] == 'stop':
@@ -245,9 +267,17 @@ class SculptureAgent:
             
             logger.info(f"Sculpture {self.sculpture_id} agent started")
             
+            button_pressed = False
             while True:
                 self.publish_status()
-                time.sleep(5)
+                # Poll the shutdown button every 0.1s
+                if GPIO.input(BUTTON_SHUTDOWN) == GPIO.LOW:
+                    if not button_pressed:
+                        self.handle_shutdown_button(BUTTON_SHUTDOWN)
+                        button_pressed = True
+                else:
+                    button_pressed = False
+                time.sleep(1)
                 
         except KeyboardInterrupt:
             logger.info("Shutting down...")

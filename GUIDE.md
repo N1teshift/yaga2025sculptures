@@ -68,7 +68,7 @@ sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_CO
 sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_CONTROl_NODE_IP
 ```
 
-## Step 6: Deploy to Raspberry Pis
+## Step 6: Choose audio routing approach
 
 Select sculpture system's audio approach by editing in edge/ansible/group_vars/all.yml audio_backend variable value to either `pulse` or `alsa`.
 
@@ -304,5 +304,3 @@ sudo systemctl restart liquidsoap
 # then on each Pi
 sudo systemctl restart darkice
 ```
-
-### Mountpoint ghost listeners
