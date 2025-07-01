@@ -79,7 +79,7 @@ Select sculpture system's audio approach by editing in edge/ansible/group_vars/a
 ansible-playbook -i edge/ansible/hosts.ini edge/ansible/playbook.yml
 ```
 
-This command runs the main Ansible playbook, which automates the entire configuration process for each Raspberry Pi. The playbook performs the following tasks in order:
+This command runs the main Ansible playbook, which automates the entire configuration process for each Raspberry Pi. The playbook handles all the setup, so you don't have to configure each Pi manually. The playbook performs the following tasks in order:
 
 **1. System Preparation:**
 
@@ -113,18 +113,16 @@ This command runs the main Ansible playbook, which automates the entire configur
 19. **Template darkice Configuration:** Generates a `darkice.cfg` file from a template, customized with the control node's IP and the sculpture's ID for streaming audio to the server.
 20. **Configure PulseAudio Rate:** If using PulseAudio, it sets the correct default and alternate sample rates in `/etc/pulse/daemon.conf`.
 21. **Configure ALSA for Shared Access:** If using ALSA, it creates an `/etc/asound.conf` file to allow multiple applications to use the audio device simultaneously.
-22. **Create PulseAudio Sink:** If using PulseAudio, it sets up a special "null sink" which is used for routing and monitoring audio within the system.
-23. **Enable PulseAudio TCP Access:** Allows remote monitoring of PulseAudio streams over the network for debugging.
 
 **5. Service Management:**
 
-24. **Install systemd Services:** Creates and installs `systemd` service files for `darkice`, `pi-agent`, `player-live` (for live playback), and `player-loop` (for local track playback). This allows the applications to run as background services.
-25. **Enable and Start Services:** Enables and starts the `darkice`, `player-live`, `player-loop`, and `pi-agent` services so they launch on boot.
-26. **Disable player-loop by Default:** Immediately disables and stops the `player-loop` service, as it's only intended to be activated on demand by the `pi-agent`.
+22. **Install systemd Services:** Creates and installs `systemd` service files for `darkice`, `pi-agent`, `player-live` (for live playback), and `player-loop` (for local track playback). This allows the applications to run as background services.
+23. **Enable and Start Services:** Enables and starts the `darkice`, `player-live`, `player-loop`, and `pi-agent` services so they launch on boot.
+24. **Disable player-loop by Default:** Immediately disables and stops the `player-loop` service, as it's only intended to be activated on demand by the `pi-agent`.
+25. **Enable PulseAudio TCP Access:** If using PulseAudio, allows remote monitoring of PulseAudio streams over the network for debugging.
+26. **Remove Old PulseAudio Sink Config:** If using PulseAudio, removes any old `sculpture_sink` configuration from the PulseAudio configuration to ensure a clean setup.
 27. **Ensure pi-agent is Running:** Double-checks that the main `pi-agent` service is started and enabled.
 28. **Grant Sudo Access to pi-agent:** Adds a `sudoers` file that allows the `pi-agent` script to start and stop the other audio-related services without needing a password, enabling autonomous control.
-
-The playbook handles all the setup, so you don't have to configure each Pi manually.
 
 # Verify deployment
 ansible sculptures -i edge/ansible/hosts.ini -m ping
@@ -140,6 +138,52 @@ Now, run the Ansible playbook that installs and configures all the local service
 # Run the control node playbook
 sudo ansible-playbook -i server/ansible/hosts.ini server/ansible/install_control_node.yml
 ```
+
+This command runs the control node Ansible playbook, which sets up all the server services on your WSL machine. The playbook performs the following tasks in order:
+
+**1. System Preparation:**
+1. **Update package cache:** Updates the list of available packages from the repositories.
+2. **Add NodeSource Node.js repository:** Adds the official Node.js 20.x repository to enable installation of a recent Node.js version.
+3. **Install required packages:** Installs essential server software: `icecast2` (streaming server), `liquidsoap` (audio mixer), `mosquitto` (MQTT broker), `mosquitto-clients` (MQTT tools), `nodejs` (JavaScript runtime), and `python3-pip` (Python package manager).
+4. **Install Node-RED globally:** Installs Node-RED as a global npm package for flow-based programming and dashboard creation.
+
+**2. User Management:**
+5. **Create node-red user:** Creates a dedicated system user for running the Node-RED service securely.
+6. **Create liquidsoap user:** Creates a dedicated system user for running the Liquidsoap audio mixer service.
+7. **Create unix user for MQTT bridge:** Creates a system user for the MQTT to Telnet bridge service.
+
+**3. Directory Structure:**
+8. **Create sculpture system directory:** Creates the main application directory at `/opt/sculpture-system` with proper ownership for the node-red user.
+9. **Create shared loops directory:** Creates a subdirectory for shared audio loop files.
+10. **Create liquidsoap scripts directory:** Creates a subdirectory for Liquidsoap-related scripts and files.
+11. **Create liquidsoap config directory:** Creates the system configuration directory at `/etc/liquidsoap` for Liquidsoap configuration files.
+
+**4. Node-RED Configuration:**
+12. **Install Node-RED dashboard:** Installs the Node-RED dashboard package for creating web-based control interfaces.
+13. **Generate Node-RED flow configuration:** Creates the main Node-RED flow configuration from a template, customized with project-specific settings.
+14. **Create Node-RED settings file:** Generates the Node-RED settings file with custom paths, security settings, and API endpoints configuration.
+
+**5. Audio Streaming Configuration:**
+15. **Configure Icecast2:** Templates the main Icecast2 configuration file with streaming server settings, mount points, and access credentials.
+16. **Enable Icecast2 in default config:** Modifies the system default configuration to enable Icecast2 to start automatically.
+17. **Template Liquidsoap main configuration:** Creates the main Liquidsoap script from a template with audio mixing logic and stream routing.
+18. **Copy Liquidsoap presets:** Copies the Liquidsoap presets file containing audio effect and processing configurations.
+
+**6. MQTT Communication:**
+19. **Configure Mosquitto MQTT broker:** Creates the Mosquitto configuration file to enable anonymous connections on port 1883 for inter-service communication.
+
+**7. Service Management:**
+20. **Create Liquidsoap systemd service:** Installs the systemd service file for Liquidsoap with proper dependencies and restart behavior.
+21. **Create Node-RED systemd service:** Installs the systemd service file for Node-RED with custom settings and working directory.
+22. **Copy MQTT to Telnet bridge script:** Copies the Python script that bridges MQTT messages to Liquidsoap's telnet interface for real-time control.
+23. **Install MQTT bridge Python dependencies:** Installs required Python packages for the MQTT bridge from the requirements.txt file.
+24. **Copy MQTT to Telnet bridge service:** Installs the systemd service file for the MQTT bridge service.
+
+**8. Final Setup:**
+25. **Set ownership of sculpture directory:** Ensures all files in the sculpture system directory have the correct ownership for the node-red user.
+26. **Enable and start services:** Enables and starts all five services (`icecast2`, `mosquitto`, `liquidsoap`, `node-red`, `mqtt_to_telnet_bridge`) so they launch on boot and begin running immediately.
+
+The playbook configures a complete audio streaming and control infrastructure on your WSL machine.
 
 ## Default Credentials
 
@@ -165,7 +209,21 @@ htop
 ```
 Load averages should be below 1.
 
-### 3. Test Pi services status
+### 3. Check Pi sinks and sources
+```bash
+pactl list sinks short
+pactl list sources short
+```
+
+You should see only
+
+```bash
+0       alsa_output.platform-soc_sound.stereo-fallback  module-alsa-card.c      s16le 2ch 16000Hz       RUNNING
+0       alsa_output.platform-soc_sound.stereo-fallback.monitor  module-alsa-card.c      s16le 2ch 16000Hz       IDLE
+1       alsa_input.platform-soc_sound.stereo-fallback   module-alsa-card.c      s16le 2ch 16000Hz       RUNNING
+```
+
+### 4. Test Pi services status
 ```bash
 sudo systemctl status darkice
 ```
@@ -180,7 +238,7 @@ Check if in player-live script mpv player is set to your prefered audio settings
 sudo systemctl status player-live
 ```
 
-### 4. Check Icecast2 mounts existance
+### 5. Check Icecast2 mounts existance
 http://localhost:8000/admin/listmounts.xsl
 
 Should see six mounts: mix-for-1, mix-for-2, mix-for-3, s1-mic, s2-mic, s3-mic.
@@ -192,7 +250,7 @@ If you dont see s1-mic, s2-mic, s3-mic - it means darkice is bad or the micropho
 sudo systemctl restart darkice
 ```
 
-### 5. Test Icecast2 mounts in VLC
+### 6. Test Icecast2 mounts in VLC
 Check if the desired microphone sound encoding coming from darkice matches the mix stream encoding coming from liquidsoap.
 
 http://localhost:8000/s1-mic.ogg
@@ -203,60 +261,48 @@ http://localhost:8000/mix-for-1.ogg
 http://localhost:8000/mix-for-2.ogg
 http://localhost:8000/mix-for-3.ogg
 
-### 6. Test sculpture_sink.monitor sound
+### 7. Test hardware audio output
+Test the transducer/speaker output:
 ```bash
-ssh pi@<RASPBERRY_PI_IP> "pacat -r -d sculpture_sink.monitor" | pacat -p
+# Test speakers (always sink 0 on all sculptures)
+timeout 3s speaker-test -c 1 -t sine -D pulse:0
 ```
 
-### 7. Test Node-red connection with sculpture_sink.monitor
-1. While listening to stream from sculpture_sink.monitor in your select Pi go to http://localhost:1880/api/ui
+### 8. Test PulseAudio hardware routing
+Test the complete audio chain through PulseAudio:
+```bash
+# Test audio output with live stream (always sink 0)
+mpv --no-video --audio-device=pulse/0 --audio-samplerate=16000 http://192.168.8.156:8000/mix-for-3.ogg
+```
 
-2. Check if CPU, Temperature, Microphone Level and Output Level gauges are active.
+### 9. Test microphone input
+Test the microphone input:
+```bash
+# Test microphone (always source 1 on all sculptures)
+timeout 3s parec --device=1 --raw | od -t d2 -w2 | head -5
+```
 
-3. Slide the volume slider, the sound in sculpture_sink.monitur should change accordingly. Also you should see changes live in these:
+## Known issues
+
+### Mountpoint ghost listeners
+
+Sometimes for no apperant reason sculpture's microphone stream in icecast mointpoint can start gathering somekind of fake liquidsoap listeners and in this way the mointpoint reaches max 20 listeners and through VLC is not possible to listen to the stream anymore.
+This can be fixed by restarting darkice on that sculpture's rasberry device.
+```bash
+sudo systemctl restart darkice
+```
+
+If that doesnt help then do a more proper restarting procedure:
 
 ```bash
-journalctl -u pi-agent -f
+# First on control node
+sudo systemctl restart icecast2
+sudo systemctl restart liquidsoap
 ```
 
 ```bash
-mosquitto_sub -h localhost -t '#'
+# then on each Pi
+sudo systemctl restart darkice
 ```
 
-4.  Press the red MUTE button - the sculpture_sink.monitor sound should disapear and the red MUTE button should turn to a green UNMUTE button.
-
-5.  Press the green UNMUTE button - the sculpture_sink.monitor sound should reapear and the green UNMUTE button should turn to a red MUTE button.
-
-6. Click PLAN D button to test local tracks playback. The modes of all sculptures should change from LIVE to LOCAL. Listen in the sculpture_sink.monitor if the default test1.wav track is playing.
-
-7. Check if in player-loop script mpv player is set to your prefered audio settings.
-
-```bash
-sudo systemctl restart player-loop
-journalctl -u player-loop.service -f
-```
-
-8. In the Select Track dropdown select a prefered track and then click the LOAD LOCAL TRACK button below. This should change the track in the player-loop script.
-
-9. Change plan back to B1 or A1. This should disable the LOAD LOCAL TRACK buttons and make the live sound come back.
-
-10. 
-
-
-## Troubleshooting
-
-### Service Issues After Playbook
-
-* **Mosquitto:** If Mosquitto fails to start (check `sudo systemctl status mosquitto.service`), it might be due to a duplicate `log_dest file` configuration.
-  1. Confirm error: `/usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf`.
-  2. If duplicate `log_dest` error, edit `/etc/mosquitto/conf.d/sculpture.conf` (e.g., `sudo nano /etc/mosquitto/conf.d/sculpture.conf`) and comment out the `log_dest file ...` line.
-  3. Then: `sudo systemctl restart mosquitto` and check status.
-
-* **Node-RED:** If Node-RED fails to start:
-  1. Check logs: `sudo journalctl -xeu node-red.service`.
-  2. Common issues include incorrect Node.js version or wrong path to the `node-red` executable in `/etc/systemd/system/node-red.service`. Ensure `ExecStart` points to the correct path.
-  3. After resolving issues, restart the service and verify:
-     ```bash
-     sudo systemctl restart node-red
-     sudo systemctl status node-red
-     ```
+### Mountpoint ghost listeners

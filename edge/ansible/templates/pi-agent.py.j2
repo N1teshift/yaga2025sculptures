@@ -5,10 +5,25 @@ import time
 import os
 import logging
 import paho.mqtt.client as mqtt
+import subprocess
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    # Use a mock GPIO for testing on non-Pi environments
+    import sys
+    from unittest.mock import MagicMock
+    sys.modules['RPi'] = MagicMock()
+    sys.modules['RPi.GPIO'] = MagicMock()
+    import RPi.GPIO as GPIO
 
 from audio_manager import AudioManager
 from system_manager import SystemManager
 from status_collector import StatusCollector
+
+# GPIO Definitions
+LED_GREEN = 23
+LED_RED = 24
+BUTTON_SHUTDOWN = 27
 
 # Configuration
 MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.8.156')
@@ -41,6 +56,60 @@ class SculptureAgent:
         self.tracks_topic = f"sculpture/{self.sculpture_id}/tracks"
         self.broadcast_topic = "system/broadcast"
         
+        # Initialize hardware
+        self._init_hardware()
+        
+    def _init_hardware(self):
+        """Initialize GPIO for LEDs and Buttons."""
+        try:
+            GPIO.setmode(GPIO.BCM)
+            GPIO.setup(LED_GREEN, GPIO.OUT)
+            GPIO.setup(LED_RED, GPIO.OUT)
+            GPIO.setup(BUTTON_SHUTDOWN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+            # Add button press event
+            GPIO.add_event_detect(BUTTON_SHUTDOWN, GPIO.FALLING, 
+                                  callback=self.handle_shutdown_button, 
+                                  bouncetime=300)
+            logger.info("GPIO initialized successfully.")
+            self.set_led_off() # Start with LEDs off
+        except Exception as e:
+            logger.error(f"Could not initialize GPIO. Running without hardware support. Error: {e}")
+
+    def set_led_off(self, pin=None):
+        """Turn off a specific LED or all LEDs."""
+        if pin:
+            GPIO.output(pin, GPIO.LOW)
+        else:
+            GPIO.output(LED_GREEN, GPIO.LOW)
+            GPIO.output(LED_RED, GPIO.LOW)
+
+    def set_led_on(self, pin):
+        """Turn on a specific LED."""
+        GPIO.output(pin, GPIO.HIGH)
+
+    def handle_shutdown_button(self, channel):
+        """Handle button press for shutting down the Pi."""
+        logger.info("Shutdown button pressed. Initiating shutdown...")
+        
+        # Signal shutdown with LEDs
+        self.set_led_off()
+        self.set_led_on(LED_RED)
+        time.sleep(0.5)
+        self.set_led_off(LED_RED)
+        time.sleep(0.5)
+        self.set_led_on(LED_RED)
+
+        # Stop all software services gracefully
+        self.handle_stop_command()
+
+        # Shutdown the system
+        try:
+            subprocess.run(["sudo", "poweroff"], check=True)
+        except Exception as e:
+            logger.error(f"Failed to power off: {e}")
+            self.set_led_on(LED_RED) # Solid red on failure
+
     def on_connect(self, client, userdata, flags, rc):
         """Handle MQTT connection."""
         logger.info(f"Connected to MQTT broker with result code {rc}")
@@ -49,6 +118,8 @@ class SculptureAgent:
         logger.info(f"Subscribed to {self.cmd_topic} and {self.broadcast_topic}")
         # Default to live mode on connect
         self.handle_mode_command("live")
+        # Signal successful connection
+        self.set_led_on(LED_GREEN)
         
     def on_message(self, client, userdata, msg):
         """Handle incoming MQTT messages."""
@@ -128,6 +199,7 @@ class SculptureAgent:
             self.system_manager.stop_all_services()
         except Exception as e:
             logger.error(f"Failed to handle stop command: {e}")
+            self.set_led_on(LED_RED)
             
     def get_system_status(self):
         """Get complete system status."""
@@ -181,7 +253,10 @@ class SculptureAgent:
             logger.info("Shutting down...")
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
+            self.set_led_on(LED_RED)
         finally:
+            logger.info("Cleaning up GPIO.")
+            GPIO.cleanup()
             self.client.loop_stop()
             self.client.disconnect()
 

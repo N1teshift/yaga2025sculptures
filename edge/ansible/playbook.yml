@@ -26,6 +26,7 @@
           - python3-pip
           - git
           - pulsemixer
+          - python3-rpi.gpio
         state: present
 
     - name: Install PulseAudio (PulseAudio mode only)
@@ -170,6 +171,12 @@
         mode: '0644'
       when: audio_backend == 'alsa'
 
+    - name: Ensure custom ALSA config is absent (PulseAudio mode only)
+      ansible.builtin.file:
+        path: /etc/asound.conf
+        state: absent
+      when: audio_backend == 'pulse'
+
     - name: Find IQaudIO sound card number
       ansible.builtin.shell: "grep 'IQaudIOCODEC' /proc/asound/cards | awk '{print $1}'"
       register: iqaudio_card_num_result
@@ -228,6 +235,18 @@
         dest: "{{ sculpture_dir }}/status_collector.py"
         mode: '0644'
       notify: Restart pi-agent
+
+    - name: Copy audio diagnostics script
+      copy:
+        src: ../scripts/audio_diagnostics.sh
+        dest: "{{ sculpture_dir }}/audio_diagnostics.sh"
+        mode: '0755'
+
+    - name: Copy hardware audio test script
+      copy:
+        src: ../scripts/hardware_audio_test.sh
+        dest: "{{ sculpture_dir }}/hardware_audio_test.sh"
+        mode: '0755'
 
     - name: Install darkice systemd service
       template:
@@ -300,6 +319,15 @@
       notify: Restart pulseaudio
       when: audio_backend == 'pulse'
 
+    - name: Blacklist snd_aloop module to prevent loopback devices
+      lineinfile:
+        path: /etc/modprobe.d/blacklist-sculpture.conf
+        regexp: '^blacklist snd_aloop'
+        line: 'blacklist snd_aloop'
+        state: present
+        create: yes
+      notify: Reboot required
+
     - name: Ensure pi-agent service is started and enabled
       systemd:
         name: pi-agent.service
@@ -327,6 +355,10 @@
         state: restarted
         scope: user
       become: no
+
+    - name: Reboot required
+      debug:
+        msg: "REBOOT REQUIRED: Kernel module blacklist changes need reboot to take effect"
 
     - name: Restart darkice
       systemd:
