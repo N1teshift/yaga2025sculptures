@@ -120,7 +120,8 @@ class SculptureAgent:
         logger.info(f"Connected to MQTT broker with result code {rc}")
         client.subscribe(self.cmd_topic)
         client.subscribe(self.broadcast_topic)
-        logger.info(f"Subscribed to {self.cmd_topic} and {self.broadcast_topic}")
+        client.subscribe("system/plan")  # Subscribe to plan updates from server-agent
+        logger.info(f"Subscribed to {self.cmd_topic}, {self.broadcast_topic}, and system/plan")
         # Default to live mode on connect
         self.handle_mode_command("live")
         # Signal successful connection
@@ -137,7 +138,9 @@ class SculptureAgent:
                 return
 
             # Route commands to appropriate handlers
-            if 'mode' in payload:
+            if 'plan' in payload:
+                self.handle_plan_command(payload['plan'])
+            elif 'mode' in payload:
                 self.handle_mode_command(payload['mode'], payload.get('track'))
             elif 'volume' in payload:
                 self.handle_volume_command(payload['volume'])
@@ -176,6 +179,28 @@ class SculptureAgent:
             logger.error(f"Invalid JSON in message: {msg.payload.decode()}")
         except Exception as e:
             logger.error(f"Error processing message: {e}")
+            
+    def handle_plan_command(self, plan):
+        """Handle plan change commands and switch mode accordingly."""
+        try:
+            logger.info(f"Received plan change: {plan}")
+            current_mode = self.system_manager.current_mode
+            
+            # Plan D = local mode, all other plans = live mode
+            if plan == "D":
+                if current_mode != "local":
+                    logger.info("Switching to local mode for plan D")
+                    self.system_manager.switch_to_local_mode(None, self.audio_manager.audio_config)
+                else:
+                    logger.info("Already in local mode for plan D, no action needed")
+            else:
+                if current_mode != "live":
+                    logger.info(f"Switching to live mode for plan {plan}")
+                    self.system_manager.switch_to_live_mode()
+                else:
+                    logger.info(f"Already in live mode for plan {plan}, no action needed")
+        except Exception as e:
+            logger.error(f"Failed to handle plan command: {e}")
             
     def handle_mode_command(self, mode, track=None):
         """Handle mode switching commands."""

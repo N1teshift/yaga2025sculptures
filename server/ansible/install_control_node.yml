@@ -55,9 +55,11 @@
         mode: '0755'
 
     - name: Install Node-RED dashboard
-      ansible.builtin.shell:
-        cmd: 'su -s /bin/sh -c "npm install node-red-dashboard --production" node-red'
-        chdir: "{{ sculpture_dir }}"
+      npm:
+        name: node-red-dashboard
+        path: "{{ sculpture_dir }}"
+        production: yes
+      become_user: node-red
       notify:
         - reload systemd
         - restart node-red
@@ -288,7 +290,7 @@
         path: "{{ sculpture_dir }}"
         owner: node-red
         group: node-red
-        recurse: yes
+        state: directory
 
     - name: Copy MQTT to Telnet bridge script
       copy:
@@ -297,6 +299,7 @@
         mode: '0755'
         owner: unix
         group: unix
+        force: yes
 
     - name: Install MQTT bridge Python dependencies
       pip:

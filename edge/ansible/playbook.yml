@@ -188,101 +188,81 @@
         iqaudio_card_num: "{{ iqaudio_card_num_result.stdout }}"
 
     - name: Configure ALSA mixer for microphone input
-      ansible.builtin.command: "amixer -c {{ iqaudio_card_num }} sset '{{ item.control }}' {{ item.value }}"
+      ansible.builtin.shell: |
+        current=$(amixer -c {{ iqaudio_card_num }} sget '{{ item.control }}' 2>/dev/null || echo "not_found")
+        if ! echo "$current" | grep -q "{{ item.value }}"; then
+          amixer -c {{ iqaudio_card_num }} sset '{{ item.control }}' {{ item.value }} >/dev/null
+          echo "changed"
+        else
+          echo "ok"
+        fi
       loop:
         - { control: 'Mic 2', value: '5 on' }
         - { control: 'Mixin Left Mic 2', value: 'on' }
         - { control: 'Mixin Right Mic 2', value: 'on' }
         - { control: 'ADC', value: '114 on' }
         - { control: 'Mixin PGA', value: '7 on' }
-      changed_when: true
+      register: mic_mixer_result
+      changed_when: mic_mixer_result.stdout == "changed"
       notify: Save ALSA state
 
     - name: Configure ALSA mixer for speaker output
-      ansible.builtin.command: "amixer -c {{ iqaudio_card_num }} sset '{{ item.control }}' {{ item.value }}"
+      ansible.builtin.shell: |
+        current=$(amixer -c {{ iqaudio_card_num }} sget '{{ item.control }}' 2>/dev/null || echo "not_found")
+        if ! echo "$current" | grep -q "{{ item.value }}"; then
+          amixer -c {{ iqaudio_card_num }} sset '{{ item.control }}' {{ item.value }} >/dev/null
+          echo "changed"
+        else
+          echo "ok"
+        fi
       loop:
         - { control: 'Lineout', value: 'on' }
         - { control: 'Headphone', value: 'on' }
         - { control: 'Mixout Left DAC Left', value: 'on' }
         - { control: 'Mixout Right DAC Right', value: 'on' }
-      changed_when: true
+      register: speaker_mixer_result
+      changed_when: speaker_mixer_result.stdout == "changed"
       notify: Save ALSA state
 
-    - name: Template pi-agent script
+    - name: Install sculpture system files
       template:
-        src: templates/pi-agent.py.j2
-        dest: "{{ sculpture_dir }}/pi-agent.py"
-        mode: '0755'
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { src: templates/pi-agent.py.j2, dest: "{{ sculpture_dir }}/pi-agent.py", mode: '0755' }
+        - { src: templates/audio_manager.py.j2, dest: "{{ sculpture_dir }}/audio_manager.py", mode: '0644' }
+        - { src: templates/system_manager.py.j2, dest: "{{ sculpture_dir }}/system_manager.py", mode: '0644' }
       notify: Restart pi-agent
 
-    - name: Template audio manager module
-      template:
-        src: templates/audio_manager.py.j2
-        dest: "{{ sculpture_dir }}/audio_manager.py"
-        mode: '0644'
-      notify: Restart pi-agent
-
-    - name: Template system manager module
-      template:
-        src: templates/system_manager.py.j2
-        dest: "{{ sculpture_dir }}/system_manager.py"
-        mode: '0644'
-      notify: Restart pi-agent
-
-    - name: Copy status collector module
+    - name: Copy sculpture system modules and scripts
       copy:
-        src: ../scripts/status_collector.py
-        dest: "{{ sculpture_dir }}/status_collector.py"
-        mode: '0644'
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { src: ../scripts/status_collector.py, dest: "{{ sculpture_dir }}/status_collector.py", mode: '0644' }
+        - { src: ../scripts/audio_diagnostics.sh, dest: "{{ sculpture_dir }}/audio_diagnostics.sh", mode: '0755' }
+        - { src: ../scripts/hardware_audio_test.sh, dest: "{{ sculpture_dir }}/hardware_audio_test.sh", mode: '0755' }
       notify: Restart pi-agent
 
-    - name: Copy audio diagnostics script
-      copy:
-        src: ../scripts/audio_diagnostics.sh
-        dest: "{{ sculpture_dir }}/audio_diagnostics.sh"
-        mode: '0755'
-
-    - name: Copy hardware audio test script
-      copy:
-        src: ../scripts/hardware_audio_test.sh
-        dest: "{{ sculpture_dir }}/hardware_audio_test.sh"
-        mode: '0755'
-
-    - name: Install darkice systemd service
+    - name: Install systemd services
       template:
-        src: ../systemd/darkice.service.j2
-        dest: /etc/systemd/system/darkice.service
+        src: "{{ item.src }}"
+        dest: "/etc/systemd/system/{{ item.name }}.service"
         owner: root
         group: root
         mode: '0644'
-      notify: Restart darkice
-
-    - name: Install player-live systemd service
-      template:
-        src: ../systemd/player-live.service.j2
-        dest: /etc/systemd/system/player-live.service
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Restart player-live
-
-    - name: Install player-loop systemd service
-      template:
-        src: ../systemd/player-loop.service.j2
-        dest: /etc/systemd/system/player-loop.service
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Restart player-loop
-
-    - name: Install pi-agent systemd service
-      template:
-        src: ../systemd/pi-agent.service.j2
-        dest: /etc/systemd/system/pi-agent.service
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Restart pi-agent
+      loop:
+        - { src: ../systemd/darkice.service.j2, name: darkice }
+        - { src: ../systemd/player-live.service.j2, name: player-live }
+        - { src: ../systemd/player-loop.service.j2, name: player-loop }
+        - { src: ../systemd/pi-agent.service.j2, name: pi-agent }
+      notify: 
+        - Restart darkice
+        - Restart player-live
+        - Restart player-loop
+        - Restart pi-agent
 
     - name: Enable and start services
       systemd:
@@ -311,29 +291,6 @@
       notify: Restart pulseaudio
       when: audio_backend == 'pulse'
 
-    - name: Remove old sculpture_sink configuration from PulseAudio
-      lineinfile:
-        path: /etc/pulse/default.pa
-        regexp: '^load-module module-null-sink sink_name=sculpture_sink'
-        state: absent
-      notify: Restart pulseaudio
-      when: audio_backend == 'pulse'
-
-    - name: Blacklist snd_aloop module to prevent loopback devices
-      lineinfile:
-        path: /etc/modprobe.d/blacklist-sculpture.conf
-        regexp: '^blacklist snd_aloop'
-        line: 'blacklist snd_aloop'
-        state: present
-        create: yes
-      notify: Reboot required
-
-    - name: Ensure pi-agent service is started and enabled
-      systemd:
-        name: pi-agent.service
-        enabled: yes
-        state: started
-
     - name: Grant pi-agent limited sudo access for service management
       template:
         src: templates/pi-agent-sudoers.j2
@@ -356,10 +313,6 @@
         scope: user
       become: no
 
-    - name: Reboot required
-      debug:
-        msg: "REBOOT REQUIRED: Kernel module blacklist changes need reboot to take effect"
-
     - name: Restart darkice
       systemd:
         name: darkice
@@ -378,6 +331,7 @@
     - name: Restart pi-agent
       systemd:
         name: pi-agent
+        
         state: restarted
 
     - name: Save ALSA state

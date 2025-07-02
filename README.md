@@ -162,6 +162,7 @@ Default passwords (change for production):
 - **Test Tone:** `timeout 3s speaker-test -c 1 -t sine`
 - **Telnet:** `telnet localhost 1234` # Password: admin
 - **Alsamixer:** `alsamixer`
+- **flow.json:** `jq . /opt/sculpture-system/flow.json`
 
 ```
 ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.154"
