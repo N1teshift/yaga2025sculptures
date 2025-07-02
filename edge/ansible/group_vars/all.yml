@@ -21,3 +21,33 @@ mpv_audio_format: "s16"
 mpv_audio_buffer_secs: 10
 mpv_cache_secs: 60
 mpv_demuxer_max_bytes: "20M"
+
+# Predefined playlists - collections of wav files to play in sequence
+predefined_playlists:
+  - name: "Ambient Collection"
+    description: "Calm ambient sounds"
+    tracks:
+      - "test1.wav"
+      - "test2.wav"
+      - "test3.wav"
+  - name: "Full Sample Set"
+    description: "All available test samples"
+    tracks:
+      - "test1.wav"
+      - "test2.wav"
+      - "test3.wav"
+      - "test4.wav"
+      - "test5.wav"
+      - "test6.wav"
+  - name: "Quick Loop"
+    description: "Short samples for testing"
+    tracks:
+      - "test1.wav"
+      - "test2.wav"
+  - name: "Extended Mix"
+    description: "Longer format mix"
+    tracks:
+      - "test3.wav"
+      - "test4.wav"
+      - "test5.wav"
+      - "test6.wav"
