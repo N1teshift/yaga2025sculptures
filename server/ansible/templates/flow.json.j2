@@ -1,8 +1,15 @@
 [
-    {% include "flow_parts/part1.json.j2" %},
-    {% include "flow_parts/system/system_control.json.j2" %},
+    {% include "flow_parts/core/config.json.j2" %},
+    {% include "flow_parts/core/startup.json.j2" %},
+    {% include "flow_parts/core/dashboard.json.j2" %},
+    {% include "flow_parts/system/plan_buttons.json.j2" %},
+    {% include "flow_parts/system/plan_logic.json.j2" %},
+    {% include "flow_parts/system/plan_broadcast.json.j2" %},
+    {% include "flow_parts/system/emergency_stop.json.j2" %},
     {% include "flow_parts/system/system_restart_buttons.json.j2" %},
-    {% include "flow_parts/part2.json.j2" %},
-    {% include "flow_parts/sculpture_gauges.json.j2" %},
-    {% include "flow_parts/sculpture_restart_buttons.json.j2" %}
+    {% include "flow_parts/sculpture/mqtt_inputs.json.j2" %},
+    {% include "flow_parts/sculpture/controls.json.j2" %},
+    {% include "flow_parts/sculpture/tracks.json.j2" %},
+    {% include "flow_parts/sculpture/gauges.json.j2" %},
+    {% include "flow_parts/sculpture/restart_buttons.json.j2" %}
 ] 

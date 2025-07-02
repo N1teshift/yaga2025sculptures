@@ -30,6 +30,7 @@
           - mosquitto-clients
           - nodejs
           - python3-pip
+          - jq
         state: present
 
     - name: Install Node-RED globally
@@ -200,6 +201,45 @@
         group: node-red
         mode: '0644'
       notify: restart node-red
+
+    - name: Validate generated flow.json syntax
+      shell: jq . "{{ sculpture_dir }}/flow.json" > /dev/null
+      register: json_validation
+      failed_when: json_validation.rc != 0
+      changed_when: false
+      tags: 
+        - validation
+        - json
+
+    - name: Display JSON validation success
+      debug:
+        msg: "✅ flow.json syntax validation passed - JSON is valid!"
+      when: json_validation.rc == 0
+      tags:
+        - validation
+        - json
+
+    - name: Show JSON structure summary (optional verbose check)
+      shell: |
+        echo "JSON file size: $(wc -c < {{ sculpture_dir }}/flow.json) bytes"
+        echo "Number of nodes: $(jq '. | length' {{ sculpture_dir }}/flow.json)"
+        echo "Node types: $(jq -r '.[].type' {{ sculpture_dir }}/flow.json | sort | uniq -c | sort -nr)"
+      register: json_summary
+      when: json_validation.rc == 0 and ansible_verbosity >= 1
+      changed_when: false
+      tags:
+        - validation
+        - json
+        - verbose
+
+    - name: Display JSON summary
+      debug:
+        var: json_summary.stdout_lines
+      when: json_validation.rc == 0 and ansible_verbosity >= 1
+      tags:
+        - validation
+        - json
+        - verbose
 
     - name: Create Node-RED settings file
       copy:

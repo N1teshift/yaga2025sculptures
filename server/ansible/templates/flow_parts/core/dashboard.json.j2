@@ -1,0 +1,40 @@
+{
+    "id": "ui_ui_control_dashboard",
+    "type": "ui_ui_control",
+    "z": "sculpture_dashboard",
+    "name": "Dashboard Connect Listener",
+    "x": 160,
+    "y": 140,
+    "wires": [["plan_dashboard_connect"]]
+},
+
+{
+    "id": "get_tracks_on_startup",
+    "type": "inject",
+    "z": "sculpture_dashboard",
+    "name": "Get Tracks on Startup",
+    "props": [{"p": "payload"}],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "1",
+    "topic": "",
+    "payload": "{\"command\":\"get_tracks\"}",
+    "payloadType": "json",
+    "x": 150,
+    "y": 80,
+    "wires": [["get_tracks_broadcast"]]
+},
+{
+    "id": "get_tracks_broadcast",
+    "type": "mqtt out",
+    "z": "sculpture_dashboard",
+    "name": "Broadcast Get Tracks",
+    "topic": "system/broadcast",
+    "qos": "0",
+    "retain": "false",
+    "broker": "mqtt_broker",
+    "x": 370,
+    "y": 80,
+    "wires": []
+} 

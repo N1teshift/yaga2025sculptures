@@ -159,6 +159,9 @@ class SculptureAgent:
                 elif restart_target == 'player-live':
                     logger.info('Restarting player-live service by command')
                     subprocess.run(['sudo', 'systemctl', 'restart', 'player-live.service'], check=True)
+                elif restart_target == 'player-loop':
+                    logger.info('Restarting player-loop service by command')
+                    subprocess.run(['sudo', 'systemctl', 'restart', 'player-loop.service'], check=True)
                 else:
                     logger.info('Restarting all services by command')
                     self.handle_restart_command()

@@ -1,0 +1,70 @@
+{% for sculpture_id in [1, 2, 3] %}
+{
+    "id": "status_in_{{ sculpture_id }}",
+    "type": "mqtt in",
+    "z": "sculpture_dashboard",
+    "name": "Status {{ sculpture_id }}",
+    "topic": "sculpture/{{ sculpture_id }}/status",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "mqtt_broker",
+    "inputs": 0,
+    "x": 100,
+    "y": 420,
+    "wires": [["status_offline_switch_{{ sculpture_id }}"]]
+},
+{
+    "id": "status_offline_switch_{{ sculpture_id }}",
+    "type": "switch",
+    "z": "sculpture_dashboard",
+    "name": "Offline Switch {{ sculpture_id }}",
+    "property": "payload.status",
+    "propertyType": "msg",
+    "rules": [
+        { "t": "eq", "v": "offline", "vt": "str" },
+        { "t": "else" }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 2,
+    "x": 180,
+    "y": 420,
+    "wires": [
+        ["status_nullify_{{ sculpture_id }}"],
+        ["status_parse_{{ sculpture_id }}"]
+    ]
+},
+{
+    "id": "status_nullify_{{ sculpture_id }}",
+    "type": "change",
+    "z": "sculpture_dashboard",
+    "name": "Nullify Stats {{ sculpture_id }}",
+    "rules": [
+        { "t": "set", "p": "payload.cpu", "pt": "msg", "to": "null", "tot": "jsonata" },
+        { "t": "set", "p": "payload.temp", "pt": "msg", "to": "null", "tot": "jsonata" },
+        { "t": "set", "p": "payload.mic", "pt": "msg", "to": "null", "tot": "jsonata" },
+        { "t": "set", "p": "payload.output", "pt": "msg", "to": "null", "tot": "jsonata" }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 340,
+    "y": 400,
+    "wires": [["status_parse_{{ sculpture_id }}"]]
+},
+{
+    "id": "tracks_in_{{ sculpture_id }}",
+    "type": "mqtt in",
+    "z": "sculpture_dashboard",
+    "name": "Tracks for {{ sculpture_id }}",
+    "topic": "sculpture/{{ sculpture_id }}/tracks",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "mqtt_broker",
+    "x": 120,
+    "y": 620,
+    "wires": [["format_tracks_{{ sculpture_id }}"]]
+}{% if not loop.last %},{% endif %}
+{% endfor %} 
