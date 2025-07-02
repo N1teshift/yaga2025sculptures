@@ -85,30 +85,5 @@
     "x": 400,
     "y": 740,
     "wires": [["load_track_button_{{ sculpture_id }}"]]
-},
-{
-    "id": "tracks_in_{{ sculpture_id }}",
-    "type": "mqtt in",
-    "z": "sculpture_dashboard",
-    "name": "Tracks and Playlists for {{ sculpture_id }}",
-    "topic": "sculpture/{{ sculpture_id }}/tracks",
-    "qos": "0",
-    "datatype": "json",
-    "broker": "mqtt_broker",
-    "x": 120,
-    "y": 620,
-    "wires": [["format_tracks_{{ sculpture_id }}"]]
-},
-{
-    "id": "format_tracks_{{ sculpture_id }}",
-    "type": "function",
-    "z": "sculpture_dashboard",
-    "name": "Format Tracks/Playlists {{ sculpture_id }}",
-    "func": "// Transform the new data structure into dropdown options\nvar items = msg.payload;\nvar options = [];\n\nif (Array.isArray(items)) {\n    items.forEach(function(item) {\n        if (typeof item === 'string') {\n            // Legacy format - just a filename string\n            options.push({\n                label: item,\n                value: item\n            });\n        } else if (item && item.name && item.display_name) {\n            // New format - object with name, type, display_name\n            options.push({\n                label: item.display_name,\n                value: item.name  // Store just the name as value\n            });\n        }\n    });\n}\n\nmsg.options = options;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "x": 330,
-    "y": 620,
-    "wires": [["track_selector_{{ sculpture_id }}"]]
 }{% if not loop.last %},{% endif %}
 {% endfor %} 

@@ -132,33 +132,21 @@ class SystemManager:
         """Get list of available audio tracks and playlists."""
         try:
             loops_dir = Path(self.sculpture_dir)
-            tracks_and_playlists = []
+            available_items = []
             
-            # Get individual tracks
+            # Get individual tracks (just the filenames)
+            individual_tracks = []
             if loops_dir.is_dir():
                 individual_tracks = sorted([f.name for f in loops_dir.iterdir() 
                                          if f.is_file() and f.suffix in ['.wav', '.mp3', '.flac']])
-                
-                # Add individual tracks with type identifier
-                for track in individual_tracks:
-                    tracks_and_playlists.append({
-                        'name': track,
-                        'type': 'track',
-                        'display_name': f"🎵 {track}"
-                    })
+                available_items.extend(individual_tracks)
             
-            # Add predefined playlists
-            for playlist in self.predefined_playlists:
-                tracks_and_playlists.append({
-                    'name': playlist['name'],
-                    'type': 'playlist',
-                    'display_name': f"📻 {playlist['name']} ({len(playlist['tracks'])} tracks)",
-                    'description': playlist.get('description', ''),
-                    'tracks': playlist['tracks']
-                })
+            # Get predefined playlist names
+            playlist_names = [playlist['name'] for playlist in self.predefined_playlists]
+            available_items.extend(playlist_names)
             
-            logger.info(f"Found {len(tracks_and_playlists)} items: tracks and playlists")
-            return tracks_and_playlists
+            logger.info(f"Found {len(available_items)} items: {len(individual_tracks)} tracks, {len(playlist_names)} playlists")
+            return available_items
             
         except Exception as e:
             logger.error(f"Error getting tracks and playlists: {e}")
