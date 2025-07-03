@@ -212,10 +212,10 @@ class SystemManager:
             raise
 
         # Create the drop-in file content for playlist
-        # Use --playlist and --loop-playlist for mpv playlist support
+        # Use --playlist= and --loop-playlist for mpv playlist support
         override_content = f"""[Service]
 ExecStart=
-ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={samplerate} --audio-format={audio_format} --playlist {playlist_file} --loop-playlist --audio-buffer=5
+ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={samplerate} --audio-format={audio_format} --playlist={playlist_file} --loop-playlist --audio-buffer=5
 """
         try:
             # Write to a temporary file and then move it to be atomic
@@ -239,8 +239,7 @@ ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={sa
         
         try:
             with open(playlist_file, 'w') as f:
-                f.write("# Sculpture System Playlist\n")
-                f.write(f"# Generated playlist: {playlist_name}\n")
+                # Write only file paths, no comments for mpv compatibility
                 for track in tracks:
                     track_path = Path(self.sculpture_dir) / track
                     if track_path.exists():
@@ -248,7 +247,7 @@ ExecStart=/usr/bin/mpv --no-video --audio-device={device} --audio-samplerate={sa
                     else:
                         logger.warning(f"Track in playlist not found: {track_path}")
             
-            logger.info(f"Generated playlist file: {playlist_file}")
+            logger.info(f"Generated playlist file: {playlist_file} with {len(tracks)} tracks")
             return str(playlist_file)
             
         except Exception as e:

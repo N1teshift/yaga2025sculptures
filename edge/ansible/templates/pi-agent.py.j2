@@ -298,7 +298,7 @@ class SculptureAgent:
             button_pressed = False
             while True:
                 self.publish_status()
-                # Poll the shutdown button every 0.1s
+                # Poll the shutdown button every 1s
                 if GPIO.input(BUTTON_SHUTDOWN) == GPIO.LOW:
                     if not button_pressed:
                         self.handle_shutdown_button(BUTTON_SHUTDOWN)
