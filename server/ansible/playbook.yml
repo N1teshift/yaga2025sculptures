@@ -294,16 +294,7 @@
         group: node-red
         state: directory
 
-    - name: Copy mqtt_to_telnet_bridge.py
-      copy:
-        src: ../mqtt_to_telnet_bridge/mqtt_to_telnet_bridge.py
-        dest: "{{ sculpture_dir }}/liquidsoap/mqtt_to_telnet_bridge.py"
-
-    - name: Copy mqtt_to_telnet_bridge systemd service
-      copy:
-        src: ../mqtt_to_telnet_bridge/mqtt_to_telnet_bridge.service
-        dest: /etc/systemd/system/mqtt_to_telnet_bridge.service
-      notify: restart mqtt_to_telnet_bridge
+    # MQTT to Telnet bridge removed - now using direct HTTP API
 
     - name: Copy server-agent requirements
       copy:
@@ -346,7 +337,6 @@
         - mosquitto
         - liquidsoap
         - node-red
-        - mqtt_to_telnet_bridge
 
   handlers:
     - name: reload systemd
@@ -373,10 +363,7 @@
         name: node-red
         state: restarted
 
-    - name: restart mqtt_to_telnet_bridge
-      systemd:
-        name: mqtt_to_telnet_bridge
-        state: restarted
+    # mqtt_to_telnet_bridge handler removed - no longer needed
 
     - name: restart server-agent
       systemd:

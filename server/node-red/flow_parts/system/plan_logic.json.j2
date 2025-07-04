@@ -1,22 +1,9 @@
 {
-    "id": "plan_status_mqtt_in",
-    "type": "mqtt in",
-    "z": "sculpture_dashboard",
-    "name": "Plan Status from Server",
-    "topic": "system/plan",
-    "qos": "0",
-    "datatype": "json",
-    "broker": "mqtt_broker",
-    "x": 180,
-    "y": 200,
-    "wires": [["plan_highlighter"]]
-},
-{
     "id": "plan_highlighter",
     "type": "function",
     "z": "sculpture_dashboard",
     "name": "Plan Highlighter",
-    "func": "// Extract plan from server-agent payload\nvar currentPlan = msg.payload.plan;\nif (!currentPlan) return null; // Exit if no plan in payload\n\n// Store the current plan in flow context for persistence\nflow.set('currentPlan', currentPlan);\n\n// Send the current plan to all button state nodes\n// Each output gets the same message with the current plan\nvar stateMsgs = Array(7).fill({payload: currentPlan});\n\nreturn stateMsgs;",
+    "func": "// Extract plan from payload\nvar currentPlan = msg.payload.plan;\nif (!currentPlan) return null; // Exit if no plan in payload\n\n// Store the current plan in flow context for persistence\nflow.set('currentPlan', currentPlan);\n\n// Send the current plan to all button state nodes\n// Each output gets the same message with the current plan\nvar stateMsgs = Array(7).fill({payload: currentPlan});\n\nreturn stateMsgs;",
     "outputs": 7,
     "noerr": 0,
     "initialize": "",
@@ -52,7 +39,7 @@
     "type": "function",
     "z": "sculpture_dashboard",
     "name": "Send Plan Highlight on Connect",
-    "func": "// On dashboard connect, re-broadcast the current plan highlight\nif (msg.payload && msg.payload.event === 'connect') {\n    var currentPlan = flow.get('currentPlan') || 'B1'; // Default to B1\n    return { payload: { plan: currentPlan } };\n}\nreturn null;",
+    "func": "// On dashboard connect, re-broadcast the current plan highlight\nif (msg.payload && msg.payload.event === 'connect') {\n    var currentPlan = flow.get('currentPlan') || 'A1'; // Default to A1\n    return { payload: { plan: currentPlan } };\n}\nreturn null;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
@@ -70,7 +57,7 @@
     "type": "function",
     "z": "sculpture_dashboard",
     "name": "Plan Button Logic",
-    "func": "// Find which button was pressed from the payload (e.g., 'A1', 'B1', etc.)\nvar selectedPlan = msg.payload;\n\nif (selectedPlan) {\n    // Just send the plan - sculptures will determine their own mode\n    msg.payload = { plan: selectedPlan };\n    return msg;\n}\n\nreturn null;",
+    "func": "// Extract plan and mode from button payload\nvar planData = msg.payload;\n\nif (planData && planData.plan) {\n    // Forward both plan and mode to MQTT prepare\n    msg.payload = {\n        plan: planData.plan,\n        mode: planData.mode || 'live' // Default to live mode\n    };\n    return msg;\n}\n\nreturn null;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
@@ -79,8 +66,43 @@
     "y": 180,
     "wires": [
         [
-            "plan_mqtt_out",
+            "plan_mqtt_prepare",
             "plan_broadcast_out"
         ]
     ]
+},
+{
+    "id": "plan_startup_init",
+    "type": "inject",
+    "z": "sculpture_dashboard",
+    "name": "Initialize with Default Plan",
+    "props": [
+        {
+            "p": "payload"
+        }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 180,
+    "y": 60,
+    "wires": [["plan_startup_default"]]
+},
+{
+    "id": "plan_startup_default",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "Set Default Plan on Startup",
+    "func": "// Set default plan on startup - server-agent will publish actual plan via MQTT\nnode.warn('Setting default plan A1 on startup - waiting for MQTT updates from server-agent');\nreturn {\n    payload: {\n        plan: 'A1'\n    },\n    topic: 'plan/startup'\n};",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "x": 420,
+    "y": 60,
+    "wires": [["plan_highlighter"]]
 } 

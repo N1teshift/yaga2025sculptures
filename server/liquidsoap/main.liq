@@ -1,7 +1,7 @@
 #!/usr/bin/liquidsoap
 
 # Liquidsoap main configuration for sculpture system
-# Supports dynamic plan switching via telnet
+# Supports dynamic plan switching via HTTP API
 
 # Import presets
 %include "presets.liq"
@@ -10,7 +10,7 @@
 settings.log.level.set(4)
 settings.log.file.path.set("/var/log/liquidsoap/main.log")
 
-# Enable telnet server for control
+# Enable telnet server for server-agent communication
 settings.server.telnet.set(true)
 settings.server.telnet.bind_addr.set("0.0.0.0")
 settings.server.telnet.port.set(1234)
@@ -35,7 +35,7 @@ s2_mono = to_mono(s2_input)
 s3_mono = to_mono(s3_input)
 
 # Add fallback silence for when inputs are not available
-silence = amplify(0.0, sine())
+silence = blank()
 
 s1_safe = fallback(id="s1_fallback", track_sensitive=false, [s1_mono, silence])
 s2_safe = fallback(id="s2_fallback", track_sensitive=false, [s2_mono, silence])
@@ -52,82 +52,96 @@ prerecorded = sine(440.0)
 # Reference to current plan (default: A1)
 current_plan = ref("A1")
 
-# Mix output references updated when the plan changes
-to1 = ref(silence)
-to2 = ref(silence)
-to3 = ref(silence)
+# Create dynamic sources that update when plan changes
+to1_dynamic = source.dynamic()
+to2_dynamic = source.dynamic()  
+to3_dynamic = source.dynamic()
 
+# Make dynamic sources infallible with fallback to silence
+to1 = fallback(id="to1_fallback", track_sensitive=false, [to1_dynamic, silence])
+to2 = fallback(id="to2_fallback", track_sensitive=false, [to2_dynamic, silence])
+to3 = fallback(id="to3_fallback", track_sensitive=false, [to3_dynamic, silence])
 
-# Function to create mixes based on plan
-# Returns: [to1, to2, to3]
-def get_mixes(plan)
-  if plan == "A1" then
-    # 1 hears 2, 2 hears 3, 3 hears 1
-    [s2_proc, s3_proc, s1_proc]
-  elsif plan == "A2" then
-    # 1 hears 3, 2 hears 1, 3 hears 2
-    [s3_proc, s1_proc, s2_proc]
-  elsif plan == "B1" then
-    # 1<->2, 3 silent
-    [s2_proc, s1_proc, silence]
-  elsif plan == "B2" then
-    # 2<->3, 1 silent
-    [silence, s3_proc, s2_proc]
-  elsif plan == "B3" then
-    # 3<->1, 2 silent
-    [s3_proc, silence, s1_proc]
-  elsif plan == "C" then
-    # All-to-all except self
-    [add([s2_proc, s3_proc]), add([s1_proc, s3_proc]), add([s1_proc, s2_proc])]
-  elsif plan == "D" then
-    # All outputs play prerecorded file
-    [prerecorded, prerecorded, prerecorded]
-  else
-    # Fallback to A1
-    [s2_proc, s3_proc, s1_proc]
-  end
-end
-
-# Update mix references based on the current plan
+# Function to update all mix sources based on current plan
 def update_mixes()
-  log("Updating mixes for plan #{!current_plan}")
-  mixes = get_mixes(!current_plan)
-  to1 := list.hd(mixes)
-  to2 := list.hd(list.tl(mixes))
-  to3 := list.hd(list.tl(list.tl(mixes)))
+  plan = !current_plan
+  log("Updating mixes for plan: #{plan}")
+  
+  # Update sculpture 1 mix
+  if plan == "A1" then to1_dynamic.set(s2_proc)
+  elsif plan == "A2" then to1_dynamic.set(s3_proc)  
+  elsif plan == "B1" then to1_dynamic.set(s2_proc)
+  elsif plan == "B2" then to1_dynamic.set(silence)
+  elsif plan == "B3" then to1_dynamic.set(s3_proc)
+  elsif plan == "C" then to1_dynamic.set(add([s2_proc, s3_proc]))
+  elsif plan == "D" then to1_dynamic.set(prerecorded)
+  else to1_dynamic.set(s2_proc) end
+  
+  # Update sculpture 2 mix
+  if plan == "A1" then to2_dynamic.set(s3_proc)
+  elsif plan == "A2" then to2_dynamic.set(s1_proc)
+  elsif plan == "B1" then to2_dynamic.set(s1_proc)  
+  elsif plan == "B2" then to2_dynamic.set(s3_proc)
+  elsif plan == "B3" then to2_dynamic.set(silence)
+  elsif plan == "C" then to2_dynamic.set(add([s1_proc, s3_proc]))
+  elsif plan == "D" then to2_dynamic.set(prerecorded)
+  else to2_dynamic.set(s3_proc) end
+  
+  # Update sculpture 3 mix
+  if plan == "A1" then to3_dynamic.set(s1_proc)
+  elsif plan == "A2" then to3_dynamic.set(s2_proc)
+  elsif plan == "B1" then to3_dynamic.set(silence)
+  elsif plan == "B2" then to3_dynamic.set(s2_proc)  
+  elsif plan == "B3" then to3_dynamic.set(s1_proc)
+  elsif plan == "C" then to3_dynamic.set(add([s1_proc, s2_proc]))
+  elsif plan == "D" then to3_dynamic.set(prerecorded)
+  else to3_dynamic.set(s1_proc) end
+  
+  log("Mix updates completed for plan #{plan}")
 end
 
-# Telnet command to set plan
-def set_plan(arg)
+# Plan switching functions
+def set_plan_command(plan)
+  log("Received set_plan command: #{plan}")
+  
   # Allowed plans
   plans = ["A1", "A2", "B1", "B2", "B3", "C", "D"]
   
-  if list.mem(arg, plans) then
-    log("Setting plan to #{arg}...")
+  if list.mem(plan, plans) then
+    log("Setting plan to #{plan}...")
     # Update the reference
-    current_plan := arg
-    # Reload the mixes with the new plan
+    current_plan := plan
+    # Update all mixes with the new plan
     update_mixes()
-    log("Plan changed to #{arg}")
-    "Plan set to #{arg}"
+    log("Plan changed to #{plan}")
+    "Plan set to #{plan}"
   else
-    "Unknown plan: #{arg}"
+    log("Invalid plan requested: #{plan}")
+    "Invalid plan #{plan}. Valid plans: A1, A2, B1, B2, B3, C, D"
   end
 end
-server.register("set_plan", set_plan)
 
-# Telnet command to get the current plan
-def get_plan(_)
-  !current_plan
+def get_plan_command()
+  log("Received get_plan command")
+  "#{!current_plan}"
 end
-server.register("get_plan", get_plan, description="Get the current plan.")
+
+# Register telnet commands for server-agent compatibility
+server.register(
+  "set_plan",
+  fun(plan) -> set_plan_command(plan)
+)
+
+server.register(
+  "get_plan", 
+  fun(_) -> get_plan_command()
+)
 
 # Initialize mixes
 update_mixes()
 
-# The !toX refs now hold the final, processed audio.
-# The `sculpture_process` function is already applied to the safe sources,
-# so we can use the refs directly in the output.
+# The toX sources now dynamically switch based on current plan
+# No dereferencing needed since they are direct sources
 
 # Output to Icecast
 output.icecast(
@@ -138,7 +152,7 @@ output.icecast(
   mount="mix-for-1.ogg",
   name="Mix for Sculpture 1",
   description="Personalized audio mix",
-  !to1
+  to1
 )
 
 output.icecast(
@@ -147,9 +161,9 @@ output.icecast(
   port=8000,
   password="hackme",
   mount="mix-for-2.ogg",
-  name="Mix for Sculpture 2",
+  name="Mix for Sculpture 2", 
   description="Personalized audio mix",
-  !to2
+  to2
 )
 
 output.icecast(
@@ -160,8 +174,12 @@ output.icecast(
   mount="mix-for-3.ogg",
   name="Mix for Sculpture 3",
   description="Personalized audio mix",
-  !to3
+  to3
 )
 
 # Log startup
-log("Sculpture system Liquidsoap configuration loaded (dynamic plans)")
+log("Sculpture system Liquidsoap configuration loaded with telnet API (port 1234)")
+log("Available telnet commands:")
+log("  set_plan <PLAN> - Set plan (A1, A2, B1, B2, B3, C, D)")
+log("  get_plan        - Get current plan")
+

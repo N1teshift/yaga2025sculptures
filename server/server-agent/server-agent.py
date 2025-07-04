@@ -703,6 +703,23 @@ def handle_plan_command(client, plan):
     else:
         logger.error(f"Failed to set plan in Liquidsoap")
 
+def forward_to_sculptures(client, plan, mode):
+    """Forward plan and mode information to all pi-agents."""
+    try:
+        message_data = {
+            'plan': plan,
+            'mode': mode,
+            'timestamp': time.time(),
+            'source': 'server-agent'
+        }
+        
+        # Publish to system/plan topic for pi-agents
+        client.publish("system/plan", json.dumps(message_data), retain=True)
+        logger.info(f"Forwarded plan {plan} (mode: {mode}) to sculptures")
+        
+    except Exception as e:
+        logger.error(f"Failed to forward plan to sculptures: {e}")
+
 def tail_log(name, path):
     """Continuously tail a log file and print new lines with a prefix."""
     try:
@@ -766,7 +783,15 @@ def on_message(client, userdata, msg):
             # Handle plan broadcast messages
             if 'plan' in data:
                 plan = data['plan']
+                mode = data.get('mode', 'live')  # Default to live if mode not specified
+                
+                logger.info(f"Received plan broadcast: {plan} (mode: {mode})")
+                
+                # Update Liquidsoap with plan (Liquidsoap doesn't care about mode)
                 handle_plan_command(client, plan)
+                
+                # Forward complete message to pi-agents for mode switching
+                forward_to_sculptures(client, plan, mode)
             else:
                 logger.warning(f"Broadcast message missing plan: {data}")
                 
