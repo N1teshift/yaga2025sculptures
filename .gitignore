@@ -1,0 +1,14 @@
+# Ignore all files in samples directory
+samples/*
+
+# But keep the specific test files
+!samples/test1.wav
+!samples/test2.wav
+!samples/test3.wav
+!samples/test4.wav
+!samples/test5.wav
+!samples/test6.wav
+
+# Ignore all samples except Test
+!samples/Test/
+!samples/Test/*

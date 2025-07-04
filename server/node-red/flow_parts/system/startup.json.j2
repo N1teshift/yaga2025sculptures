@@ -1,0 +1,152 @@
+{
+    "id": "ui_ui_control_dashboard",
+    "type": "ui_ui_control",
+    "z": "sculpture_dashboard",
+    "name": "Dashboard Connect Listener",
+    "x": 160,
+    "y": 140,
+    "wires": [
+        [
+            "plan_dashboard_connect"
+        ]
+    ]
+},
+{
+    "id": "plan_broadcast_in",
+    "type": "mqtt in",
+    "z": "sculpture_dashboard",
+    "name": "Listen for Plan Broadcasts",
+    "topic": "system/broadcast",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "mqtt_broker",
+    "x": 150,
+    "y": 200,
+    "wires": [
+        [
+            "plan_highlighter"
+        ]
+    ]
+},
+{
+    "id": "get_tracks_on_startup",
+    "type": "inject",
+    "z": "sculpture_dashboard",
+    "name": "Get Tracks on Startup",
+    "props": [
+        {
+            "p": "payload"
+        }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "1",
+    "topic": "",
+    "payload": "{\"command\":\"get_tracks\"}",
+    "payloadType": "json",
+    "x": 150,
+    "y": 80,
+    "wires": [
+        [
+            "get_tracks_broadcast"
+        ]
+    ]
+},
+{
+    "id": "get_tracks_broadcast",
+    "type": "mqtt out",
+    "z": "sculpture_dashboard",
+    "name": "Broadcast Get Tracks",
+    "topic": "system/broadcast",
+    "qos": "0",
+    "retain": "false",
+    "broker": "mqtt_broker",
+    "x": 370,
+    "y": 80,
+    "wires": []
+},
+{
+    "id": "set_initial_volume_inject",
+    "type": "inject",
+    "z": "sculpture_dashboard",
+    "name": "Set Initial Volume on Startup",
+    "props": [
+        {
+            "p": "payload"
+        }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "1.5",
+    "topic": "",
+    "payload": "0.5",
+    "payloadType": "num",
+    "x": 170,
+    "y": 40,
+    "wires": [
+        [
+            "set_initial_volume_link_out"
+        ]
+    ]
+},
+{
+    "id": "set_initial_volume_link_out",
+    "type": "link out",
+    "z": "sculpture_dashboard",
+    "name": "Set Initial Volume",
+    "links": [
+        "set_initial_volume_link_in_1",
+        "set_initial_volume_link_in_2",
+        "set_initial_volume_link_in_3",
+        "set_initial_volume_link_in_1_tab",
+        "set_initial_volume_link_in_2_tab",
+        "set_initial_volume_link_in_3_tab"
+    ],
+    "x": 370,
+    "y": 40,
+    "wires": []
+},
+{
+    "id": "set_initial_capture_inject",
+    "type": "inject",
+    "z": "sculpture_dashboard",
+    "name": "Set Initial Capture on Startup",
+    "props": [
+        {
+            "p": "payload"
+        }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "2",
+    "topic": "",
+    "payload": "0.5",
+    "payloadType": "num",
+    "x": 170,
+    "y": 120,
+    "wires": [
+        [
+            "set_initial_capture_link_out"
+        ]
+    ]
+},
+{
+    "id": "set_initial_capture_link_out",
+    "type": "link out",
+    "z": "sculpture_dashboard",
+    "name": "Set Initial Capture",
+    "links": [
+        "set_initial_capture_link_in_1",
+        "set_initial_capture_link_in_2",
+        "set_initial_capture_link_in_3",
+        "set_initial_capture_link_in_1_tab",
+        "set_initial_capture_link_in_2_tab",
+        "set_initial_capture_link_in_3_tab"
+    ],
+    "x": 370,
+    "y": 120,
+    "wires": []
+} 

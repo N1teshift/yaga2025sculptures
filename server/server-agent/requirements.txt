@@ -1,0 +1,2 @@
+paho-mqtt>=1.6.0
+paramiko>=2.11.0 

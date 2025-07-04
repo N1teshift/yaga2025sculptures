@@ -1,0 +1,15 @@
+# Audio and system configuration shared by edge and server
+
+audio_sample_rate: 48000
+audio_channels: 1
+audio_bit_depth: 16
+audio_backend: pulse
+darkice_quality: 0.4      # VBR quality (0.1 to 1.0)
+darkice_bitrate: 32       # Fallback bitrate if VBR is not used
+mpv_audio_device: "pulse/alsa_output.platform-soc_sound.stereo-fallback"
+# mpv_audio_device: "alsa"
+mpv_audio_device_alsa: "alsa/tee_output"
+mpv_audio_format: "s16"
+mpv_audio_buffer_secs: 10
+mpv_cache_secs: 60
+mpv_demuxer_max_bytes: "20M" 

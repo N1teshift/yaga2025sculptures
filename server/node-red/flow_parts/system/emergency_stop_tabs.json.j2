@@ -1,0 +1,22 @@
+{
+    "id": "emergency_stop_button_tab",
+    "type": "ui_button",
+    "z": "sculpture_dashboard",
+    "name": "Emergency Stop Button (Tab)",
+    "group": "ui_group_system_tab",
+    "order": 8,
+    "width": 6,
+    "height": 2,
+    "passthru": false,
+    "label": "EMERGENCY STOP",
+    "tooltip": "Stop all sculptures immediately",
+    "color": "white",
+    "bgcolor": "red",
+    "icon": "fa-warning",
+    "payload": "{\"command\":\"stop\"}",
+    "payloadType": "json",
+    "topic": "emergency_stop",
+    "x": 640,
+    "y": 340,
+    "wires": [["emergency_stop_fanout"]]
+} 

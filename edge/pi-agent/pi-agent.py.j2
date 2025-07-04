@@ -1,0 +1,297 @@
+#!/usr/bin/env python3
+
+import json
+import time
+import os
+import logging
+import threading
+import subprocess
+import RPi.GPIO as GPIO
+from audio_manager import AudioManager
+from system_manager import SystemManager
+from status_collector import StatusCollector
+from gpio_utils import setup_gpio, set_led_on, set_led_off, blink_led, LED_GREEN, LED_RED, BUTTON_SHUTDOWN
+from mqtt_client import MQTTClientWrapper
+
+# Configuration
+MQTT_BROKER = os.environ.get('CONTROL_HOST', '192.168.8.156')
+MQTT_PORT = 1883
+SCULPTURE_ID = os.environ.get('SCULPTURE_ID', '1')
+SCULPTURE_DIR = '/opt/sculpture-system'
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class SculptureAgent:
+    """Main sculpture agent orchestrating all components."""
+    
+    def __init__(self):
+        self.audio_manager = AudioManager(audio_backend='{{ audio_backend }}')
+        
+        # Load playlists configuration
+        predefined_playlists = {{ predefined_playlists | tojson }}
+        
+        self.system_manager = SystemManager(predefined_playlists=predefined_playlists)
+        self.status_collector = StatusCollector(SCULPTURE_ID)
+        self.sculpture_id = SCULPTURE_ID
+        self.status_topic = f"sculpture/{self.sculpture_id}/status"
+        self.cmd_topic = f"sculpture/{self.sculpture_id}/cmd"
+        self.tracks_topic = f"sculpture/{self.sculpture_id}/tracks"
+        self.broadcast_topic = "system/broadcast"
+        lwt_payload = json.dumps({"status": "offline"})
+        self._blink_thread = None
+        self._blink_stop_event = threading.Event()
+        setup_gpio()
+        self.mqtt = MQTTClientWrapper(self.on_connect, self.on_message, self.on_disconnect,
+                                      MQTT_BROKER, MQTT_PORT, self.status_topic, lwt_payload)
+
+    def on_connect(self, client, userdata, flags, rc):
+        logger.info(f"Connected to MQTT broker with result code {rc}")
+        self.mqtt.subscribe(self.cmd_topic)
+        self.mqtt.subscribe(self.broadcast_topic)
+        self.mqtt.subscribe("system/plan")
+        self.handle_mode_command("live")
+        self._stop_led_blink()
+        set_led_on(LED_GREEN)
+
+    def on_disconnect(self, client, userdata, rc):
+        logger.warning("Disconnected from MQTT broker. Starting LED blink (green).")
+        self._start_led_blink()
+
+    def on_message(self, client, userdata, msg):
+        try:
+            payload = json.loads(msg.payload.decode())
+            logger.info(f"Received message on {msg.topic}: {payload}")
+            
+            if not isinstance(payload, dict):
+                logger.warning(f"Received message is not a JSON object, ignoring. Payload: {payload}")
+                return
+
+            # Route commands to appropriate handlers
+            if 'plan' in payload:
+                self.handle_plan_command(payload['plan'])
+            elif 'mode' in payload:
+                self.handle_mode_command(payload['mode'], payload.get('track'))
+            elif 'volume' in payload:
+                self.handle_volume_command(payload['volume'])
+            elif 'capture' in payload:
+                self.audio_manager.set_capture(payload['capture'])
+            elif 'mute' in payload:
+                self.handle_mute_command(payload['mute'])
+            elif 'reboot' in payload and payload['reboot']:
+                logger.info('Rebooting Raspberry Pi by command')
+                subprocess.run(['sudo', 'reboot'], check=True)
+            elif 'restart' in payload and payload['restart']:
+                restart_target = payload['restart']
+                if restart_target == 'darkice':
+                    logger.info('Restarting darkice service by command')
+                    self.system_manager.restart_darkice()
+                elif restart_target == 'pi-agent':
+                    logger.info('Restarting pi-agent service by command')
+                    subprocess.run(['sudo', 'systemctl', 'restart', 'pi-agent.service'], check=True)
+                elif restart_target == 'player-live':
+                    logger.info('Restarting player-live service by command')
+                    subprocess.run(['sudo', 'systemctl', 'restart', 'player-live.service'], check=True)
+                elif restart_target == 'player-loop':
+                    logger.info('Restarting player-loop service by command')
+                    subprocess.run(['sudo', 'systemctl', 'restart', 'player-loop.service'], check=True)
+                else:
+                    logger.info('Restarting all services by command')
+                    self.handle_restart_command()
+            elif 'command' in payload and payload['command'] == 'get_tracks':
+                self.handle_get_tracks()
+            elif 'command' in payload and payload['command'] == 'stop':
+                self.handle_stop_command()
+            else:
+                logger.warning(f"Unknown command: {payload}")
+                
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON in message: {msg.payload.decode()}")
+        except Exception as e:
+            logger.error(f"Error processing message: {e}")
+
+    def handle_plan_command(self, plan):
+        """Handle plan change commands and switch mode accordingly."""
+        try:
+            logger.info(f"Received plan change: {plan}")
+            current_mode = self.system_manager.current_mode
+            
+            # Plan D = local mode, all other plans = live mode
+            if plan == "D":
+                if current_mode != "local":
+                    logger.info("Switching to local mode for plan D")
+                    self.system_manager.switch_to_local_mode(None, self.audio_manager.audio_config)
+                else:
+                    logger.info("Already in local mode for plan D, no action needed")
+            else:
+                if current_mode != "live":
+                    logger.info(f"Switching to live mode for plan {plan}")
+                    self.system_manager.switch_to_live_mode()
+                else:
+                    logger.info(f"Already in live mode for plan {plan}, no action needed")
+        except Exception as e:
+            logger.error(f"Failed to handle plan command: {e}")
+            
+    def handle_mode_command(self, mode, track=None):
+        """Handle mode switching commands."""
+        try:
+            if mode == "live":
+                self.system_manager.switch_to_live_mode()
+            elif mode == "local":
+                self.system_manager.switch_to_local_mode(track, self.audio_manager.audio_config)
+            else:
+                logger.warning(f"Unknown mode: {mode}")
+        except Exception as e:
+            logger.error(f"Failed to handle mode command: {e}")
+            
+    def handle_volume_command(self, volume):
+        """Handle volume adjustment commands."""
+        try:
+            self.audio_manager.set_volume(volume)
+        except Exception as e:
+            logger.error(f"Failed to handle volume command: {e}")
+            
+    def handle_mute_command(self, mute):
+        """Handle mute/unmute commands."""
+        try:
+            self.audio_manager.set_mute(mute)
+        except Exception as e:
+            logger.error(f"Failed to handle mute command: {e}")
+            
+    def handle_restart_command(self):
+        """Handle restart commands."""
+        try:
+            self.system_manager.restart_all_services()
+        except Exception as e:
+            logger.error(f"Failed to handle restart command: {e}")
+            
+    def handle_get_tracks(self):
+        """Handle get tracks commands."""
+        try:
+            tracks = self.playlist_manager.get_available_tracks()
+            self.mqtt.publish(self.tracks_topic, json.dumps(tracks), retain=True)
+        except Exception as e:
+            logger.error(f"Failed to handle get tracks command: {e}")
+            
+    def handle_stop_command(self):
+        """Handle emergency stop commands."""
+        try:
+            self.system_manager.stop_all_services()
+        except Exception as e:
+            logger.error(f"Failed to handle stop command: {e}")
+            set_led_on(LED_RED)
+            
+    def get_system_status(self):
+        """Get complete system status."""
+        try:
+            # Get audio levels
+            mic_level = self.audio_manager.get_microphone_level()
+            output_level = self.audio_manager.get_output_level()
+            
+            # Get mute status
+            is_muted = self.audio_manager.get_mute_status(self.system_manager.current_mode)
+            
+            # Build status using status collector
+            status = self.status_collector.build_status(
+                current_mode=self.system_manager.current_mode,
+                is_muted=is_muted,
+                mic_level=mic_level,
+                output_level=output_level
+            )
+            
+            return status
+            
+        except Exception as e:
+            logger.error(f"Failed to get system status: {e}")
+            # Return fallback status
+            return self.status_collector.build_status(
+                current_mode=self.system_manager.current_mode,
+                is_muted=self.audio_manager.is_muted,
+                mic_level=-60,
+                output_level=-60,
+                error_message=str(e)
+            )
+            
+    def publish_status(self):
+        """Publish system status to MQTT."""
+        status = self.get_system_status()
+        self.mqtt.publish(self.status_topic, json.dumps(status))
+        
+    def _start_led_blink(self):
+        if self._blink_thread and self._blink_thread.is_alive():
+            return
+        self._blink_stop_event.clear()
+        self._blink_thread = threading.Thread(target=blink_led, args=(LED_GREEN, self._blink_stop_event), daemon=True)
+        self._blink_thread.start()
+
+    def _stop_led_blink(self):
+        self._blink_stop_event.set()
+        if self._blink_thread:
+            self._blink_thread.join(timeout=1)
+        set_led_on(LED_GREEN)
+
+    def handle_shutdown_button(self, button_pin):
+        """Handle shutdown button press."""
+        try:
+            logger.info("Shutdown button pressed, initiating shutdown...")
+            set_led_on(LED_RED)
+            subprocess.run(['sudo', 'shutdown', '-h', 'now'], check=True)
+        except Exception as e:
+            logger.error(f"Failed to handle shutdown button: {e}")
+
+    def run(self):
+        """Main run loop."""
+        try:
+            self.mqtt.connect()
+            logger.info(f"Sculpture {self.sculpture_id} agent started")
+            
+            # Clear old retained tracks and publish current ones
+            self.clear_retained_tracks()
+            time.sleep(1)  # Give broker time to process
+            self.publish_tracks()
+            
+            button_pressed = False
+            while True:
+                self.publish_status()
+                # Poll the shutdown button every 1s
+                if GPIO.input(BUTTON_SHUTDOWN) == GPIO.LOW:
+                    if not button_pressed:
+                        self.handle_shutdown_button(BUTTON_SHUTDOWN)
+                        button_pressed = True
+                else:
+                    button_pressed = False
+                time.sleep(1)
+                
+        except KeyboardInterrupt:
+            logger.info("Shutting down...")
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            set_led_on(LED_RED)
+        finally:
+            logger.info("Cleaning up GPIO.")
+            self._stop_led_blink()
+            GPIO.cleanup()
+            self.mqtt.disconnect()
+
+    def clear_retained_tracks(self):
+        """Clear retained track messages from MQTT broker"""
+        try:
+            logger.info(f"Clearing retained tracks from topic: {self.tracks_topic}")
+            self.mqtt.publish(self.tracks_topic, "", retain=True)
+            logger.info("Cleared retained tracks")
+        except Exception as e:
+            logger.error(f"Error clearing retained tracks: {e}")
+
+    def publish_tracks(self):
+        try:
+            tracks = self.playlist_manager.get_available_tracks()
+            logger.info(f"Publishing {len(tracks)} tracks to MQTT: {tracks}")
+            self.mqtt.publish(self.tracks_topic, json.dumps(tracks), retain=True)
+            logger.info(f"Published tracks to topic: {self.tracks_topic}")
+        except Exception as e:
+            logger.error(f"Error publishing tracks: {e}")
+
+if __name__ == "__main__":
+    agent = SculptureAgent()
+    agent.run() 

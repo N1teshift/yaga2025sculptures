@@ -4,6 +4,9 @@
   become: yes
   vars:
     sculpture_dir: /opt/sculpture-system
+  vars_files:
+    - ../../audio_config.yml
+    - ../../playlists.yml
 
   tasks:
     - name: Update package cache
@@ -132,17 +135,45 @@
     - name: Convert loop files to the correct format locally
       local_action:
         module: ansible.builtin.shell
-        cmd: 'for f in ../../samples/*.wav; do ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "/tmp/converted_loops/$(basename "$f")"; done'
+        cmd: |
+          # Convert all supported audio formats to WAV with correct settings (only if needed)
+          find ../../samples -type f "(" -iname '*.wav' -o -iname '*.flac' -o -iname '*.mp3' -o -iname '*.ogg' -o -iname '*.m4a' -o -iname '*.aac' ")" | while read f; do
+            if [ -f "$f" ]; then
+              # Get filename without extension and add .wav
+              basename_noext=$(basename "$f" | sed 's/\.[^.]*$//')
+              output_file="/tmp/converted_loops/${basename_noext}.wav"
+              
+              # Only convert if output doesn't exist or source is newer
+              if [ ! -f "$output_file" ] || [ "$f" -nt "$output_file" ]; then
+                echo "Converting: $f -> $output_file"
+                ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "$output_file"
+              else
+                echo "Skipping (up to date): $f"
+              fi
+            fi
+          done
       become: no
       run_once: true
 
-    - name: Copy the CONVERTED loop files to the edge device
-      ansible.builtin.copy:
+    - name: Copy the CONVERTED loop files to the edge device (incremental)
+      ansible.builtin.synchronize:
         src: /tmp/converted_loops/
         dest: /opt/sculpture-system/
+        delete: no
+        checksum: yes
+        owner: no
+        group: no
+        times: yes
+      become: yes
+      notify: Set file permissions
+
+    - name: Fix file ownership immediately after sync
+      ansible.builtin.file:
+        path: "{{ sculpture_dir }}"
         owner: pi
         group: audio
-        mode: '0644'
+        recurse: yes
+        state: directory
 
     - name: Clean up temporary local directory
       local_action:
@@ -234,14 +265,27 @@
 
     - name: Install sculpture system files
       template:
-        src: "{{ item.src }}"
+        src: "../pi-agent/{{ item.src }}"
         dest: "{{ item.dest }}"
         mode: "{{ item.mode }}"
       loop:
-        - { src: templates/pi-agent.py.j2, dest: "{{ sculpture_dir }}/pi-agent.py", mode: '0755' }
-        - { src: templates/audio_manager.py.j2, dest: "{{ sculpture_dir }}/audio_manager.py", mode: '0644' }
-        - { src: templates/system_manager.py.j2, dest: "{{ sculpture_dir }}/system_manager.py", mode: '0644' }
+        - { src: pi-agent.py.j2, dest: "{{ sculpture_dir }}/pi-agent.py", mode: '0755' }
+        - { src: audio_manager.py.j2, dest: "{{ sculpture_dir }}/audio_manager.py", mode: '0644' }
+        - { src: system_manager.py.j2, dest: "{{ sculpture_dir }}/system_manager.py", mode: '0644' }
       notify: Restart pi-agent
+
+    - name: Install pi-agent modules
+      template:
+        src: "../pi-agent/{{ item.src }}"
+        dest: "{{ sculpture_dir }}/{{ item.dest }}"
+        mode: "0644"
+      loop:
+        - { src: agent_main.py.j2, dest: agent_main.py }
+        - { src: file_utils.py.j2, dest: file_utils.py }
+        - { src: gpio_utils.py.j2, dest: gpio_utils.py }
+        - { src: mqtt_client.py.j2, dest: mqtt_client.py }
+        - { src: playlist_manager.py.j2, dest: playlist_manager.py }
+        - { src: service_manager.py.j2, dest: service_manager.py }
 
     - name: Copy sculpture system modules and scripts
       copy:
@@ -301,7 +345,7 @@
 
     - name: Grant pi-agent limited sudo access for service management
       template:
-        src: templates/pi-agent-sudoers.j2
+        src: ../pi-agent/pi-agent-sudoers.j2
         dest: "/etc/sudoers.d/pi-agent-sudo"
         owner: root
         group: root
@@ -344,3 +388,18 @@
 
     - name: Save ALSA state
       ansible.builtin.command: alsactl store
+
+    - name: Set file permissions
+      ansible.builtin.file:
+        path: "{{ sculpture_dir }}"
+        owner: pi
+        group: audio
+        recurse: yes
+      ignore_errors: yes
+
+    - name: Set correct permissions for audio files
+      ansible.builtin.shell: |
+        find {{ sculpture_dir }} -type f -name "*.wav" -exec chmod 644 {} \;
+        find {{ sculpture_dir }} -type f -name "*.wav" -exec chown pi:audio {} \;
+        find {{ sculpture_dir }} -type d -exec chmod 755 {} \;
+        find {{ sculpture_dir }} -type d -exec chown pi:audio {} \;

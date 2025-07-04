@@ -1,0 +1,27 @@
+# Configuration file for server-agent underrun monitoring
+# Copy this to config.py and modify as needed
+
+# Pi systems to monitor
+PI_SYSTEMS = [
+    {"name": "sculpture1", "host": "sculpture1.local", "user": "pi"},
+    {"name": "sculpture2", "host": "sculpture2.local", "user": "pi"},
+    {"name": "sculpture3", "host": "sculpture3.local", "user": "pi"},
+    # Add more systems as needed
+    # {"name": "sculpture4", "host": "192.168.1.104", "user": "pi"},
+]
+
+# Services to monitor for underruns
+MONITORED_SERVICES = ["player-live", "player-loop"]
+
+# MQTT Configuration
+MQTT_BROKER = "localhost"  # Or use environment variable CONTROL_HOST
+MQTT_PORT = 1883
+UNDERRUN_TOPIC = "system/underruns"
+
+# SSH Configuration
+SSH_TIMEOUT = 10
+SSH_KEY_FILE = None  # None for default, or specify path like "/home/unix/.ssh/id_ed25519"
+
+# Monitoring Configuration
+UNDERRUN_HISTORY_SIZE = 100  # Number of recent underruns to keep in memory
+STATUS_PUBLISH_INTERVAL = 30  # Seconds between status publications 

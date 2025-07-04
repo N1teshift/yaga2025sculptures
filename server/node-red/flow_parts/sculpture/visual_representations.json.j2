@@ -1,0 +1,57 @@
+{% for sculpture_id in [1, 2, 3] %}
+{
+    "id": "sculpture{{ sculpture_id }}_ascii_art",
+    "type": "ui_template",
+    "z": "sculpture_dashboard",
+    "group": "ui_group_sculpture{{ sculpture_id }}",
+    "name": "Sculpture {{ sculpture_id }} Visual",
+    "order": 0,
+    "width": 0,
+    "height": 5,
+    "format": "{% raw %}<div style=\"text-align: center; background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 5px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">{% endraw %}{% if sculpture_id == 1 %}{% raw %}<svg width=\"120\" height=\"100\" viewBox=\"0 0 120 100\" xmlns=\"http://www.w3.org/2000/svg\">
+  <!-- Square Pyramid -->
+  <!-- Base (square) -->
+  <polygon points=\"20,80 100,80 90,90 10,90\" fill=\"#8e9aaf\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Front face -->
+  <polygon points=\"20,80 60,20 100,80\" fill=\"#dae1e7\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Right face -->
+  <polygon points=\"100,80 60,20 90,90\" fill=\"#b8c5d1\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Left face (back) -->
+  <polygon points=\"20,80 60,20 10,90\" fill=\"#a4b3c4\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <text x=\"60\" y=\"97\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"10\" fill=\"#2c3e50\">Square Pyramid</text>
+</svg>{% endraw %}{% elif sculpture_id == 2 %}{% raw %}<svg width=\"120\" height=\"100\" viewBox=\"0 0 120 100\" xmlns=\"http://www.w3.org/2000/svg\">
+  <!-- Cube -->
+  <!-- Back face -->
+  <polygon points=\"30,30 70,30 70,70 30,70\" fill=\"#a4b3c4\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Top face -->
+  <polygon points=\"30,30 45,15 85,15 70,30\" fill=\"#dae1e7\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Right face -->
+  <polygon points=\"70,30 85,15 85,55 70,70\" fill=\"#b8c5d1\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Front face -->
+  <polygon points=\"30,70 70,70 85,55 45,55\" fill=\"#8e9aaf\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Left face -->
+  <polygon points=\"30,30 30,70 45,55 45,15\" fill=\"#c5d2df\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <text x=\"60\" y=\"97\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"10\" fill=\"#2c3e50\">Cube</text>
+</svg>{% endraw %}{% elif sculpture_id == 3 %}{% raw %}<svg width=\"120\" height=\"100\" viewBox=\"0 0 120 100\" xmlns=\"http://www.w3.org/2000/svg\">
+  <!-- Truncated Tetrahedron -->
+  <!-- Bottom hexagon -->
+  <polygon points=\"30,75 50,80 70,80 90,75 80,65 40,65\" fill=\"#8e9aaf\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Top triangle -->
+  <polygon points=\"45,25 60,20 75,25 65,35 55,35\" fill=\"#dae1e7\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Front left face -->
+  <polygon points=\"30,75 45,25 55,35 40,65\" fill=\"#b8c5d1\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Front right face -->
+  <polygon points=\"90,75 75,25 65,35 80,65\" fill=\"#c5d2df\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <!-- Back face -->
+  <polygon points=\"50,80 60,20 70,80\" fill=\"#a4b3c4\" stroke=\"#2c3e50\" stroke-width=\"1.5\"/>
+  <text x=\"60\" y=\"97\" text-anchor=\"middle\" font-family=\"Arial, sans-serif\" font-size=\"9\" fill=\"#2c3e50\">Truncated Tetrahedron</text>
+</svg>{% endraw %}{% endif %}{% raw %}</div>{% endraw %}",
+    "storeOutMessages": false,
+    "fwdInMessages": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 420,
+    "y": {{ 380 + (sculpture_id - 1) * 200 }},
+    "wires": []
+}{% if not loop.last %},{% endif %}
+{% endfor %} 

@@ -1,0 +1,74 @@
+# Playlists shared by edge and server
+
+predefined_playlists:
+  - name: "Test sounds"
+    description: "Test sounds"
+    tracks:
+      - "test1.wav"
+      - "test2.wav"
+      - "test3.wav"
+      - "test4.wav"
+      - "test5.wav"
+      - "test6.wav"
+
+  - name: "Vibrations"
+    description: "Francois Bayle"
+    tracks:
+      - "Vibrations 2.flac"
+      - "Vibrations 3.flac"
+      - "Vibrations 4.flac"
+      - "Vibrations 5.flac"
+      - "Vibrations 6.flac"
+      - "Vibrations 7.flac"
+      - "Vibrations 8.flac"
+      - "Vibrations 9.flac"
+
+  - name: "SFX"
+    description: "Alien Transmissions"
+    tracks:
+      - "SFX Data Alien Transmission.mp3"
+      - "SFX Data Transmission Distorted Alien Vocal.mp3"
+      - "SFX Alien Transmission Power Failing.mp3"
+      - "SFX Alien Communication Transmition Scramble.mp3"
+      - "SFX Alien Robot Transmission.mp3"
+      - "SFX Alien Transmission.mp3"
+      - "SFX Static Transmission Alien Send.mp3"
+      - "SFX Alien Transmission Chopper Distortion.mp3"
+      - "SFX Broken Transmission Aboard Alien Ship Reverb.mp3"
+      - "SFX Ambience Alien Digital Transmission.mp3"
+      - "SFX Alien Data Transmission.mp3"
+      - "SFX Alien Transmission_Garbled Oscillating Tones And Static C1.wav"
+
+  - name: "Synth sense"
+    description: "Alien Transmissions"
+    tracks:
+      - "Synth sense 1.flac"
+      - "Synth sense 2.flac"
+      - "Synth sense 3.flac"
+      - "Synth sense 4.flac" 
+
+  - name: "Viltė recordings"
+    description: "Viltė recordings"
+    tracks:
+      - "wind_trees.wav"
+      - "scratch_wood.wav"
+      - "grasshoppers+distsnt_traffic.wav"
+      - "frogs_night.wav"
+      - "frogs_day.wav"
+      - "Evening_Bird_17.40_Vilte.wav"
+
+  - name: "Zwischen"
+    description: "Zwischen recordings"
+    tracks:
+      - "13 - Audio Liner Notes Faitiche17.flac"
+      - "12 - Max Ernst.flac"
+      - "11 - Yoko Ono.flac"
+      - "10 - Friedericke Mayröcker.flac"
+      - "09 - Marcel Duchamp.flac"
+      - "08 - Karlheinz Stockhausen.flac"
+      - "07 - Ernst Jandl.flac"
+      - "06 - Lady Gaga.flac"
+      - "05 - Joseph Beuys.flac"
+      - "03 - Hubert Fichte.flac"
+      - "02 - John Cage.flac"
+      - "01 - Alice Schwarzer.flac"

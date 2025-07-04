@@ -1,0 +1,93 @@
+{
+    "id": "sculpture_dashboard",
+    "type": "tab",
+    "label": "Sculpture Control Dashboard",
+    "disabled": false,
+    "info": ""
+},
+{
+    "id": "mqtt_broker",
+    "type": "mqtt-broker",
+    "name": "Sculpture MQTT",
+    "broker": "localhost",
+    "port": "1883",
+    "clientid": "node-red-dashboard",
+    "usetls": false,
+    "compatmode": false,
+    "keepalive": "60",
+    "cleansession": true,
+    "birthTopic": "",
+    "birthQos": "0",
+    "birthPayload": "",
+    "closeTopic": "",
+    "closeQos": "0",
+    "closePayload": "",
+    "willTopic": "",
+    "willQos": "0",
+    "willPayload": ""
+},
+{
+    "id": "ui_tab_all",
+    "type": "ui_tab",
+    "name": "ALL",
+    "icon": "dashboard",
+    "order": 1,
+    "disabled": false,
+    "hidden": false
+},
+{
+    "id": "ui_tab_sculpture1",
+    "type": "ui_tab",
+    "name": "Sculpture 1",
+    "icon": "dashboard",
+    "order": 2,
+    "disabled": false,
+    "hidden": false
+},
+{
+    "id": "ui_tab_sculpture2",
+    "type": "ui_tab",
+    "name": "Sculpture 2",
+    "icon": "dashboard",
+    "order": 3,
+    "disabled": false,
+    "hidden": false
+},
+{
+    "id": "ui_tab_sculpture3",
+    "type": "ui_tab",
+    "name": "Sculpture 3",
+    "icon": "dashboard",
+    "order": 4,
+    "disabled": false,
+    "hidden": false
+},
+{
+    "id": "ui_tab_system",
+    "type": "ui_tab",
+    "name": "System",
+    "icon": "dashboard",
+    "order": 5,
+    "disabled": false,
+    "hidden": false
+},
+{
+    "id": "ui_group_system",
+    "type": "ui_group",
+    "name": "System Control",
+    "tab": "ui_tab_all",
+    "order": 4,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+},
+{
+    "id": "ui_group_system_tab",
+    "type": "ui_group",
+    "name": "System Control",
+    "tab": "ui_tab_system",
+    "order": 1,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+} 

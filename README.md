@@ -163,7 +163,14 @@ Default passwords (change for production):
 - **Telnet:** `telnet localhost 1234` # Password: admin
 - **Alsamixer:** `alsamixer`
 - **flow.json:** `jq . /opt/sculpture-system/flow.json`
-
+- **Inspecting the copied samples audio settings:**
+```
+ffprobe -v error -show_entries \
+        stream=sample_rate,channels,sample_fmt \
+        -of default=noprint_wrappers=1:nokey=1 \
+        /opt/sculpture-system/*.wav
+```
+- **Reseting SSH keys after Pi IP/SD_card change:**
 ```
 ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.154"
 ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.157" 

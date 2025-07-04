@@ -136,7 +136,7 @@ Now, run the Ansible playbook that installs and configures all the local service
 # In WSL Ubuntu terminal, ensure you are in your project directory
 # cd /path/to/your/yaga2025sculptures
 # Run the control node playbook
-sudo ansible-playbook -i server/ansible/hosts.ini server/ansible/install_control_node.yml
+sudo ansible-playbook -i server/ansible/hosts.ini server/ansible/playbook.yml
 ```
 
 This command runs the control node Ansible playbook, which sets up all the server services on your WSL machine. The playbook performs the following tasks in order:

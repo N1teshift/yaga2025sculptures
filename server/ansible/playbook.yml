@@ -1,0 +1,384 @@
+---
+- name: Install and Configure Control Node
+  hosts: localhost
+  become: yes
+  vars_files:
+    - ../../audio_config.yml
+
+  vars:
+    sculpture_dir: /opt/sculpture-system
+    liquidsoap_config_dir: /etc/liquidsoap
+    
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Add NodeSource Node.js repository
+      ansible.builtin.shell: |
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+
+    - name: Install required packages
+      apt:
+        name:
+          - icecast2
+          - liquidsoap
+          - mosquitto
+          - mosquitto-clients
+          - nodejs
+          - python3-pip
+          - jq
+        state: present
+
+    - name: Install Node-RED globally
+      npm:
+        name: node-red
+        global: yes
+
+    - name: Create node-red user
+      user:
+        name: node-red
+        system: yes
+        shell: /bin/false
+        home: /opt/sculpture-system
+        create_home: no
+
+    - name: Create sculpture system directory
+      file:
+        path: "{{ sculpture_dir }}"
+        state: directory
+        owner: node-red
+        group: node-red
+        mode: '0755'
+
+    - name: Install Node-RED dashboard
+      npm:
+        name: node-red-dashboard
+        path: "{{ sculpture_dir }}"
+        production: yes
+      become_user: node-red
+      notify:
+        - reload systemd
+        - restart node-red
+
+    - name: Create shared loops directory
+      file:
+        path: "{{ sculpture_dir }}/shared-loops"
+        state: directory
+        mode: '0755'
+
+    - name: Create liquidsoap scripts directory
+      file:
+        path: "{{ sculpture_dir }}/liquidsoap"
+        state: directory
+        mode: '0755'
+
+    - name: Create liquidsoap config directory
+      file:
+        path: "{{ liquidsoap_config_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy Icecast2 configuration
+      template:
+        src: ../icecast/icecast.xml.j2
+        dest: /etc/icecast2/icecast.xml
+        backup: yes # backup the original file
+      notify: restart icecast2
+
+    - name: Enable Icecast2 to boot on startup
+      lineinfile:
+        path: /etc/default/icecast2
+        regexp: '^ENABLE='
+        line: 'ENABLE=true'
+      notify: restart icecast2
+
+    - name: Template Liquidsoap main configuration
+      template:
+        src: ../liquidsoap/main.liq
+        dest: "{{ liquidsoap_config_dir }}/main.liq"
+      notify: restart liquidsoap
+
+    - name: Copy Liquidsoap presets
+      copy:
+        src: ../liquidsoap/presets.liq
+        dest: "{{ liquidsoap_config_dir }}/presets.liq"
+      notify: restart liquidsoap
+
+    - name: Install Liquidsoap requirements
+      pip:
+        requirements: "{{ playbook_dir }}/../liquidsoap/requirements.txt"
+
+    - name: Create Liquidsoap systemd service
+      copy:
+        dest: /etc/systemd/system/liquidsoap.service
+        content: |
+          [Unit]
+          Description=Liquidsoap Audio Streaming
+          After=network.target icecast2.service
+          Wants=icecast2.service
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/bin/liquidsoap /etc/liquidsoap/main.liq
+          Restart=always
+          RestartSec=5
+          User=liquidsoap
+          Group=liquidsoap
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      notify: 
+        - reload systemd
+        - restart liquidsoap
+
+    - name: Create liquidsoap user
+      user:
+        name: liquidsoap
+        system: yes
+        shell: /bin/false
+        home: /var/lib/liquidsoap
+        create_home: yes
+
+    - name: Configure Mosquitto MQTT broker
+      copy:
+        dest: /etc/mosquitto/conf.d/sculpture.conf
+        content: |
+          listener 1883
+          allow_anonymous true
+          log_type all
+        mode: '0644'
+      notify: restart mosquitto
+
+    - name: Create Node-RED systemd service
+      copy:
+        dest: /etc/systemd/system/node-red.service
+        content: |
+          [Unit]
+          Description=Node-RED
+          After=syslog.target network.target
+
+          [Service]
+          ExecStart=/usr/bin/node-red --settings /opt/sculpture-system/node-red-settings.js
+          Restart=always
+          RestartSec=5
+          KillSignal=SIGINT
+          User=node-red
+          Group=node-red
+          WorkingDirectory=/opt/sculpture-system
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      notify:
+        - reload systemd
+        - restart node-red
+
+    - name: Create unix user for MQTT bridge
+      user:
+        name: unix
+        system: yes
+        shell: /bin/false
+        home: /opt/sculpture-system
+        create_home: no
+
+    - name: Add unix user to sudoers for service management
+      copy:
+        dest: /etc/sudoers.d/unix-service-management
+        content: |
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart icecast2
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart liquidsoap
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl status icecast2
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl status liquidsoap
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart server-agent
+          unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl status server-agent
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Template Node-RED flow.json
+      template:
+        src: ../node-red/flow.json.j2
+        dest: "{{ sculpture_dir }}/flow.json"
+      notify: restart node-red
+
+    - name: Validate generated flow.json syntax
+      shell: jq . "{{ sculpture_dir }}/flow.json" > /dev/null
+      register: json_validation
+      failed_when: json_validation.rc != 0
+      changed_when: false
+      tags: 
+        - validation
+        - json
+
+    - name: Display JSON validation success
+      debug:
+        msg: "✅ flow.json syntax validation passed - JSON is valid!"
+      when: json_validation.rc == 0
+      tags:
+        - validation
+        - json
+
+    - name: Show JSON structure summary (optional verbose check)
+      shell: |
+        echo "JSON file size: $(wc -c < {{ sculpture_dir }}/flow.json) bytes"
+        echo "Number of nodes: $(jq '. | length' {{ sculpture_dir }}/flow.json)"
+        echo "Node types: $(jq -r '.[].type' {{ sculpture_dir }}/flow.json | sort | uniq -c | sort -nr)"
+      register: json_summary
+      when: json_validation.rc == 0 and ansible_verbosity >= 1
+      changed_when: false
+      tags:
+        - validation
+        - json
+        - verbose
+
+    - name: Display JSON summary
+      debug:
+        var: json_summary.stdout_lines
+      when: json_validation.rc == 0 and ansible_verbosity >= 1
+      tags:
+        - validation
+        - json
+        - verbose
+
+    - name: Create Node-RED settings file
+      copy:
+        dest: "{{ sculpture_dir }}/node-red-settings.js"
+        content: |
+          module.exports = {
+              uiPort: process.env.PORT || 1880,
+              uiHost: "0.0.0.0",
+              mqttReconnectTime: 15000,
+              serialReconnectTime: 15000,
+              debugMaxLength: 1000,
+              functionGlobalContext: {},
+              exportGlobalContextKeys: false,
+              logging: {
+                  console: {
+                      level: "info",
+                      metrics: false,
+                      audit: false
+                  }
+              },
+              editorTheme: {
+                  projects: {
+                      enabled: false
+                  }
+              },
+              flowFile: 'flow.json',
+              userDir: '/opt/sculpture-system/',
+              httpAdminRoot: '/admin',
+              httpNodeRoot: '/api',
+              ui: { path: "ui" },
+              requireHttps: false,
+              httpNodeCors: {
+                  origin: "*",
+                  methods: "GET,PUT,POST,DELETE"
+              },
+              httpAdminCors: {
+                  origin: "*",
+                  methods: "GET,PUT,POST,DELETE"
+              }
+          }
+        mode: '0644'
+        owner: node-red
+        group: node-red
+
+    - name: Set ownership of sculpture directory
+      file:
+        path: "{{ sculpture_dir }}"
+        owner: node-red
+        group: node-red
+        state: directory
+
+    - name: Copy mqtt_to_telnet_bridge.py
+      copy:
+        src: ../mqtt_to_telnet_bridge/mqtt_to_telnet_bridge.py
+        dest: "{{ sculpture_dir }}/liquidsoap/mqtt_to_telnet_bridge.py"
+
+    - name: Copy mqtt_to_telnet_bridge systemd service
+      copy:
+        src: ../mqtt_to_telnet_bridge/mqtt_to_telnet_bridge.service
+        dest: /etc/systemd/system/mqtt_to_telnet_bridge.service
+      notify: restart mqtt_to_telnet_bridge
+
+    - name: Copy server-agent requirements
+      copy:
+        src: ../server-agent/requirements.txt
+        dest: /opt/sculpture-system/server-agent-requirements.txt
+      notify: restart server-agent
+
+    - name: Install server-agent requirements
+      pip:
+        requirements: /opt/sculpture-system/server-agent-requirements.txt
+      notify: restart server-agent
+
+    - name: Copy server-agent script
+      copy:
+        src: ../server-agent/server-agent.py
+        dest: /opt/sculpture-system/server-agent.py
+      notify: restart server-agent
+
+    - name: Copy server-agent systemd service
+      copy:
+        src: ../server-agent/server-agent.service
+        dest: /etc/systemd/system/server-agent.service
+      notify: restart server-agent
+
+    - name: Enable and start server-agent service
+      systemd:
+        name: server-agent
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Enable and start services
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      loop:
+        - icecast2
+        - mosquitto
+        - liquidsoap
+        - node-red
+        - mqtt_to_telnet_bridge
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart icecast2
+      systemd:
+        name: icecast2
+        state: restarted
+
+    - name: restart liquidsoap
+      systemd:
+        name: liquidsoap
+        state: restarted
+
+    - name: restart mosquitto
+      systemd:
+        name: mosquitto
+        state: restarted
+
+    - name: restart node-red
+      systemd:
+        name: node-red
+        state: restarted
+
+    - name: restart mqtt_to_telnet_bridge
+      systemd:
+        name: mqtt_to_telnet_bridge
+        state: restarted
+
+    - name: restart server-agent
+      systemd:
+        name: server-agent
+        state: restarted

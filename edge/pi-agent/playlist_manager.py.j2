@@ -1,0 +1,125 @@
+import logging
+import subprocess
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+class PlaylistManager:
+    def __init__(self, sculpture_dir, predefined_playlists):
+        self.sculpture_dir = sculpture_dir
+        self.playlists_dir = Path(sculpture_dir) / 'playlists'
+        self.predefined_playlists = predefined_playlists
+        self._ensure_playlists_directory()
+
+    def _ensure_playlists_directory(self):
+        try:
+            if not self.playlists_dir.exists():
+                self.playlists_dir.mkdir(exist_ok=True)
+                logger.info(f"Created playlists directory: {self.playlists_dir}")
+        except Exception as e:
+            logger.warning(f"Unexpected error creating playlists directory: {e}")
+
+    def get_available_tracks(self):
+        try:
+            loops_dir = Path(self.sculpture_dir)
+            available_items = []
+            individual_tracks = []
+            if loops_dir.is_dir():
+                individual_tracks = sorted([f.name for f in loops_dir.iterdir() 
+                                         if f.is_file() and f.suffix in ['.wav', '.mp3', '.flac']])
+                available_items.extend(individual_tracks)
+                logger.info(f"Found {len(individual_tracks)} individual tracks: {individual_tracks[:5]}...")
+            
+            playlist_names = [playlist['name'] for playlist in self.predefined_playlists]
+            available_items.extend(playlist_names)
+            logger.info(f"Found {len(playlist_names)} playlists: {playlist_names}")
+            logger.info(f"Total available items: {len(available_items)} items: {len(individual_tracks)} tracks, {len(playlist_names)} playlists")
+            return available_items
+        except Exception as e:
+            logger.error(f"Error getting tracks and playlists: {e}")
+            return []
+
+    def update_loop_content(self, content_name, audio_config=None):
+        is_playlist = False
+        playlist_data = None
+        for playlist in self.predefined_playlists:
+            if playlist['name'] == content_name:
+                is_playlist = True
+                playlist_data = playlist
+                break
+        if is_playlist:
+            logger.info(f"Loading playlist: {content_name}")
+            self.update_loop_playlist(playlist_data, audio_config)
+        else:
+            logger.info(f"Loading individual track: {content_name}")
+            track_path = Path(self.sculpture_dir) / content_name
+            if track_path.exists():
+                self.update_loop_track(str(track_path), audio_config)
+            else:
+                logger.warning(f"Track not found: {track_path}")
+                raise FileNotFoundError(f"Track not found: {track_path}")
+
+    def update_loop_playlist(self, playlist_data, audio_config=None):
+        playlist_name = playlist_data['name']
+        tracks = playlist_data['tracks']
+        playlist_file = self.generate_playlist_file(playlist_name, tracks)
+        self._update_systemd_dropin(playlist_file, audio_config)
+        logger.info(f"Updated systemd drop-in for playlist: {playlist_name}")
+
+    def generate_playlist_file(self, playlist_name, tracks):
+        playlist_file = self.playlists_dir / f"{playlist_name.replace(' ', '_').lower()}.m3u"
+        try:
+            with open(playlist_file, 'w') as f:
+                for track in tracks:
+                    track_path = Path(self.sculpture_dir) / track
+                    if track_path.exists():
+                        f.write(f"{track_path}\n")
+                    else:
+                        logger.warning(f"Track in playlist not found: {track_path}")
+            logger.info(f"Generated playlist file: {playlist_file} with {len(tracks)} tracks")
+            return str(playlist_file)
+        except Exception as e:
+            logger.error(f"Failed to generate playlist file: {e}")
+            raise
+
+    def update_loop_track(self, track_path, audio_config=None):
+        self._update_systemd_dropin(track_path, audio_config)
+        logger.info(f"Updated systemd drop-in for track: {track_path}")
+        
+    def _update_systemd_dropin(self, audio_source, audio_config):
+        """Update the systemd drop-in file for player-loop service."""
+        try:
+            # Build the mpv command
+            mpv_cmd = [
+                "/usr/bin/mpv",
+                "--no-video",
+                f"--audio-device={audio_config.get('mpv_audio_device', 'pulse/alsa_output.platform-soc_sound.stereo-fallback')}",
+                f"--audio-samplerate={audio_config.get('audio_sample_rate', 48000)}",
+                f"--audio-format={audio_config.get('mpv_audio_format', 's16')}",
+                "--loop",
+                audio_source,
+                f"--audio-buffer={audio_config.get('mpv_audio_buffer_secs', 5)}",
+                "--msg-level=all=info"
+            ]
+            
+            # Create the drop-in content with logging
+            track_name = audio_source.split('/')[-1]  # Get just the filename
+            dropin_content = f"""[Service]
+ExecStart=
+ExecStart=/bin/bash -c 'echo "Starting playback of: {track_name}" | systemd-cat -t player-loop -p info; exec {' '.join(mpv_cmd)}'
+"""
+            
+            # Write to temporary file
+            temp_file = "/tmp/sculpture-override.conf.tmp"
+            with open(temp_file, 'w') as f:
+                f.write(dropin_content)
+            
+            # Move to final location and reload daemon
+            subprocess.run(['sudo', 'mv', temp_file, '/etc/systemd/system/player-loop.service.d/override.conf'], check=True)
+            subprocess.run(['sudo', 'systemctl', 'daemon-reload'], check=True)
+            
+            logger.info(f"Successfully updated systemd drop-in for: {audio_source}")
+            
+        except Exception as e:
+            logger.error(f"Failed to update systemd drop-in: {e}")
+            raise 

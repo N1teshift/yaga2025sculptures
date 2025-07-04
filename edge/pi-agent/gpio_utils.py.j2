@@ -1,0 +1,36 @@
+import RPi.GPIO as GPIO
+import time
+import logging
+
+LED_GREEN = 23
+LED_RED = 24
+BUTTON_SHUTDOWN = 27
+
+logger = logging.getLogger(__name__)
+
+def setup_gpio():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(LED_GREEN, GPIO.OUT)
+    GPIO.setup(LED_RED, GPIO.OUT)
+    GPIO.setup(BUTTON_SHUTDOWN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    logger.info("GPIO initialized successfully.")
+    set_led_off()
+    GPIO.output(LED_GREEN, GPIO.LOW)
+    GPIO.output(LED_RED, GPIO.HIGH)
+
+def set_led_off(pin=None):
+    if pin:
+        GPIO.output(pin, GPIO.LOW)
+    else:
+        GPIO.output(LED_RED, GPIO.LOW)
+        GPIO.output(LED_GREEN, GPIO.LOW)
+
+def set_led_on(pin):
+    GPIO.output(pin, GPIO.HIGH)
+
+def blink_led(pin, stop_event, interval=0.5):
+    while not stop_event.is_set():
+        GPIO.output(pin, GPIO.HIGH)
+        time.sleep(interval)
+        GPIO.output(pin, GPIO.LOW)
+        time.sleep(interval) 

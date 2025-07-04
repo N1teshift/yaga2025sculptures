@@ -1,0 +1,61 @@
+import subprocess
+import logging
+
+logger = logging.getLogger(__name__)
+
+class ServiceManager:
+    def switch_to_live_mode(self):
+        try:
+            logger.info("Switching to live mode")
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'start', 'darkice.service'], check=True)
+            subprocess.run(['sudo', 'systemctl', 'start', 'player-live.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to switch to live mode: {e}")
+            raise
+
+    def switch_to_local_mode(self, track=None, audio_config=None, update_loop_content=None):
+        try:
+            logger.info(f"Switching to local mode with track/playlist: {track}")
+            subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
+            if track and update_loop_content:
+                update_loop_content(track, audio_config)
+            subprocess.run(['sudo', 'systemctl', 'restart', 'player-loop.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to switch to local mode: {e}")
+            raise
+
+    def stop_all_services(self):
+        try:
+            logger.info("Stopping all audio services due to emergency stop command.")
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to stop services during emergency stop: {e}")
+            raise
+
+    def restart_darkice(self):
+        try:
+            logger.info("Restarting darkice.service via systemctl")
+            subprocess.run(['sudo', 'systemctl', 'restart', 'darkice.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to restart darkice: {e}")
+            raise
+
+    def restart_all_services(self, current_mode):
+        try:
+            logger.info("Restarting all sculpture services...")
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-live.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'player-loop.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'stop', 'darkice.service'], check=False)
+            subprocess.run(['sudo', 'systemctl', 'start', 'darkice.service'], check=True)
+            if current_mode == "live":
+                subprocess.run(['sudo', 'systemctl', 'start', 'player-live.service'], check=True)
+            elif current_mode == "local":
+                subprocess.run(['sudo', 'systemctl', 'start', 'player-loop.service'], check=True)
+            subprocess.run(['sudo', 'systemctl', 'restart', 'pi-agent.service'], check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to restart all services: {e}")
+            raise 

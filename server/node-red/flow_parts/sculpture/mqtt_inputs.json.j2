@@ -1,0 +1,89 @@
+{% for sculpture_id in [1, 2, 3] %}
+{
+    "id": "status_in_{{ sculpture_id }}",
+    "type": "mqtt in",
+    "z": "sculpture_dashboard",
+    "name": "Status {{ sculpture_id }}",
+    "topic": "sculpture/{{ sculpture_id }}/status",
+    "qos": "0",
+    "datatype": "json",
+    "broker": "mqtt_broker",
+    "inputs": 0,
+    "x": 100,
+    "y": 420,
+    "wires": [["status_offline_switch_{{ sculpture_id }}"]]
+},
+{
+    "id": "status_offline_switch_{{ sculpture_id }}",
+    "type": "switch",
+    "z": "sculpture_dashboard",
+    "name": "Offline Switch {{ sculpture_id }}",
+    "property": "payload.status",
+    "propertyType": "msg",
+    "rules": [
+        { "t": "eq", "v": "offline", "vt": "str" },
+        { "t": "else" }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 2,
+    "x": 180,
+    "y": 420,
+    "wires": [
+        ["status_nullify_{{ sculpture_id }}"],
+        ["status_parse_{{ sculpture_id }}"]
+    ]
+},
+{
+    "id": "status_nullify_{{ sculpture_id }}",
+    "type": "change",
+    "z": "sculpture_dashboard",
+    "name": "Nullify Stats {{ sculpture_id }}",
+    "rules": [
+        { "t": "set", "p": "payload.cpu", "pt": "msg", "to": "null", "tot": "jsonata" },
+        { "t": "set", "p": "payload.temp", "pt": "msg", "to": "null", "tot": "jsonata" },
+        { "t": "set", "p": "payload.mic", "pt": "msg", "to": "null", "tot": "jsonata" },
+        { "t": "set", "p": "payload.output", "pt": "msg", "to": "null", "tot": "jsonata" }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 340,
+    "y": 400,
+    "wires": [["status_parse_{{ sculpture_id }}"]]
+},
+{
+    "id": "status_parse_{{ sculpture_id }}",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "Parse Status {{ sculpture_id }}",
+    "func": "var data = msg.payload;\nflow.set('sculpture_{{ sculpture_id }}_status', data);\n\nvar mode_val = data.mode === 'live' ? 'Live' : 'Local';\nvar is_muted = data.is_muted === undefined ? false : data.is_muted;\n\nreturn [\n    {payload: data.cpu, topic: \"cpu\"},\n    {payload: data.temp, topic: \"temp\"},\n    {payload: mode_val, topic: \"mode_status\"},\n    {payload: data.mic, topic: \"mic_level\"},\n    {payload: data.output, topic: \"output_level\"},\n    {payload: is_muted, topic: \"mute_status\"},\n    {payload: data.mode}\n];",
+    "outputs": 7,
+    "noerr": 0,
+    "x": 240,
+    "y": 520,
+    "wires": [
+        ["cpu_gauge_{{ sculpture_id }}", "cpu_gauge_{{ sculpture_id }}_tab"],
+        ["temp_gauge_{{ sculpture_id }}", "temp_gauge_{{ sculpture_id }}_tab"],
+        ["sculpture{{ sculpture_id }}_mode", "sculpture{{ sculpture_id }}_mode_tab"],
+        ["sculpture{{ sculpture_id }}_mic_level", "sculpture{{ sculpture_id }}_mic_level_tab"],
+        ["sculpture{{ sculpture_id }}_output_level", "sculpture{{ sculpture_id }}_output_level_tab"],
+        ["sculpture{{ sculpture_id }}_mute_state"],
+        ["load_track_button_state_{{ sculpture_id }}", "restart_player_state_{{ sculpture_id }}", "restart_darkice_state_{{ sculpture_id }}", "restart_all_state_{{ sculpture_id }}"]
+    ]
+},
+{
+    "id": "load_track_button_state_{{ sculpture_id }}",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "Update Load Button State {{ sculpture_id }}",
+    "func": "msg.mode = msg.payload;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 400,
+    "y": 740,
+    "wires": [["load_track_button_{{ sculpture_id }}", "load_track_button_{{ sculpture_id }}_tab"]]
+}{% if not loop.last %},{% endif %}
+{% endfor %} 
