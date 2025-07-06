@@ -1,0 +1,110 @@
+{% set sliders = [
+  {
+    "name": "compress_ratio",
+    "label": "Compression Ratio: 1:1 ←→ 10:1",
+    "tooltip": "Audio compression ratio (1:1 to 10:1)",
+    "min": 1, "max": 10, "step": 0.1, "default": "compress_ratio",
+    "color": "#FF5722"
+  },
+  {
+    "name": "compress_threshold", 
+    "label": "Compression Threshold: -30dB ←→ 0dB",
+    "tooltip": "Audio compression threshold in dB",
+    "min": -30, "max": 0, "step": 1, "default": "compress_threshold",
+    "color": "#FF5722"
+  },
+  {
+    "name": "attack_time",
+    "label": "Attack Time: 0.01s ←→ 1.0s", 
+    "tooltip": "Compressor attack time in seconds",
+    "min": 0.01, "max": 1, "step": 0.01, "default": "attack_time",
+    "color": "#FF5722"
+  },
+  {
+    "name": "release_time",
+    "label": "Release Time: 0.1s ←→ 5.0s",
+    "tooltip": "Compressor release time in seconds", 
+    "min": 0.1, "max": 5, "step": 0.1, "default": "release_time",
+    "color": "#FF5722"
+  },
+  {
+    "name": "highpass_freq",
+    "label": "High-pass Frequency: 20Hz ←→ 500Hz",
+    "tooltip": "High-pass filter frequency in Hz",
+    "min": 20, "max": 500, "step": 5, "default": "highpass_freq",
+    "color": "#2196F3"
+  },
+  {
+    "name": "lowpass_freq", 
+    "label": "Low-pass Frequency: 1kHz ←→ 20kHz",
+    "tooltip": "Low-pass filter frequency in Hz",
+    "min": 1000, "max": 20000, "step": 100, "default": "lowpass_freq",
+    "color": "#2196F3"
+  },
+  {
+    "name": "delay_time",
+    "label": "Delay Time: 0ms ←→ 2000ms",
+    "tooltip": "Delay effect time in milliseconds",
+    "min": 0, "max": 2000, "step": 10, "default": "delay_time",
+    "color": "#4CAF50"
+  },
+  {
+    "name": "delay_feedback",
+    "label": "Delay Feedback: 0% ←→ 90%",
+    "tooltip": "Delay effect feedback amount",
+    "min": 0, "max": 0.9, "step": 0.05, "default": "delay_feedback",
+    "color": "#4CAF50"
+  },
+  {
+    "name": "gate_threshold",
+    "label": "Gate Threshold: -60dB ←→ -10dB",
+    "tooltip": "Noise gate threshold in dB",
+    "min": -60, "max": -10, "step": 1, "default": "gate_threshold",
+    "color": "#9C27B0"
+  },
+  {
+    "name": "normalize_target",
+    "label": "Normalize Target: -24dB ←→ -6dB",
+    "tooltip": "Normalization target level in dB",
+    "min": -24, "max": -6, "step": 1, "default": "normalize_target",
+    "color": "#607D8B"
+  }
+] %}
+{% for slider in sliders %}
+{
+    "id": "{{ slider.name }}_slider",
+    "type": "ui_slider",
+    "z": "sculpture_dashboard",
+    "name": "{{ slider.label.split(':')[0] }}",
+    "label": "{{ slider.label }}",
+    "tooltip": "{{ slider.tooltip }}",
+    "group": "ui_group_audio",
+    "order": {{ loop.index * 2 - 1 }},
+    "width": 12,
+    "height": 1,
+    "passthru": true,
+    "outs": "all",
+    "topic": "system/audio/{{ slider.name }}",
+    "topicType": "str",
+    "min": {{ slider.min }},
+    "max": {{ slider.max }},
+    "step": {{ slider.step }},
+    "range": "min,max",
+    "value": {{ audio_processing[slider.default] }},
+    "color": "{{ slider.color }}",
+    "colorBackground": "#e0e0e0",
+    "x": 200,
+    "y": {{ 100 + loop.index0 * 80 }},
+    "wires": [["{{ slider.name }}_format", "{{ slider.name }}_display"]]
+},
+{
+    "id": "set_initial_{{ slider.name }}_link_in",
+    "type": "link in",
+    "z": "sculpture_dashboard",
+    "name": "set_initial_{{ slider.name }}_link_in",
+    "links": ["set_initial_{{ slider.name }}_link_out"],
+    "x": 100,
+    "y": {{ 100 + loop.index0 * 80 }},
+    "wires": [["{{ slider.name }}_slider", "{{ slider.name }}_display"]]
+}{% if not loop.last %},{% endif %}
+{% endfor %} 

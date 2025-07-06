@@ -20,6 +20,14 @@ This enhanced server-agent provides centralized monitoring of audio underruns ac
 - **Robust service restart** with multiple strategies for stuck services
 - **Buffer overrun spam detection** to prevent log flooding issues
 
+### Enhanced Connection Handling (NEW)
+- **Multiple connection methods** per sculpture (.local, hostname, IP address)
+- **Automatic fallback** between connection methods when one fails
+- **Connection state tracking** and automatic reconnection
+- **Enhanced underrun detection** with multiple regex patterns for MPV
+- **Diagnostic tools** for testing connections before deployment
+- **Improved logging** with connection status and underrun rates
+
 ## Installation
 
 1. **Install dependencies:**
@@ -35,17 +43,47 @@ This enhanced server-agent provides centralized monitoring of audio underruns ac
    ssh-copy-id pi@sculpture3.local
    ```
 
-3. **Configure your systems** (optional):
+3. **Configure your systems** (IMPORTANT - Updated Configuration):
    ```bash
    cp config.py.example config.py
-   # Edit config.py to match your setup
+   # Edit config.py to match your setup - NOW INCLUDES MULTIPLE CONNECTION METHODS
    ```
 
-4. **Run the installation script:**
+4. **Test connections before running** (NEW):
+   ```bash
+   python3 test_connections.py
+   ```
+
+5. **Run the installation script:**
    ```bash
    chmod +x install.sh
    ./install.sh
    ```
+
+## Architecture
+
+The server-agent uses a modular architecture for better maintainability:
+
+### Module Structure
+```
+server-agent/
+├── server_agent.py          # Main application (~200 lines)
+├── config.py                # Configuration and constants
+├── underrun_monitor.py      # UnderrunMonitor class
+├── darkice_monitor.py       # DarkiceMonitor class  
+├── liquidsoap_client.py     # LiquidSoapClient class
+├── plan_manager.py          # Plan state management
+├── mqtt_handlers.py         # MQTT callbacks and handlers
+├── test_connections.py      # Connection diagnostic tool
+├── config.py.example        # Configuration template
+└── server-agent.service     # Updated systemd service
+```
+
+### Benefits of Modular Architecture
+- **Better maintainability**: Each module has a single responsibility
+- **Easier testing**: Individual components can be tested separately
+- **Cleaner imports**: Clear separation of concerns
+- **Better organization**: Related functionality grouped together
 
 ## Usage
 
@@ -122,15 +160,43 @@ mosquitto_pub -h localhost -t server/cmd -m '{"darkice_restart": true, "system":
 
 ## Configuration
 
-### Pi Systems
-Edit the `PI_SYSTEMS` list in `server-agent.py` or create a `config.py` file:
+### Pi Systems (UPDATED)
+Edit the `PI_SYSTEMS` list in `server-agent.py` or create a `config.py` file. 
+
+**New multi-host configuration:**
 ```python
 PI_SYSTEMS = [
-    {"name": "sculpture1", "host": "sculpture1.local", "user": "pi"},
-    {"name": "sculpture2", "host": "sculpture2.local", "user": "pi"},
-    {"name": "sculpture3", "host": "sculpture3.local", "user": "pi"},
+    {
+        "name": "sculpture1", 
+        "hosts": [
+            "sculpture1.local",     # Try mDNS first
+            "sculpture1",           # Then hostname
+            "192.168.1.101"        # Finally IP address
+        ],
+        "user": "pi"
+    },
+    {
+        "name": "sculpture2", 
+        "hosts": [
+            "sculpture2.local",
+            "sculpture2",
+            "192.168.1.102"        # Update with actual IP
+        ],
+        "user": "pi"
+    },
+    {
+        "name": "sculpture3", 
+        "hosts": [
+            "sculpture3.local",
+            "sculpture3",
+            "192.168.1.103"        # Update with actual IP
+        ],
+        "user": "pi"
+    },
 ]
 ```
+
+**Important**: Update the IP addresses to match your actual sculpture IPs!
 
 ### Services to Monitor
 By default, monitors `player-live` and `player-loop` for underruns. Modify `MONITORED_SERVICES` to change this.
@@ -152,10 +218,45 @@ DARKICE_CONFIG = {
 
 ## Troubleshooting
 
-### SSH Connection Issues
-- Ensure SSH key authentication is set up
-- Check that Pi systems are accessible: `ssh pi@sculpture1.local`
-- Verify hostnames resolve correctly
+### SSH Connection Issues (UPDATED)
+
+**First, use the diagnostic tool:**
+```bash
+python3 test_connections.py
+```
+
+This will test all connection methods and show exactly what's failing.
+
+**Common issues and solutions:**
+
+1. **"Name or service not known" errors:**
+   - Update IP addresses in `config.py`
+   - Test resolution: `ping sculpture1.local`
+   - Use IP addresses instead of hostnames
+
+2. **SSH connection refused:**
+   - Check SSH service: `ssh pi@sculpture1.local`
+   - Verify SSH key authentication
+   - Check firewall settings
+
+3. **All connection methods failing:**
+   - Verify network connectivity
+   - Check that Pi systems are powered on
+   - Use `nmap` to scan for devices: `nmap -sn 192.168.1.0/24`
+
+4. **Service monitoring not working:**
+   - Check service status: `ssh pi@sculpture1.local systemctl status player-live`
+   - Verify service names match configuration
+   - Test log access: `ssh pi@sculpture1.local journalctl -u player-live -n 5`
+
+**Connection State Monitoring:**
+The enhanced agent now shows connection status in logs:
+```
+[UNDERRUN] Connection status: 2/3 systems connected
+[UNDERRUN] sculpture1: Connected via 192.168.1.101 (1 connections)
+[UNDERRUN] sculpture2: Connected via sculpture2.local (1 connections)
+[UNDERRUN] sculpture3: Disconnected (last attempt: 2025-01-07 17:30:15)
+```
 
 ### Missing Underrun Detection
 - Check that the services are running on Pi systems

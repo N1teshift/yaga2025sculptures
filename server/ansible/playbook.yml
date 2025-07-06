@@ -102,8 +102,8 @@
         dest: "{{ liquidsoap_config_dir }}/main.liq"
       notify: restart liquidsoap
 
-    - name: Copy Liquidsoap presets
-      copy:
+    - name: Template Liquidsoap presets
+      template:
         src: ../liquidsoap/presets.liq
         dest: "{{ liquidsoap_config_dir }}/presets.liq"
       notify: restart liquidsoap
@@ -198,6 +198,41 @@
           unix ALL=(ALL) NOPASSWD: /usr/bin/systemctl status server-agent
         mode: '0440'
         validate: 'visudo -cf %s'
+
+    - name: Create SSH directory for unix user
+      file:
+        path: /home/unix/.ssh
+        state: directory
+        owner: unix
+        group: unix
+        mode: '0700'
+
+    - name: Generate SSH key for unix user
+      openssh_keypair:
+        path: /home/unix/.ssh/id_rsa
+        type: rsa
+        size: 2048
+        owner: unix
+        group: unix
+        mode: '0600'
+        force: no
+
+    - name: Display public key for manual setup
+      slurp:
+        src: /home/unix/.ssh/id_rsa.pub
+      register: unix_ssh_public_key
+
+    - name: Show SSH public key
+      debug:
+        msg: |
+          =================================================================
+          IMPORTANT: Copy this SSH public key to ALL Pi systems:
+          
+          {{ unix_ssh_public_key.content | b64decode }}
+          
+          Run this command on EACH Pi system:
+          echo "{{ unix_ssh_public_key.content | b64decode | trim }}" >> ~/.ssh/authorized_keys
+          =================================================================
 
     - name: Template Node-RED flow.json
       template:
@@ -296,28 +331,50 @@
 
     # MQTT to Telnet bridge removed - now using direct HTTP API
 
+    - name: Create server-agent directory
+      file:
+        path: "{{ sculpture_dir }}/server-agent"
+        state: directory
+        owner: unix
+        group: unix
+        mode: '0755'
+
     - name: Copy server-agent requirements
       copy:
         src: ../server-agent/requirements.txt
-        dest: /opt/sculpture-system/server-agent-requirements.txt
+        dest: /opt/sculpture-system/server-agent/requirements.txt
       notify: restart server-agent
 
     - name: Install server-agent requirements
       pip:
-        requirements: /opt/sculpture-system/server-agent-requirements.txt
+        requirements: /opt/sculpture-system/server-agent/requirements.txt
       notify: restart server-agent
 
-    - name: Copy server-agent script
+    - name: Copy server-agent modules
       copy:
-        src: ../server-agent/server-agent.py
-        dest: /opt/sculpture-system/server-agent.py
+        src: "{{ item }}"
+        dest: "/opt/sculpture-system/server-agent/{{ item | basename }}"
+        owner: unix
+        group: unix
+        mode: '0644'
+      loop:
+        - ../server-agent/server_agent.py
+        - ../server-agent/config.py
+        - ../server-agent/underrun_monitor.py
+        - ../server-agent/darkice_monitor.py
+        - ../server-agent/liquidsoap_client.py
+        - ../server-agent/plan_manager.py
+        - ../server-agent/mqtt_handlers.py
+        - ../server-agent/test_connections.py
       notify: restart server-agent
 
     - name: Copy server-agent systemd service
       copy:
         src: ../server-agent/server-agent.service
         dest: /etc/systemd/system/server-agent.service
-      notify: restart server-agent
+      notify: 
+        - reload systemd
+        - restart server-agent
 
     - name: Enable and start server-agent service
       systemd:

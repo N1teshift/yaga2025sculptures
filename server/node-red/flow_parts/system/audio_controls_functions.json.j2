@@ -1,0 +1,67 @@
+{% set functions = [
+  {
+    "name": "compress_ratio",
+    "label": "Format Compression Ratio",
+    "payload": "compress_ratio"
+  },
+  {
+    "name": "compress_threshold", 
+    "label": "Format Compression Threshold",
+    "payload": "compress_threshold"
+  },
+  {
+    "name": "attack_time",
+    "label": "Format Attack Time",
+    "payload": "attack_time"
+  },
+  {
+    "name": "release_time",
+    "label": "Format Release Time",
+    "payload": "release_time"
+  },
+  {
+    "name": "highpass_freq",
+    "label": "Format High-pass Frequency",
+    "payload": "highpass_freq"
+  },
+  {
+    "name": "lowpass_freq", 
+    "label": "Format Low-pass Frequency",
+    "payload": "lowpass_freq"
+  },
+  {
+    "name": "delay_time",
+    "label": "Format Delay Time",
+    "payload": "delay_time",
+    "convert": "/ 1000"
+  },
+  {
+    "name": "delay_feedback",
+    "label": "Format Delay Feedback",
+    "payload": "delay_feedback"
+  },
+  {
+    "name": "gate_threshold",
+    "label": "Format Gate Threshold",
+    "payload": "gate_threshold"
+  },
+  {
+    "name": "normalize_target",
+    "label": "Format Normalize Target",
+    "payload": "normalize_target"
+  }
+] %}
+{% for func in functions %}
+{
+    "id": "{{ func.name }}_format",
+    "type": "function",
+    "z": "sculpture_dashboard",
+    "name": "{{ func.label }}",
+    "func": "msg.payload = {\"{{ func.payload }}\": msg.payload{% if func.convert is defined %} {{ func.convert }}{% endif %}};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 620,
+    "y": {{ 100 + loop.index0 * 80 }},
+    "wires": [["audio_mqtt_out"]]
+}{% if not loop.last %},{% endif %}
+{% endfor %} 

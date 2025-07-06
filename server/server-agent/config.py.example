@@ -1,27 +1,102 @@
-# Configuration file for server-agent underrun monitoring
+# Configuration file for server-agent underrun and darkice monitoring
 # Copy this to config.py and modify as needed
 
-# Pi systems to monitor
+# Pi systems to monitor - Enhanced with multiple connection methods
+# Each system can have multiple hosts to try (e.g., .local, hostname, IP)
+# The monitor will try each host in order until one succeeds
 PI_SYSTEMS = [
-    {"name": "sculpture1", "host": "sculpture1.local", "user": "pi"},
-    {"name": "sculpture2", "host": "sculpture2.local", "user": "pi"},
-    {"name": "sculpture3", "host": "sculpture3.local", "user": "pi"},
-    # Add more systems as needed
-    # {"name": "sculpture4", "host": "192.168.1.104", "user": "pi"},
+    {
+        "name": "sculpture1", 
+        "hosts": [
+            "sculpture1.local",       # mDNS name (may not work on all networks)
+            "sculpture1",             # hostname
+            "192.168.1.101"          # IP address (replace with actual IP)
+        ],
+        "user": "pi"
+    },
+    {
+        "name": "sculpture2", 
+        "hosts": [
+            "sculpture2.local",
+            "sculpture2",
+            "192.168.1.102"          # IP address (replace with actual IP)
+        ],
+        "user": "pi"
+    },
+    {
+        "name": "sculpture3", 
+        "hosts": [
+            "sculpture3.local",
+            "sculpture3",
+            "192.168.1.103"          # IP address (replace with actual IP)
+        ],
+        "user": "pi"
+    },
+    # Add more systems as needed:
+    # {
+    #     "name": "sculpture4", 
+    #     "hosts": ["sculpture4.local", "sculpture4", "192.168.1.104"],
+    #     "user": "pi"
+    # },
 ]
 
 # Services to monitor for underruns
 MONITORED_SERVICES = ["player-live", "player-loop"]
 
+# Services to monitor for darkice buffer overruns
+DARKICE_SERVICES = ["darkice"]
+
 # MQTT Configuration
 MQTT_BROKER = "localhost"  # Or use environment variable CONTROL_HOST
 MQTT_PORT = 1883
 UNDERRUN_TOPIC = "system/underruns"
+DARKICE_TOPIC = "system/darkice"
 
 # SSH Configuration
-SSH_TIMEOUT = 10
-SSH_KEY_FILE = None  # None for default, or specify path like "/home/unix/.ssh/id_ed25519"
+CONNECTION_CONFIG = {
+    'ssh_timeout': 15,                      # Timeout for SSH connections
+    'connection_retry_interval': 30,        # Seconds between connection attempts
+    'max_connection_attempts': 3,           # Not currently used
+    'ssh_key_file': None,                   # SSH key file path (None for default)
+    'test_connection': True,                # Test SSH connection before monitoring
+    'heartbeat_interval': 30,               # Seconds between heartbeat logs
+}
 
 # Monitoring Configuration
-UNDERRUN_HISTORY_SIZE = 100  # Number of recent underruns to keep in memory
-STATUS_PUBLISH_INTERVAL = 30  # Seconds between status publications 
+UNDERRUN_HISTORY_SIZE = 100                 # Number of recent underruns to keep in memory
+DARKICE_HISTORY_SIZE = 50                   # Number of recent darkice events to keep
+STATUS_PUBLISH_INTERVAL = 30                # Seconds between status publications
+
+# Darkice restart configuration
+DARKICE_CONFIG = {
+    'max_restart_attempts': 5,              # Maximum restart attempts
+    'restart_cooldown': 60,                 # Seconds between restart attempts
+    'buffer_overrun_threshold': 5,          # Trigger restart after this many overruns
+    'overrun_spam_threshold': 10,           # Consider spam if more than this many in window
+    'overrun_spam_window': 30,              # Seconds for spam detection window
+    'force_kill_timeout': 10                # Seconds to wait before force killing
+}
+
+# Underrun Detection Patterns
+# These patterns are used to detect underrun events in the logs
+# You can add more patterns if needed
+UNDERRUN_PATTERNS = [
+    r'Audio device underrun detected\.',
+    r'\[ao/pulse\] audio end or underrun',
+    r'\[cplayer\] restarting audio after underrun',
+    r'audio underrun',
+    r'buffer underrun',
+    r'ao_pulse.*underrun',
+]
+
+# Logging Configuration
+LOG_LEVEL = "DEBUG"  # Can be DEBUG, INFO, WARNING, ERROR
+LOG_FORMAT = '%(asctime)s %(levelname)s - %(message)s'
+LOG_DATE_FORMAT = '%H:%M'
+
+# Additional Notes:
+# 1. Make sure the IP addresses match your actual sculpture IPs
+# 2. Test SSH connections manually first: ssh pi@sculpture1.local
+# 3. Consider setting up SSH key authentication for better security
+# 4. Monitor the server-agent logs with: journalctl -u server-agent -f
+# 5. Check connection status in the logs and MQTT messages 

@@ -1,0 +1,41 @@
+{% set audio_defaults = [
+  {"name": "compress_ratio", "delay": 2.5},
+  {"name": "compress_threshold", "delay": 2.6},
+  {"name": "attack_time", "delay": 2.7},
+  {"name": "release_time", "delay": 2.8},
+  {"name": "highpass_freq", "delay": 2.9},
+  {"name": "lowpass_freq", "delay": 3.0},
+  {"name": "delay_time", "delay": 3.1},
+  {"name": "delay_feedback", "delay": 3.2},
+  {"name": "gate_threshold", "delay": 3.3},
+  {"name": "normalize_target", "delay": 3.4}
+] %}
+{% for param in audio_defaults %}
+{
+    "id": "set_initial_{{ param.name }}",
+    "type": "inject",
+    "z": "sculpture_dashboard",
+    "name": "Set Initial {{ param.name.replace('_', ' ').title() }} ({{ audio_processing[param.name] }})",
+    "props": [{"p": "payload"}],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "{{ param.delay }}",
+    "topic": "",
+    "payload": "{{ audio_processing[param.name] }}",
+    "payloadType": "num",
+    "x": 160,
+    "y": {{ 300 + loop.index0 * 40 }},
+    "wires": [["set_initial_{{ param.name }}_link_out"]]
+},
+{
+    "id": "set_initial_{{ param.name }}_link_out",
+    "type": "link out",
+    "z": "sculpture_dashboard",
+    "name": "set_initial_{{ param.name }}_link_out",
+    "links": ["set_initial_{{ param.name }}_link_in"],
+    "x": 500,
+    "y": {{ 300 + loop.index0 * 40 }},
+    "wires": []
+}{% if not loop.last %},{% endif %}
+{% endfor %} 

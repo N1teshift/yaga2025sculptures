@@ -6,8 +6,18 @@ After=network.target
 Type=simple
 User=unix
 Group=unix
-ExecStart=/usr/bin/python3 /opt/sculpture-system/server-agent.py
+WorkingDirectory=/opt/sculpture-system/server-agent
+ExecStart=/usr/bin/python3 /opt/sculpture-system/server-agent/server_agent.py
 Restart=always
+RestartSec=10
+
+# Environment variables
+Environment=PYTHONPATH=/opt/sculpture-system/server-agent
+Environment=PYTHONUNBUFFERED=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target 

@@ -1,31 +1,67 @@
 # Liquidsoap presets and helper functions for sculpture system
 
-# Audio processing presets
-let sculpture_normalize = normalize.old(target=-14.0, window=1.0)
+# Dynamic audio processing parameters (from audio_config.yml)
+compress_ratio = ref({{ audio_processing.compress_ratio }})
+compress_threshold = ref({{ audio_processing.compress_threshold }})
+attack_time = ref({{ audio_processing.attack_time }})
+release_time = ref({{ audio_processing.release_time }})
+highpass_freq = ref({{ audio_processing.highpass_freq }})
+lowpass_freq = ref({{ audio_processing.lowpass_freq }})
+delay_time = ref({{ audio_processing.delay_time }})
+delay_feedback = ref({{ audio_processing.delay_feedback }})
+gate_threshold = ref({{ audio_processing.gate_threshold }})
+normalize_target = ref({{ audio_processing.normalize_target }})
 
-let sculpture_compress = compress(
-  attack=0.1,
-  release=0.5, 
-  ratio=3.0,
-  threshold=-12.0
-)
+# Audio processing presets (now dynamic)
+let sculpture_normalize = fun(s) ->
+  normalize.old(target=!normalize_target, window=1.0, s)
 
-let sculpture_highpass = filter.iir.butterworth.high(
-  frequency=80.0,
-  order=2
-)
+let sculpture_compress = fun(s) ->
+  compress(
+    attack=!attack_time,
+    release=!release_time, 
+    ratio=!compress_ratio,
+    threshold=!compress_threshold,
+    s
+  )
 
-let sculpture_lowpass = filter.iir.butterworth.low(
-  frequency=8000.0,
-  order=2
-)
+let sculpture_highpass = fun(s) ->
+  filter.iir.butterworth.high(
+    frequency=!highpass_freq,
+    order=2,
+    s
+  )
 
-# Combined processing chain
+let sculpture_lowpass = fun(s) ->
+  filter.iir.butterworth.low(
+    frequency=!lowpass_freq,
+    order=2,
+    s
+  )
+
+let sculpture_delay = fun(s) ->
+  if !delay_time > 0.0 then
+    add(normalize=false, [
+      s,
+      amplify(!delay_feedback, delay(!delay_time, s))
+    ])
+  else
+    s
+  end
+
+let sculpture_gate = fun(s) ->
+  gate(threshold=!gate_threshold, s)
+
+# Combined processing chain (now dynamic)
 let sculpture_process = fun(s) ->
-  sculpture_lowpass(
-    sculpture_highpass(
-      sculpture_compress(
-        sculpture_normalize(s)
+  sculpture_gate(
+    sculpture_delay(
+      sculpture_lowpass(
+        sculpture_highpass(
+          sculpture_compress(
+            sculpture_normalize(s)
+          )
+        )
       )
     )
   )
@@ -56,12 +92,7 @@ let to_mono = fun(s) ->
   mean(s)
 
 
-# Delay effect
-let sculpture_delay = fun(delay_time, feedback, s) ->
-  add(normalize=false, [
-    s,
-    amplify(feedback, delay(delay_time, s))
-  ])
+# Delay effect - now integrated into dynamic processing chain above
 
 # Dynamic range compressor specifically for ambient audio
 let ambient_compress = compress(
@@ -71,8 +102,8 @@ let ambient_compress = compress(
   threshold=-18.0
 )
 
-# Gate to remove very quiet noise
-let sculpture_gate = fun(threshold, s) ->
+# Gate to remove very quiet noise  
+let sculpture_gate_with_threshold = fun(threshold, s) ->
   gate(threshold=threshold, s)
 
 # Smooth volume automation

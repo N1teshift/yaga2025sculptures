@@ -1,0 +1,72 @@
+{% set msg_open = "{{" %}
+{% set msg_close = "}}" %}
+{% set displays = [
+  {
+    "name": "compress_ratio",
+    "label": "Compression Ratio Value",
+    "format": msg_open + "msg.payload" + msg_close + ":1"
+  },
+  {
+    "name": "compress_threshold", 
+    "label": "Compression Threshold Value",
+    "format": msg_open + "msg.payload" + msg_close + "dB"
+  },
+  {
+    "name": "attack_time",
+    "label": "Attack Time Value",
+    "format": msg_open + "msg.payload" + msg_close + "s"
+  },
+  {
+    "name": "release_time",
+    "label": "Release Time Value",
+    "format": msg_open + "msg.payload" + msg_close + "s"
+  },
+  {
+    "name": "highpass_freq",
+    "label": "High-pass Frequency Value",
+    "format": msg_open + "msg.payload" + msg_close + "Hz"
+  },
+  {
+    "name": "lowpass_freq", 
+    "label": "Low-pass Frequency Value",
+    "format": msg_open + "msg.payload" + msg_close + "Hz"
+  },
+  {
+    "name": "delay_time",
+    "label": "Delay Time Value",
+    "format": msg_open + "msg.payload" + msg_close + "ms"
+  },
+  {
+    "name": "delay_feedback",
+    "label": "Delay Feedback Value",
+    "format": msg_open + "msg.payload * 100" + msg_close + "%"
+  },
+  {
+    "name": "gate_threshold",
+    "label": "Gate Threshold Value",
+    "format": msg_open + "msg.payload" + msg_close + "dB"
+  },
+  {
+    "name": "normalize_target",
+    "label": "Normalize Target Value",
+    "format": msg_open + "msg.payload" + msg_close + "dB"
+  }
+] %}
+{% for display in displays %}
+{
+    "id": "{{ display.name }}_display",
+    "type": "ui_text",
+    "z": "sculpture_dashboard",
+    "group": "ui_group_audio",
+    "order": {{ loop.index * 2 }},
+    "width": 12,
+    "height": 1,
+    "name": "{{ display.label }}",
+    "label": "Current Value:",
+    "format": "{{ display.format }}",
+    "layout": "row-spread",
+    "x": 400,
+    "y": {{ 100 + loop.index0 * 80 }},
+    "wires": []
+}{% if not loop.last %},{% endif %}
+{% endfor %} 

@@ -108,22 +108,22 @@ def set_plan_command(plan)
   plans = ["A1", "A2", "B1", "B2", "B3", "C", "D"]
   
   if list.mem(plan, plans) then
-    log("Setting plan to #{plan}...")
+    log("Setting plan...")
     # Update the reference
     current_plan := plan
     # Update all mixes with the new plan
     update_mixes()
-    log("Plan changed to #{plan}")
-    "Plan set to #{plan}"
+    log("Plan changed")
+    "Plan set"
   else
-    log("Invalid plan requested: #{plan}")
-    "Invalid plan #{plan}. Valid plans: A1, A2, B1, B2, B3, C, D"
+    log("Invalid plan requested")
+    "Invalid plan. Valid plans: A1, A2, B1, B2, B3, C, D"
   end
 end
 
 def get_plan_command()
   log("Received get_plan command")
-  "#{!current_plan}"
+  !current_plan
 end
 
 # Register telnet commands for server-agent compatibility
@@ -135,6 +135,115 @@ server.register(
 server.register(
   "get_plan", 
   fun(_) -> get_plan_command()
+)
+
+# Audio processing parameter commands
+server.register(
+  "set_compress_ratio",
+  fun(val) -> begin
+    compress_ratio := float_of_string(val);
+    log("Compression ratio set");
+    "Compression ratio set"
+  end
+)
+
+server.register(
+  "set_compress_threshold",
+  fun(val) -> begin
+    compress_threshold := float_of_string(val);
+    log("Compression threshold set");
+    "Compression threshold set"
+  end
+)
+
+server.register(
+  "set_attack_time",
+  fun(val) -> begin
+    attack_time := float_of_string(val);
+    log("Attack time set");
+    "Attack time set"
+  end
+)
+
+server.register(
+  "set_release_time",
+  fun(val) -> begin
+    release_time := float_of_string(val);
+    log("Release time set");
+    "Release time set"
+  end
+)
+
+server.register(
+  "set_highpass_freq",
+  fun(val) -> begin
+    highpass_freq := float_of_string(val);
+    log("High-pass frequency set");
+    "High-pass frequency set"
+  end
+)
+
+server.register(
+  "set_lowpass_freq",
+  fun(val) -> begin
+    lowpass_freq := float_of_string(val);
+    log("Low-pass frequency set");
+    "Low-pass frequency set"
+  end
+)
+
+server.register(
+  "set_delay_time",
+  fun(val) -> begin
+    delay_time := float_of_string(val);
+    log("Delay time set");
+    "Delay time set"
+  end
+)
+
+server.register(
+  "set_delay_feedback",
+  fun(val) -> begin
+    delay_feedback := float_of_string(val);
+    log("Delay feedback set");
+    "Delay feedback set"
+  end
+)
+
+server.register(
+  "set_gate_threshold",
+  fun(val) -> begin
+    gate_threshold := float_of_string(val);
+    log("Gate threshold set");
+    "Gate threshold set"
+  end
+)
+
+server.register(
+  "set_normalize_target",
+  fun(val) -> begin
+    normalize_target := float_of_string(val);
+    log("Normalize target set");
+    "Normalize target set"
+  end
+)
+
+server.register(
+  "reset_audio",
+  fun(_) -> begin
+    compress_ratio := {{ audio_processing.compress_ratio }};
+    compress_threshold := {{ audio_processing.compress_threshold }};
+    attack_time := {{ audio_processing.attack_time }};
+    release_time := {{ audio_processing.release_time }};
+    highpass_freq := {{ audio_processing.highpass_freq }};
+    lowpass_freq := {{ audio_processing.lowpass_freq }};
+    delay_time := {{ audio_processing.delay_time }};
+    delay_feedback := {{ audio_processing.delay_feedback }};
+    gate_threshold := {{ audio_processing.gate_threshold }};
+    normalize_target := {{ audio_processing.normalize_target }};
+    log("Audio processing reset to defaults");
+    "Audio processing reset to defaults"
+  end
 )
 
 # Initialize mixes
@@ -182,4 +291,16 @@ log("Sculpture system Liquidsoap configuration loaded with telnet API (port 1234
 log("Available telnet commands:")
 log("  set_plan <PLAN> - Set plan (A1, A2, B1, B2, B3, C, D)")
 log("  get_plan        - Get current plan")
+log("Audio processing commands:")
+log("  set_compress_ratio <VALUE>     - Set compression ratio (1.0-10.0)")
+log("  set_compress_threshold <VALUE> - Set compression threshold (-30.0-0.0)")
+log("  set_attack_time <VALUE>        - Set attack time (0.01-1.0)")
+log("  set_release_time <VALUE>       - Set release time (0.1-5.0)")
+log("  set_highpass_freq <VALUE>      - Set high-pass frequency (20-500)")
+log("  set_lowpass_freq <VALUE>       - Set low-pass frequency (1000-20000)")
+log("  set_delay_time <VALUE>         - Set delay time (0.0-2.0)")
+log("  set_delay_feedback <VALUE>     - Set delay feedback (0.0-0.9)")
+log("  set_gate_threshold <VALUE>     - Set gate threshold (-60.0--10.0)")
+log("  set_normalize_target <VALUE>   - Set normalize target (-24.0--6.0)")
+log("  reset_audio                    - Reset all audio processing to defaults")
 

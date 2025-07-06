@@ -1,0 +1,37 @@
+# Cursor Rules for yaga2025sculptures Project
+
+## File Management
+
+### File Length Preference
+- **Keep files under 200 lines when possible**: This makes it easier and faster for AI agents to edit files directly
+- **Refactor large files**: If a file exceeds 200 lines, consider breaking it into smaller, focused modules
+- **Exception**: Only avoid refactoring if it doesn't make logical sense (e.g., would create unnecessary complexity or break cohesion)
+
+## Terminal Access & Command Execution
+
+### WSL Ubuntu Terminal Access
+- **Full command execution permission**: AI agents are authorized to execute commands on the WSL Ubuntu terminal without requiring approval for each action
+- **Sudo commands**: When using sudo commands, agents should proceed without asking for password confirmation from the user
+- **Target environment**: Commands should be executed in the Ubuntu WSL instance where the project services run
+- **Transparency**: Agents should still inform the user what commands they're running and why, but don't need to wait for approval
+- **Purpose**: This enables agents to check system status, diagnose issues, and perform maintenance tasks independently
+
+### SSH Access to Raspberry Pi Devices
+- **SSH permission**: AI agents can SSH to the Raspberry Pi sculpture devices for remote command execution
+- **Device information**: IPs and connection details are defined in `edge/ansible/hosts.ini`
+  - sculpture1: 192.168.8.158
+  - sculpture2: 192.168.8.155
+  - sculpture3: 192.168.8.157
+- **SSH configuration**: Use `pi` user with SSH key `~/.ssh/id_rsa`
+- **Remote sudo**: Agents can execute sudo commands on the Pi devices without password confirmation
+- **Purpose**: Enables remote diagnostics, service management, and system maintenance on sculpture devices
+
+### Ansible Deployment Restrictions
+- **Do NOT run ansible commands**: AI agents should never execute ansible-playbook or other ansible commands
+- **User controls deployment**: Only the user should run ansible deployments
+- **Reminder only**: Agents can remind or mention that it's time to run ansible, but should not attempt to do it themselves
+- **Purpose**: Ensures user maintains control over deployment to production systems
+
+## General Guidelines
+
+*Additional rules will be added as needed* 
