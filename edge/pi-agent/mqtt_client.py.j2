@@ -21,8 +21,8 @@ class MQTTClientWrapper:
         self.client.loop_stop()
         self.client.disconnect()
 
-    def publish(self, topic, payload):
-        self.client.publish(topic, payload)
+    def publish(self, topic, payload, retain=False):
+        self.client.publish(topic, payload, retain=retain)
 
     def subscribe(self, topic):
         self.client.subscribe(topic) 

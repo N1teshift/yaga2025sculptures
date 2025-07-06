@@ -1,0 +1,19 @@
+---
+- name: Update Sculpture Agent Only
+  hosts: sculptures
+  become: yes
+  vars:
+    sculpture_dir: /opt/sculpture-system
+  vars_files:
+    - ../../audio_config.yml
+    - ../../playlists.yml
+
+  tasks:
+    - name: Include sculpture agent tasks
+      include_tasks: tasks/sculpture-agent.yml
+
+  handlers:
+    - name: Restart pi-agent
+      systemd:
+        name: pi-agent
+        state: restarted 

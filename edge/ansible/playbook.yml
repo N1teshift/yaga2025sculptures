@@ -103,6 +103,23 @@
         group: audio
         mode: '0755'
 
+    - name: Create samples subdirectory
+      file:
+        path: "{{ sculpture_dir }}/samples"
+        state: directory
+        owner: pi
+        group: audio
+        mode: '0755'
+
+    - name: Move existing audio files to samples directory
+      ansible.builtin.shell: |
+        # Move any existing audio files from root to samples directory
+        if [ -d "{{ sculpture_dir }}" ]; then
+          find {{ sculpture_dir }} -maxdepth 1 -type f \( -name "*.wav" -o -name "*.mp3" -o -name "*.flac" \) -exec mv {} {{ sculpture_dir }}/samples/ \;
+        fi
+      failed_when: false
+      changed_when: false
+
     - name: Check if ffmpeg is available on the control node
       local_action:
         module: ansible.builtin.command
@@ -158,7 +175,7 @@
     - name: Copy the CONVERTED loop files to the edge device (incremental)
       ansible.builtin.synchronize:
         src: /tmp/converted_loops/
-        dest: /opt/sculpture-system/
+        dest: /opt/sculpture-system/samples/
         delete: no
         checksum: yes
         owner: no
@@ -189,7 +206,7 @@
         dest: "{{ sculpture_dir }}/darkice.cfg"
         mode: '0644'
 
-    - name: Configure PulseAudio for the target sample rate
+    - name: Configure PulseAudio for the target sample rate and underrun prevention
       lineinfile:
         path: /etc/pulse/daemon.conf
         regexp: "{{ item.regexp }}"
@@ -198,6 +215,14 @@
       with_items:
         - { regexp: '^; default-sample-rate = .*', line: 'default-sample-rate = {{ audio_sample_rate }}' }
         - { regexp: '^; alternate-sample-rate = .*', line: 'alternate-sample-rate = {{ audio_sample_rate }}' }
+        - { regexp: '^; default-sample-format = .*', line: 'default-sample-format = s16le' }
+        - { regexp: '^; default-fragments = .*', line: 'default-fragments = 8' }
+        - { regexp: '^; default-fragment-size-msec = .*', line: 'default-fragment-size-msec = {{ pulse_latency_msec }}' }
+        - { regexp: '^; high-priority = .*', line: 'high-priority = yes' }
+        - { regexp: '^; nice-level = .*', line: 'nice-level = -11' }
+        - { regexp: '^; realtime-scheduling = .*', line: 'realtime-scheduling = yes' }
+        - { regexp: '^; realtime-priority = .*', line: 'realtime-priority = 9' }
+        - { regexp: '^; avoid-resampling = .*', line: 'avoid-resampling = yes' }
       notify: Restart pulseaudio
       when: audio_backend == 'pulse'
 
@@ -296,6 +321,7 @@
         - { src: ../scripts/status_collector.py, dest: "{{ sculpture_dir }}/status_collector.py", mode: '0644' }
         - { src: ../scripts/audio_diagnostics.sh, dest: "{{ sculpture_dir }}/audio_diagnostics.sh", mode: '0755' }
         - { src: ../scripts/hardware_audio_test.sh, dest: "{{ sculpture_dir }}/hardware_audio_test.sh", mode: '0755' }
+        - { src: ../scripts/optimize_audio.sh, dest: "{{ sculpture_dir }}/optimize_audio.sh", mode: '0755' }
       notify: Restart pi-agent
 
     - name: Install systemd services
@@ -334,6 +360,12 @@
         enabled: no
         state: stopped
 
+    - name: Run audio optimization script
+      command: "{{ sculpture_dir }}/optimize_audio.sh"
+      args:
+        creates: /etc/systemd/system/audio-optimize.service
+      notify: Reboot system
+
     - name: Enable PulseAudio TCP access for SSH monitoring
       lineinfile:
         path: /etc/pulse/default.pa
@@ -364,6 +396,11 @@
         state: restarted
         scope: user
       become: no
+
+    - name: Reboot system
+      reboot:
+        reboot_timeout: 300
+        msg: "Rebooting to apply audio optimizations"
 
     - name: Restart darkice
       systemd:
@@ -399,7 +436,7 @@
 
     - name: Set correct permissions for audio files
       ansible.builtin.shell: |
-        find {{ sculpture_dir }} -type f -name "*.wav" -exec chmod 644 {} \;
-        find {{ sculpture_dir }} -type f -name "*.wav" -exec chown pi:audio {} \;
+        find {{ sculpture_dir }}/samples -type f -name "*.wav" -exec chmod 644 {} \;
+        find {{ sculpture_dir }}/samples -type f -name "*.wav" -exec chown pi:audio {} \;
         find {{ sculpture_dir }} -type d -exec chmod 755 {} \;
         find {{ sculpture_dir }} -type d -exec chown pi:audio {} \;

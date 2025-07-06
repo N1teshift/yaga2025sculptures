@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import shlex
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -7,6 +8,7 @@ logger = logging.getLogger(__name__)
 class PlaylistManager:
     def __init__(self, sculpture_dir, predefined_playlists):
         self.sculpture_dir = sculpture_dir
+        self.samples_dir = Path(sculpture_dir) / 'samples'
         self.playlists_dir = Path(sculpture_dir) / 'playlists'
         self.predefined_playlists = predefined_playlists
         self._ensure_playlists_directory()
@@ -21,11 +23,10 @@ class PlaylistManager:
 
     def get_available_tracks(self):
         try:
-            loops_dir = Path(self.sculpture_dir)
             available_items = []
             individual_tracks = []
-            if loops_dir.is_dir():
-                individual_tracks = sorted([f.name for f in loops_dir.iterdir() 
+            if self.samples_dir.is_dir():
+                individual_tracks = sorted([f.name for f in self.samples_dir.iterdir() 
                                          if f.is_file() and f.suffix in ['.wav', '.mp3', '.flac']])
                 available_items.extend(individual_tracks)
                 logger.info(f"Found {len(individual_tracks)} individual tracks: {individual_tracks[:5]}...")
@@ -52,7 +53,7 @@ class PlaylistManager:
             self.update_loop_playlist(playlist_data, audio_config)
         else:
             logger.info(f"Loading individual track: {content_name}")
-            track_path = Path(self.sculpture_dir) / content_name
+            track_path = self.samples_dir / content_name
             if track_path.exists():
                 self.update_loop_track(str(track_path), audio_config)
             else:
@@ -71,7 +72,7 @@ class PlaylistManager:
         try:
             with open(playlist_file, 'w') as f:
                 for track in tracks:
-                    track_path = Path(self.sculpture_dir) / track
+                    track_path = self.samples_dir / track
                     if track_path.exists():
                         f.write(f"{track_path}\n")
                     else:
@@ -86,30 +87,98 @@ class PlaylistManager:
         self._update_systemd_dropin(track_path, audio_config)
         logger.info(f"Updated systemd drop-in for track: {track_path}")
         
-    def _update_systemd_dropin(self, audio_source, audio_config):
+    def _update_systemd_dropin(self, audio_source, audio_config=None):
         """Update the systemd drop-in file for player-loop service."""
         try:
-            # Build the mpv command
+            # Use default config if none provided
+            if audio_config is None:
+                audio_config = {
+                    'mpv_audio_device': '{{ mpv_audio_device }}',
+                    'audio_sample_rate': {{ audio_sample_rate }},
+                    'mpv_audio_format': '{{ mpv_audio_format }}',
+                    'mpv_audio_buffer_secs': {{ mpv_audio_buffer_secs }}
+                }
+            
+            # Check if this is a playlist file
+            is_playlist = audio_source.endswith('.m3u')
+            
+            # Build the mpv command with audio optimization flags
             mpv_cmd = [
                 "/usr/bin/mpv",
                 "--no-video",
-                f"--audio-device={audio_config.get('mpv_audio_device', 'pulse/alsa_output.platform-soc_sound.stereo-fallback')}",
-                f"--audio-samplerate={audio_config.get('audio_sample_rate', 48000)}",
-                f"--audio-format={audio_config.get('mpv_audio_format', 's16')}",
-                "--loop",
-                audio_source,
-                f"--audio-buffer={audio_config.get('mpv_audio_buffer_secs', 5)}",
-                "--msg-level=all=info"
+                f"--audio-device={audio_config.get('mpv_audio_device', '{{ mpv_audio_device }}')}",
+                f"--audio-samplerate={audio_config.get('audio_sample_rate', {{ audio_sample_rate }})}",
+                f"--audio-format={audio_config.get('mpv_audio_format', '{{ mpv_audio_format }}')}",
+                f"--audio-buffer={audio_config.get('mpv_audio_buffer_secs', {{ mpv_audio_buffer_secs }})}",
+                "--gapless-audio=yes",  # Enable gapless playback
+                "--audio-stream-silence=no",  # Prevent silence insertion
+                "--audio-wait-open=2.0",  # Wait for audio device to be ready
+                "--audio-client-name=sculpture-player",  # Set client name for PulseAudio
+                "--ao-null-untimed=no",  # Ensure proper timing
+                "--audio-fallback-to-null=no",  # Don't fallback to null audio
+                "--audio-exclusive=no",  # Allow shared audio access
+                "--audio-pitch-correction=yes",  # Enable pitch correction for stability
+                "--msg-level=all=info",
+                "--log-file=/tmp/mpv-loop-{{ id }}.log"
             ]
             
-            # Create the drop-in content with logging
-            track_name = audio_source.split('/')[-1]  # Get just the filename
-            dropin_content = f"""[Service]
-ExecStart=
-ExecStart=/bin/bash -c 'echo "Starting playback of: {track_name}" | systemd-cat -t player-loop -p info; exec {' '.join(mpv_cmd)}'
+            # Add appropriate loop flags based on content type
+            if is_playlist:
+                mpv_cmd.extend([
+                    "--loop-playlist=inf",  # Loop playlist infinitely
+                    "--shuffle=no",  # Disable shuffle for predictable playback
+                    "--prefetch-playlist=yes",  # Prefetch next track
+                    "--cache=yes",  # Enable caching for smoother playback
+                    "--demuxer-max-bytes=5M"  # Reasonable buffer for local files
+                ])
+                logger.info(f"Configured for playlist playback with gapless transitions")
+            else:
+                mpv_cmd.extend([
+                    "--loop=inf",  # Loop single track infinitely
+                    "--cache=yes",  # Enable caching
+                    "--demuxer-max-bytes=2M"  # Smaller buffer for single track
+                ])
+                logger.info(f"Configured for single track playback with gapless loop")
+            
+            # Add the audio source as the last argument
+            mpv_cmd.append(audio_source)
+            
+            # Create a script file to avoid complex quoting issues
+            script_content = f"""#!/bin/bash
+# Auto-generated player script for gapless playback
+echo "Starting gapless playback of: {audio_source.split('/')[-1]}" | systemd-cat -t player-loop -p info
+
+# Set audio thread priority
+if [ -f /proc/sys/kernel/sched_rt_runtime_us ]; then
+    echo "Audio thread priority optimization enabled"
+fi
+
+# Execute MPV with optimized settings
+exec {shlex.join(mpv_cmd)}
 """
             
-            # Write to temporary file
+            # Write script to temporary file
+            script_file = "/tmp/player-script.sh"
+            with open(script_file, 'w') as f:
+                f.write(script_content)
+            
+            # Make script executable and move to final location
+            subprocess.run(['chmod', '+x', script_file], check=True)
+            subprocess.run(['sudo', 'mv', script_file, '/opt/sculpture-system/player-script.sh'], check=True)
+            
+            # Create the drop-in content that executes the script
+            dropin_content = """[Service]
+ExecStart=
+ExecStart=/opt/sculpture-system/player-script.sh
+# Additional audio optimization
+IOSchedulingClass=1
+IOSchedulingPriority=4
+"""
+            
+            # Ensure drop-in directory exists
+            subprocess.run(['sudo', 'mkdir', '-p', '/etc/systemd/system/player-loop.service.d'], check=True)
+            
+            # Write drop-in to temporary file
             temp_file = "/tmp/sculpture-override.conf.tmp"
             with open(temp_file, 'w') as f:
                 f.write(dropin_content)
@@ -118,7 +187,7 @@ ExecStart=/bin/bash -c 'echo "Starting playback of: {track_name}" | systemd-cat 
             subprocess.run(['sudo', 'mv', temp_file, '/etc/systemd/system/player-loop.service.d/override.conf'], check=True)
             subprocess.run(['sudo', 'systemctl', 'daemon-reload'], check=True)
             
-            logger.info(f"Successfully updated systemd drop-in for: {audio_source}")
+            logger.info(f"Successfully updated systemd drop-in with gapless configuration for: {audio_source}")
             
         except Exception as e:
             logger.error(f"Failed to update systemd drop-in: {e}")

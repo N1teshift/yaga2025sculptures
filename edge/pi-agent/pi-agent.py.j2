@@ -10,6 +10,7 @@ import RPi.GPIO as GPIO
 from audio_manager import AudioManager
 from system_manager import SystemManager
 from status_collector import StatusCollector
+from playlist_manager import PlaylistManager
 from gpio_utils import setup_gpio, set_led_on, set_led_off, blink_led, LED_GREEN, LED_RED, BUTTON_SHUTDOWN
 from mqtt_client import MQTTClientWrapper
 
@@ -33,6 +34,7 @@ class SculptureAgent:
         predefined_playlists = {{ predefined_playlists | tojson }}
         
         self.system_manager = SystemManager(predefined_playlists=predefined_playlists)
+        self.playlist_manager = PlaylistManager(SCULPTURE_DIR, predefined_playlists)
         self.status_collector = StatusCollector(SCULPTURE_ID)
         self.sculpture_id = SCULPTURE_ID
         self.status_topic = f"sculpture/{self.sculpture_id}/status"

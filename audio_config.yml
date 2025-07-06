@@ -23,6 +23,9 @@ mpv_audio_device: "pulse/alsa_output.platform-soc_sound.stereo-fallback"
 # mpv_audio_device: "alsa"
 mpv_audio_device_alsa: "alsa/tee_output"
 mpv_audio_format: "s16"
-mpv_audio_buffer_secs: 10
+mpv_audio_buffer_secs: 15  # Increased from 10 to 15 seconds to prevent underruns
 mpv_cache_secs: 60
-mpv_demuxer_max_bytes: "20M" 
+mpv_demuxer_max_bytes: "20M"
+# PulseAudio optimizations for preventing underruns
+pulse_latency_msec: 100  # Higher latency for stability
+pulse_fragment_size: 1024  # Smaller fragments for better control 

@@ -1,0 +1,36 @@
+---
+- name: Install sculpture system files
+  template:
+    src: "../pi-agent/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { src: pi-agent.py.j2, dest: "{{ sculpture_dir }}/pi-agent.py", mode: '0755' }
+    - { src: audio_manager.py.j2, dest: "{{ sculpture_dir }}/audio_manager.py", mode: '0644' }
+    - { src: system_manager.py.j2, dest: "{{ sculpture_dir }}/system_manager.py", mode: '0644' }
+  notify: Restart pi-agent
+
+- name: Install pi-agent modules
+  template:
+    src: "../pi-agent/{{ item.src }}"
+    dest: "{{ sculpture_dir }}/{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: agent_main.py.j2, dest: agent_main.py }
+    - { src: file_utils.py.j2, dest: file_utils.py }
+    - { src: gpio_utils.py.j2, dest: gpio_utils.py }
+    - { src: mqtt_client.py.j2, dest: mqtt_client.py }
+    - { src: playlist_manager.py.j2, dest: playlist_manager.py }
+    - { src: service_manager.py.j2, dest: service_manager.py }
+  notify: Restart pi-agent
+
+- name: Copy sculpture system modules and scripts
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { src: ../scripts/status_collector.py, dest: "{{ sculpture_dir }}/status_collector.py", mode: '0644' }
+    - { src: ../scripts/audio_diagnostics.sh, dest: "{{ sculpture_dir }}/audio_diagnostics.sh", mode: '0755' }
+    - { src: ../scripts/hardware_audio_test.sh, dest: "{{ sculpture_dir }}/hardware_audio_test.sh", mode: '0755' }
+  notify: Restart pi-agent 
