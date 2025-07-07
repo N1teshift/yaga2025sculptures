@@ -3,7 +3,7 @@
 audio_sample_rate: 48000
 audio_channels: 1
 audio_bit_depth: 16
-audio_backend: pulse
+audio_backend: alsa
 darkice_quality: 0.4      # VBR quality (0.1 to 1.0)
 darkice_bitrate: 32       # Fallback bitrate if VBR is not used
 

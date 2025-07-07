@@ -56,7 +56,7 @@ CONNECTION_CONFIG = {
     'ssh_timeout': 15,
     'connection_retry_interval': 30,  # seconds between connection attempts
     'max_connection_attempts': 3,
-    'ssh_key_file': None,  # None for default, or specify path
+    'ssh_key_file': '/home/unix/.ssh/id_rsa',  # Explicit path to unix user SSH key
     'test_connection': True,  # Test connection before starting monitoring
     'heartbeat_interval': 30,  # seconds between heartbeat logs
 }

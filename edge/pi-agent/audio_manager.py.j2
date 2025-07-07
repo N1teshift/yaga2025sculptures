@@ -50,8 +50,8 @@ class AudioManager:
                 cmd = ['pactl', 'set-sink-volume', 'alsa_output.platform-soc_sound.stereo-fallback', f'{volume_percent}%']
                 env = get_pactl_env()
             else: # alsa
-                # This assumes 'Lineout' is the correct master volume control for the IQaudIO card.
-                cmd = ['amixer', '-c', '1', 'set', 'Lineout', f'{volume_percent}%']
+                # Use card name instead of number for better reliability
+                cmd = ['amixer', '-c', 'IQaudIOCODEC', 'set', 'Lineout', f'{volume_percent}%']
                 env = os.environ.copy()
 
             subprocess.run(cmd, check=True, env=env)
@@ -72,8 +72,8 @@ class AudioManager:
                 env = get_pactl_env()
             else: # alsa
                 mute_flag = 'off' if self.is_muted else 'on'
-                # This assumes 'Lineout' is the correct switch.
-                cmd = ['amixer', '-c', '1', 'set', 'Lineout', mute_flag]
+                # Use card name for reliability
+                cmd = ['amixer', '-c', 'IQaudIOCODEC', 'set', 'Lineout', mute_flag]
                 env = os.environ.copy()
 
             subprocess.run(cmd, check=True, env=env)
@@ -88,12 +88,21 @@ class AudioManager:
         try:
             # Only check for mute status if we're in a mode that produces audio
             if current_mode != "idle":
-                mute_result = subprocess.run(
-                    ['pactl', 'get-sink-mute', 'alsa_output.platform-soc_sound.stereo-fallback'],
-                    capture_output=True, text=True, check=True, env=get_pactl_env()
-                )
-                # Output is "Mute: yes" or "Mute: no"
-                self.is_muted = 'yes' in mute_result.stdout.lower()
+                if self.audio_backend == 'pulse':
+                    mute_result = subprocess.run(
+                        ['pactl', 'get-sink-mute', 'alsa_output.platform-soc_sound.stereo-fallback'],
+                        capture_output=True, text=True, check=True, env=get_pactl_env()
+                    )
+                    # Output is "Mute: yes" or "Mute: no"
+                    self.is_muted = 'yes' in mute_result.stdout.lower()
+                else: # alsa
+                    # Check ALSA mixer mute status
+                    mute_result = subprocess.run(
+                        ['amixer', '-c', 'IQaudIOCODEC', 'get', 'Lineout'],
+                        capture_output=True, text=True, check=True
+                    )
+                    # Look for [off] in the output to determine mute status
+                    self.is_muted = '[off]' in mute_result.stdout
                 # Clear previous error on success
                 self._last_mute_error = None
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -108,19 +117,30 @@ class AudioManager:
         """Get microphone input level (peak) in dB."""
         mic_level = -60.0  # Default to silence
         try:
-            mic_output = subprocess.check_output(
-                "timeout 0.1s parec --raw --device=@DEFAULT_SOURCE@ | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
-                shell=True,
-                timeout=0.5,
-                stderr=subprocess.PIPE,
-                env=get_pactl_env()
-            )
-            mic_level = float(mic_output.strip())
+            if self.audio_backend == 'pulse':
+                mic_output = subprocess.check_output(
+                    "timeout 0.1s parec --raw --device=@DEFAULT_SOURCE@ | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{print 20*(log( (max+0.0001) / 32767) / log(10))}'",
+                    shell=True,
+                    timeout=0.5,
+                    stderr=subprocess.PIPE,
+                    env=get_pactl_env()
+                )
+                mic_level = float(mic_output.strip())
+            else: # alsa
+                # Use arecord with ALSA to capture brief audio and measure level
+                mic_output = subprocess.check_output(
+                    "timeout 0.1s arecord -D mono_capture -f S16_LE -r 48000 -c 1 -t raw 2>/dev/null | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{if(max>0){print 20*log(max/32767)/log(10)} else {print -60}}'",
+                    shell=True,
+                    timeout=0.5,
+                    stderr=subprocess.PIPE
+                )
+                mic_level = float(mic_output.strip())
+            
             if mic_level < -60 or mic_level > 0:
                 mic_level = -60.0
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
             if isinstance(e, subprocess.CalledProcessError):
-                logger.warning(f"Mic level check failed with error: {e.stderr.decode('utf-8').strip()}")
+                logger.warning(f"Mic level check failed with error: {e.stderr.decode('utf-8').strip() if hasattr(e, 'stderr') and e.stderr else 'Unknown error'}")
             pass  # Keep default on error
         return mic_level
     
@@ -128,19 +148,34 @@ class AudioManager:
         """Get speaker output level (peak) in dB."""
         output_level = -60.0  # Default to silence
         try:
-            output_output = subprocess.check_output(
-                "timeout 1s parec --raw --device=alsa_output.platform-soc_sound.stereo-fallback.monitor | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{if(max>0){print 20*log(max/32767)/log(10)} else {print -60}}'",
-                shell=True,
-                timeout=2,
-                stderr=subprocess.PIPE,
-                env=get_pactl_env()
-            )
-            output_level = float(output_output.strip())
+            if self.audio_backend == 'pulse':
+                output_output = subprocess.check_output(
+                    "timeout 1s parec --raw --device=alsa_output.platform-soc_sound.stereo-fallback.monitor | od -t d2 -w2 | awk 'BEGIN{max=0} {val=$2; if(val<0) val=-val; if(val>max)max=val} END{if(max>0){print 20*log(max/32767)/log(10)} else {print -60}}'",
+                    shell=True,
+                    timeout=2,
+                    stderr=subprocess.PIPE,
+                    env=get_pactl_env()
+                )
+                output_level = float(output_output.strip())
+            else: # alsa
+                # With ALSA, we can't easily monitor output in real-time without additional setup
+                # For now, return a reasonable default. Could be enhanced with loopback device monitoring
+                # or by checking if audio is currently playing
+                try:
+                    # Check if MPV is running and outputting audio
+                    mpv_check = subprocess.run(['pgrep', '-f', 'mpv'], capture_output=True)
+                    if mpv_check.returncode == 0:
+                        output_level = -20.0  # Assume reasonable level when MPV is active
+                    else:
+                        output_level = -60.0  # Silence when no player
+                except:
+                    output_level = -60.0
+            
             if output_level < -60 or output_level > 0:
                 output_level = -60.0
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError) as e:
             if isinstance(e, subprocess.CalledProcessError):
-                logger.warning(f"Output level check failed with error: {e.stderr.decode('utf-8').strip()}")
+                logger.warning(f"Output level check failed with error: {e.stderr.decode('utf-8').strip() if hasattr(e, 'stderr') and e.stderr else 'Unknown error'}")
             pass  # Keep default on error
         return output_level
     
@@ -155,8 +190,8 @@ class AudioManager:
                 cmd = ['pactl', 'set-source-volume', 'alsa_input.platform-soc_sound.stereo-fallback', f'{capture_percent}%']
                 env = get_pactl_env()
             else: # alsa
-                # This assumes 'Capture' is the correct control for the IQaudIO card.
-                cmd = ['amixer', '-c', '1', 'set', 'Capture', f'{capture_percent}%']
+                # Use card name and correct capture control
+                cmd = ['amixer', '-c', 'IQaudIOCODEC', 'set', 'ADC', f'{capture_percent}%']
                 env = os.environ.copy()
             subprocess.run(cmd, check=True, env=env)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:

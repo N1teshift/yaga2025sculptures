@@ -217,22 +217,7 @@
         mode: '0600'
         force: no
 
-    - name: Display public key for manual setup
-      slurp:
-        src: /home/unix/.ssh/id_rsa.pub
-      register: unix_ssh_public_key
 
-    - name: Show SSH public key
-      debug:
-        msg: |
-          =================================================================
-          IMPORTANT: Copy this SSH public key to ALL Pi systems:
-          
-          {{ unix_ssh_public_key.content | b64decode }}
-          
-          Run this command on EACH Pi system:
-          echo "{{ unix_ssh_public_key.content | b64decode | trim }}" >> ~/.ssh/authorized_keys
-          =================================================================
 
     - name: Template Node-RED flow.json
       template:

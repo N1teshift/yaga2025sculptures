@@ -200,6 +200,29 @@
       become: no
       run_once: true
 
+    # SSH Key Deployment for Server-Agent Access
+    - name: Fetch server's unix user SSH public key
+      slurp:
+        src: /home/unix/.ssh/id_rsa.pub
+      register: unix_ssh_key
+      delegate_to: "{{ control_host }}"
+      become: yes
+
+    - name: Ensure pi user .ssh directory exists
+      file:
+        path: /home/pi/.ssh
+        state: directory
+        owner: pi
+        group: pi
+        mode: '0700'
+
+    - name: Deploy server's SSH key to pi user
+      authorized_key:
+        user: pi
+        key: "{{ unix_ssh_key.content | b64decode }}"
+        comment: "server-agent access key"
+        state: present
+
     - name: Template darkice configuration
       template:
         src: ../darkice/darkice.cfg
