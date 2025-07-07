@@ -35,16 +35,7 @@ First, set up the Windows Subsystem for Linux (WSL 2) and install Ansible, which
 2. Before flashing set custom settings to enable SSH and configure WiFi 
 3. Boot each Pi and note their IP addresses
 
-## Step 3: Update and Upgrade Pis
-
-
-```bash
-# In each Pi terminal run
-sudo apt update
-sudo apt upgrade -y
-```
-
-## Step 4: Configure SSH Keys
+## Step 3: Configure SSH Keys
 
 ```bash
 # In WSL Ubuntu terminal
@@ -57,7 +48,7 @@ ssh-copy-id pi@YOUR_PI2_IP
 ssh-copy-id pi@YOUR_PI3_IP
 ```
 
-## Step 5: Update Inventory File
+## Step 4: Update Inventory File
 
 Edit `edge/ansible/hosts.ini` with your actual IP addresses:
 
@@ -68,11 +59,11 @@ sculpture2 ansible_host=YOUR_PI2_IP id=2 alsa_device=hw:1,0 control_host=YOUR_CO
 sculpture3 ansible_host=YOUR_PI3_IP id=3 alsa_device=hw:1,0 control_host=YOUR_CONTROl_NODE_IP
 ```
 
-## Step 6: Choose audio routing approach
+## Step 5: Choose audio routing approach
 
 Select sculpture system's audio approach by editing in edge/ansible/group_vars/all.yml audio_backend variable value to either `pulse` or `alsa`.
 
-## Step 7: Deploy to Raspberry Pis
+## Step 6: Deploy to Raspberry Pis
 
 ```bash
 # Run the edge playbook to configure all Pis
@@ -128,7 +119,7 @@ This command runs the main Ansible playbook, which automates the entire configur
 ansible sculptures -i edge/ansible/hosts.ini -m ping
 
 
-## Step 8: Install Control Node Services
+## Step 7: Install Control Node Services
 
 Now, run the Ansible playbook that installs and configures all the local services on your WSL machine (Icecast, Liquidsoap, Mosquitto, Node-RED).
 
@@ -228,6 +219,8 @@ You should see only
 sudo systemctl status darkice
 ```
 
+Darkice can get "overrun buffer" problems, so just restart it few times until its gone. Restart icacast2 and liquidsoap too maybe.
+
 ```bash
 sudo systemctl status pi-agent
 ```
@@ -265,22 +258,17 @@ http://localhost:8000/mix-for-3.ogg
 Test the transducer/speaker output:
 ```bash
 # Test speakers (always sink 0 on all sculptures)
-timeout 3s speaker-test -c 1 -t sine -D pulse:0
+timeout 3s speaker-test -c 1 -t sine -D
 ```
 
-### 8. Test PulseAudio hardware routing
-Test the complete audio chain through PulseAudio:
+### 8. Check if all tracks were copied to the edge devices
+
 ```bash
-# Test audio output with live stream (always sink 0)
-mpv --no-video --audio-device=pulse/0 --audio-samplerate=16000 http://192.168.8.156:8000/mix-for-3.ogg
+cd /opt/sculpture-system/samples
+ls
 ```
 
-### 9. Test microphone input
-Test the microphone input:
-```bash
-# Test microphone (always source 1 on all sculptures)
-timeout 3s parec --device=1 --raw | od -t d2 -w2 | head -5
-```
+
 
 ## Known issues
 

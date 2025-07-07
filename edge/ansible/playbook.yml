@@ -13,10 +13,12 @@
       apt:
         update_cache: yes
         cache_valid_time: 3600
+      tags: [packages, system]
 
     - name: Upgrade installed packages
       apt:
         upgrade: dist
+      tags: [packages, system]
 
     - name: Install required packages
       apt:
@@ -31,12 +33,14 @@
           - pulsemixer
           - python3-rpi.gpio
         state: present
+      tags: [packages, system]
 
     - name: Install PulseAudio (PulseAudio mode only)
       apt:
         name: pulseaudio
         state: present
       when: audio_backend == 'pulse'
+      tags: [packages, system, audio]
 
     - name: Disable WiFi power saving
       copy:
@@ -48,11 +52,13 @@
         group: root
         mode: '0644'
       notify: Restart NetworkManager
+      tags: [system, network]
 
     - name: Detect firmware config path
       stat:
         path: /boot/firmware/config.txt
       register: firmware_cfg
+      tags: [hardware, system]
 
     - name: Set boot config path
       set_fact:
@@ -60,6 +66,7 @@
           {{ '/boot/firmware/config.txt'
              if firmware_cfg.stat.exists
              else '/boot/config.txt' }}
+      tags: [hardware, system]
 
     - name: Enable IQaudIO codec overlay
       lineinfile:
@@ -67,6 +74,7 @@
         regexp: '^dtoverlay=iqaudio-codec'
         line: 'dtoverlay=iqaudio-codec'
       register: overlay
+      tags: [hardware, audio]
 
     - name: Enable I2S for audio HAT
       lineinfile:
@@ -75,6 +83,7 @@
         line: 'dtparam=i2s=on'
         state: present
       register: i2s_on
+      tags: [hardware, audio]
 
     - name: Disable built-in audio to prevent I2S conflicts
       lineinfile:
@@ -83,17 +92,20 @@
         line: 'dtparam=audio=off'
         state: present
       register: audio_off
+      tags: [hardware, audio]
 
     - name: Reboot if audio configuration changed
       reboot:
         reboot_timeout: 300
       when: overlay.changed or i2s_on.changed or audio_off.changed
+      tags: [hardware, audio]
 
     - name: Create sculpture system directory
       file:
         path: "{{ sculpture_dir }}"
         state: directory
         mode: '0755'
+      tags: [system, directories]
 
     - name: Create playlists subdirectory
       file:
@@ -102,6 +114,7 @@
         owner: pi
         group: audio
         mode: '0755'
+      tags: [system, directories]
 
     - name: Create samples subdirectory
       file:
@@ -110,15 +123,7 @@
         owner: pi
         group: audio
         mode: '0755'
-
-    - name: Move existing audio files to samples directory
-      ansible.builtin.shell: |
-        # Move any existing audio files from root to samples directory
-        if [ -d "{{ sculpture_dir }}" ]; then
-          find {{ sculpture_dir }} -maxdepth 1 -type f \( -name "*.wav" -o -name "*.mp3" -o -name "*.flac" \) -exec mv {} {{ sculpture_dir }}/samples/ \;
-        fi
-      failed_when: false
-      changed_when: false
+      tags: [system, directories]
 
     - name: Check if ffmpeg is available on the control node
       local_action:
@@ -128,6 +133,7 @@
       run_once: true
       register: ffmpeg_check
       failed_when: false
+      tags: [content, validation]
 
     - name: Fail with helpful message if ffmpeg is not installed
       fail:
@@ -140,6 +146,7 @@
           Then re-run the playbook.
       when: ffmpeg_check.rc != 0
       run_once: true
+      tags: [content, validation]
 
     - name: Create a temporary local directory for converted loops
       local_action:
@@ -148,6 +155,7 @@
         state: directory
       become: no
       run_once: true
+      tags: [content, preparation]
 
     - name: Convert loop files to the correct format locally
       local_action:
@@ -163,7 +171,7 @@
               # Only convert if output doesn't exist or source is newer
               if [ ! -f "$output_file" ] || [ "$f" -nt "$output_file" ]; then
                 echo "Converting: $f -> $output_file"
-                ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "$output_file"
+                ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "$output_file" < /dev/null
               else
                 echo "Skipping (up to date): $f"
               fi
@@ -171,6 +179,7 @@
           done
       become: no
       run_once: true
+      tags: [content, conversion]
 
     - name: Copy the CONVERTED loop files to the edge device (incremental)
       ansible.builtin.synchronize:
@@ -183,6 +192,7 @@
         times: yes
       become: yes
       notify: Set file permissions
+      tags: [content, sync]
 
     - name: Fix file ownership immediately after sync
       ansible.builtin.file:
@@ -191,6 +201,7 @@
         group: audio
         recurse: yes
         state: directory
+      tags: [content, permissions]
 
     - name: Clean up temporary local directory
       local_action:
@@ -199,14 +210,17 @@
         state: absent
       become: no
       run_once: true
+      tags: [content, cleanup]
 
     # SSH Key Deployment for Server-Agent Access
-    - name: Fetch server's unix user SSH public key
-      slurp:
-        src: /home/unix/.ssh/id_rsa.pub
-      register: unix_ssh_key
-      delegate_to: "{{ control_host }}"
-      become: yes
+    - name: Copy server's SSH public key locally
+      local_action:
+        module: ansible.builtin.command
+        cmd: sudo cat /home/unix/.ssh/id_rsa.pub
+      register: unix_ssh_key_local
+      run_once: true
+      become: no
+      tags: [ssh, security]
 
     - name: Ensure pi user .ssh directory exists
       file:
@@ -215,19 +229,22 @@
         owner: pi
         group: pi
         mode: '0700'
+      tags: [ssh, security]
 
     - name: Deploy server's SSH key to pi user
       authorized_key:
         user: pi
-        key: "{{ unix_ssh_key.content | b64decode }}"
+        key: "{{ unix_ssh_key_local.stdout }}"
         comment: "server-agent access key"
         state: present
+      tags: [ssh, security]
 
     - name: Template darkice configuration
       template:
         src: ../darkice/darkice.cfg
         dest: "{{ sculpture_dir }}/darkice.cfg"
         mode: '0644'
+      tags: [audio, config]
 
     - name: Configure PulseAudio for the target sample rate and underrun prevention
       lineinfile:
@@ -248,31 +265,36 @@
         - { regexp: '^; avoid-resampling = .*', line: 'avoid-resampling = yes' }
       notify: Restart pulseaudio
       when: audio_backend == 'pulse'
+      tags: [audio, config, pulse]
 
     - name: Configure ALSA for shared access (ALSA mode only)
       template:
-        src: templates/asound.conf.j2
+        src: ../pi-agent/asound.conf.j2
         dest: /etc/asound.conf
         owner: root
         group: root
         mode: '0644'
       when: audio_backend == 'alsa'
+      tags: [audio, config, alsa]
 
     - name: Ensure custom ALSA config is absent (PulseAudio mode only)
       ansible.builtin.file:
         path: /etc/asound.conf
         state: absent
       when: audio_backend == 'pulse'
+      tags: [audio, config, pulse]
 
     - name: Find IQaudIO sound card number
       ansible.builtin.shell: "grep 'IQaudIOCODEC' /proc/asound/cards | awk '{print $1}'"
       register: iqaudio_card_num_result
       changed_when: false
       failed_when: iqaudio_card_num_result.stdout == ""
+      tags: [hardware, mixer, audio]
 
     - name: Set IQaudIO card number fact
       ansible.builtin.set_fact:
         iqaudio_card_num: "{{ iqaudio_card_num_result.stdout }}"
+      tags: [hardware, mixer, audio]
 
     - name: Configure ALSA mixer for microphone input
       ansible.builtin.shell: |
@@ -287,11 +309,13 @@
         - { control: 'Mic 2', value: '5 on' }
         - { control: 'Mixin Left Mic 2', value: 'on' }
         - { control: 'Mixin Right Mic 2', value: 'on' }
-        - { control: 'ADC', value: '114 on' }
+        - { control: 'ADC', value: '100 on' }
         - { control: 'Mixin PGA', value: '7 on' }
       register: mic_mixer_result
       changed_when: mic_mixer_result.stdout == "changed"
       notify: Save ALSA state
+      when: audio_backend == 'alsa'
+      tags: [hardware, mixer, audio, alsa]
 
     - name: Configure ALSA mixer for speaker output
       ansible.builtin.shell: |
@@ -310,6 +334,8 @@
       register: speaker_mixer_result
       changed_when: speaker_mixer_result.stdout == "changed"
       notify: Save ALSA state
+      when: audio_backend == 'alsa'
+      tags: [hardware, mixer, audio, alsa]
 
     - name: Install sculpture system files
       template:
@@ -321,6 +347,7 @@
         - { src: audio_manager.py.j2, dest: "{{ sculpture_dir }}/audio_manager.py", mode: '0644' }
         - { src: system_manager.py.j2, dest: "{{ sculpture_dir }}/system_manager.py", mode: '0644' }
       notify: Restart pi-agent
+      tags: [agent, deployment]
 
     - name: Install pi-agent modules
       template:
@@ -334,6 +361,7 @@
         - { src: mqtt_client.py.j2, dest: mqtt_client.py }
         - { src: playlist_manager.py.j2, dest: playlist_manager.py }
         - { src: service_manager.py.j2, dest: service_manager.py }
+      tags: [agent, deployment]
 
     - name: Copy sculpture system modules and scripts
       copy:
@@ -346,6 +374,7 @@
         - { src: ../scripts/hardware_audio_test.sh, dest: "{{ sculpture_dir }}/hardware_audio_test.sh", mode: '0755' }
         - { src: ../scripts/optimize_audio.sh, dest: "{{ sculpture_dir }}/optimize_audio.sh", mode: '0755' }
       notify: Restart pi-agent
+      tags: [agent, deployment, scripts]
 
     - name: Install systemd services
       template:
@@ -364,6 +393,7 @@
         - Restart player-live
         - Restart player-loop
         - Restart pi-agent
+      tags: [services, systemd]
 
     - name: Enable and start services
       systemd:
@@ -376,18 +406,21 @@
         - player-live
         - player-loop
         - pi-agent
+      tags: [services, systemd]
 
     - name: Ensure player-loop is disabled by default
       systemd:
         name: player-loop.service
         enabled: no
         state: stopped
+      tags: [services, systemd]
 
     - name: Run audio optimization script
       command: "{{ sculpture_dir }}/optimize_audio.sh"
       args:
         creates: /etc/systemd/system/audio-optimize.service
       notify: Reboot system
+      tags: [audio, optimization]
 
     - name: Enable PulseAudio TCP access for SSH monitoring
       lineinfile:
@@ -397,6 +430,7 @@
         state: present
       notify: Restart pulseaudio
       when: audio_backend == 'pulse'
+      tags: [audio, config, pulse, monitoring]
 
     - name: Grant pi-agent limited sudo access for service management
       template:
@@ -406,6 +440,7 @@
         group: root
         mode: "0440"
         validate: 'visudo -cf %s'
+      tags: [security, sudo]
 
   handlers:
     - name: Restart NetworkManager

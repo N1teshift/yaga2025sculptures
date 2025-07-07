@@ -29,17 +29,17 @@ DEFAULT_PLAN = "A1"
 PI_SYSTEMS = [
     {
         "name": "sculpture1", 
-        "hosts": ["sculpture1.local", "sculpture1", "192.168.8.158"],  # Multiple connection options
+        "hosts": ["sculpture1.local", "sculpture1", "192.168.8.101"],  # Multiple connection options
         "user": "pi"
     },
     {
         "name": "sculpture2", 
-        "hosts": ["sculpture2.local", "sculpture2", "192.168.8.155"], 
+        "hosts": ["sculpture2.local", "sculpture2", "192.168.8.102"], 
         "user": "pi"
     },
     {
         "name": "sculpture3", 
-        "hosts": ["sculpture3.local", "sculpture3", "192.168.8.157"], 
+        "hosts": ["sculpture3.local", "sculpture3", "192.168.8.103"], 
         "user": "pi"
     },
     # Add more systems as needed

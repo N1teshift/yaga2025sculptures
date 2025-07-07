@@ -57,7 +57,7 @@
     "type": "function",
     "z": "sculpture_dashboard",
     "name": "{{ func.label }}",
-    "func": "msg.payload = {\"{{ func.payload }}\": msg.payload{% if func.convert is defined %} {{ func.convert }}{% endif %}};\nreturn msg;",
+    "func": "// Check if we're in reset mode\nvar resetMode = context.get('audio_reset_mode') || false;\n\nif (resetMode) {\n    // During reset, don't send MQTT commands\n    return null;\n} else {\n    // Normal operation - send MQTT command\n    msg.payload = {\"{{ func.payload }}\": msg.payload{% if func.convert is defined %} {{ func.convert }}{% endif %}};\n    return msg;\n}",
     "outputs": 1,
     "noerr": 0,
     "x": 620,

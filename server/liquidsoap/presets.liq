@@ -12,6 +12,9 @@ delay_feedback = ref({{ audio_processing.delay_feedback }})
 gate_threshold = ref({{ audio_processing.gate_threshold }})
 normalize_target = ref({{ audio_processing.normalize_target }})
 
+# Processing bypass flag
+processing_bypass = ref(false)
+
 # Audio processing presets (now dynamic)
 let sculpture_normalize = fun(s) ->
   normalize.old(target=!normalize_target, window=1.0, s)
@@ -52,9 +55,10 @@ let sculpture_delay = fun(s) ->
 let sculpture_gate = fun(s) ->
   gate(threshold=!gate_threshold, s)
 
-# Combined processing chain (now dynamic)
-let sculpture_process = fun(s) ->
-  sculpture_gate(
+# Combined processing chain (now dynamic with bypass option)
+def sculpture_process(s) =
+  # Create processed version
+  processed = sculpture_gate(
     sculpture_delay(
       sculpture_lowpass(
         sculpture_highpass(
@@ -65,6 +69,15 @@ let sculpture_process = fun(s) ->
       )
     )
   )
+  
+  # Use switch to select between processed and unprocessed
+  switch(
+    [
+      (fun() -> !processing_bypass, s),
+      (fun() -> true, processed)
+    ]
+  )
+end
 
 # Crossfade function for smooth transitions
 let sculpture_crossfade = crossfade(

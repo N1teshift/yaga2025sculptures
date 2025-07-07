@@ -246,6 +246,35 @@ server.register(
   end
 )
 
+server.register(
+  "enable_processing",
+  fun(_) -> begin
+    processing_bypass := false;
+    log("Audio processing enabled");
+    "Audio processing enabled"
+  end
+)
+
+server.register(
+  "disable_processing", 
+  fun(_) -> begin
+    processing_bypass := true;
+    log("Audio processing disabled (bypassed)");
+    "Audio processing disabled (bypassed)"
+  end
+)
+
+server.register(
+  "get_processing_status",
+  fun(_) -> begin
+    if !processing_bypass then
+      "disabled"
+    else
+      "enabled"
+    end
+  end
+)
+
 # Initialize mixes
 update_mixes()
 
@@ -303,4 +332,7 @@ log("  set_delay_feedback <VALUE>     - Set delay feedback (0.0-0.9)")
 log("  set_gate_threshold <VALUE>     - Set gate threshold (-60.0--10.0)")
 log("  set_normalize_target <VALUE>   - Set normalize target (-24.0--6.0)")
 log("  reset_audio                    - Reset all audio processing to defaults")
+log("  enable_processing              - Enable audio processing")
+log("  disable_processing             - Disable audio processing")
+log("  get_processing_status          - Get audio processing status")
 

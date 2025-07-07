@@ -5,12 +5,12 @@
   vars:
     sculpture_dir: /opt/sculpture-system
   vars_files:
-    - ../../audio_config.yml
-    - ../../playlists.yml
+    - ../../../audio_config.yml
+    - ../../../playlists.yml
 
   tasks:
     - name: Include sculpture agent tasks
-      include_tasks: tasks/sculpture-agent.yml
+      include_tasks: sculpture-agent.yml
 
   handlers:
     - name: Restart pi-agent

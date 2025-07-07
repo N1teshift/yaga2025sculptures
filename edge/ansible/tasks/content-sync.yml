@@ -1,0 +1,124 @@
+---
+- name: Content Synchronization & Media Management
+  hosts: sculptures
+  become: yes
+  vars:
+    sculpture_dir: /opt/sculpture-system
+  vars_files:
+    - ../../audio_config.yml
+    - ../../playlists.yml
+
+  tasks:
+    - name: Create playlists subdirectory
+      file:
+        path: "{{ sculpture_dir }}/playlists"
+        state: directory
+        owner: pi
+        group: audio
+        mode: '0755'
+      tags: [directories]
+
+    - name: Create samples subdirectory
+      file:
+        path: "{{ sculpture_dir }}/samples"
+        state: directory
+        owner: pi
+        group: audio
+        mode: '0755'
+      tags: [directories]
+
+    - name: Check if ffmpeg is available on the control node
+      local_action:
+        module: ansible.builtin.command
+        cmd: which ffmpeg
+      become: no
+      run_once: true
+      register: ffmpeg_check
+      failed_when: false
+      tags: [validation]
+
+    - name: Fail with helpful message if ffmpeg is not installed
+      fail:
+        msg: |
+          ffmpeg is not installed on the control node. Please install it with:
+          
+          On Ubuntu/Debian: sudo apt update && sudo apt install ffmpeg
+          On WSL Ubuntu: sudo apt update && sudo apt install ffmpeg
+          
+          Then re-run the playbook.
+      when: ffmpeg_check.rc != 0
+      run_once: true
+      tags: [validation]
+
+    - name: Create a temporary local directory for converted loops
+      local_action:
+        module: ansible.builtin.file
+        path: /tmp/converted_loops
+        state: directory
+      become: no
+      run_once: true
+      tags: [conversion]
+
+    - name: Convert loop files to the correct format locally
+      local_action:
+        module: ansible.builtin.shell
+        cmd: |
+          # Convert all supported audio formats to WAV with correct settings (only if needed)
+          find ../../samples -type f "(" -iname '*.wav' -o -iname '*.flac' -o -iname '*.mp3' -o -iname '*.ogg' -o -iname '*.m4a' -o -iname '*.aac' ")" | while read f; do
+            if [ -f "$f" ]; then
+              # Get filename without extension and add .wav
+              basename_noext=$(basename "$f" | sed 's/\.[^.]*$//')
+              output_file="/tmp/converted_loops/${basename_noext}.wav"
+              
+              # Only convert if output doesn't exist or source is newer
+              if [ ! -f "$output_file" ] || [ "$f" -nt "$output_file" ]; then
+                echo "Converting: $f -> $output_file"
+                ffmpeg -y -i "$f" -ac {{ audio_channels }} -ar {{ audio_sample_rate }} "$output_file" < /dev/null
+              else
+                echo "Skipping (up to date): $f"
+              fi
+            fi
+          done
+      become: no
+      run_once: true
+      tags: [conversion]
+
+    - name: Copy the CONVERTED loop files to the edge device (incremental)
+      ansible.builtin.synchronize:
+        src: /tmp/converted_loops/
+        dest: /opt/sculpture-system/samples/
+        delete: no
+        checksum: yes
+        owner: no
+        group: no
+        times: yes
+      become: yes
+      notify: Set file permissions
+      tags: [sync]
+
+    - name: Fix file ownership immediately after sync
+      ansible.builtin.file:
+        path: "{{ sculpture_dir }}"
+        owner: pi
+        group: audio
+        recurse: yes
+        state: directory
+      tags: [permissions]
+
+    - name: Clean up temporary local directory
+      local_action:
+        module: ansible.builtin.file
+        path: /tmp/converted_loops
+        state: absent
+      become: no
+      run_once: true
+      tags: [cleanup]
+
+  handlers:
+    - name: Set file permissions
+      ansible.builtin.file:
+        path: "{{ sculpture_dir }}"
+        owner: pi
+        group: audio
+        recurse: yes
+      ignore_errors: yes 

@@ -32,6 +32,7 @@ class MQTTHandlers:
         logger.info(f"[MQTT] Connected to MQTT broker with result code {rc}")
         client.subscribe(CMD_TOPIC)
         client.subscribe("system/broadcast")  # Listen for plan broadcasts
+        client.subscribe("system/audio/cmd")  # Listen for audio commands
         
         # Publish initial plan status
         self.publish_plan_status(client)
@@ -46,6 +47,8 @@ class MQTTHandlers:
                 self.handle_command_message(client, data)
             elif msg.topic == "system/broadcast":
                 self.handle_broadcast_message(client, data)
+            elif msg.topic == "system/audio/cmd":
+                self.handle_audio_command_message(client, data)
             else:
                 logger.warning(f"[MQTT] Unknown topic: {msg.topic}")
                 
@@ -111,6 +114,73 @@ class MQTTHandlers:
                 
         except Exception as e:
             logger.error(f"[MQTT] Broadcast handling error: {e}")
+    
+    def handle_audio_command_message(self, client, data):
+        """Handle audio command messages."""
+        try:
+            if 'processing_toggle' in data:
+                enable = data['processing_toggle']
+                logger.info(f"[MQTT] Audio processing toggle: {'enable' if enable else 'disable'}")
+                
+                if enable:
+                    response = self.liquidsoap_client.send_command("enable_processing")
+                else:
+                    response = self.liquidsoap_client.send_command("disable_processing")
+                
+                if response:
+                    logger.info(f"[MQTT] Liquidsoap response: {response}")
+                    # Publish status update
+                    self.publish_audio_processing_status(client)
+                else:
+                    logger.error(f"[MQTT] Failed to toggle audio processing")
+                    
+            elif 'get_processing_status' in data:
+                logger.info("[MQTT] Audio processing status requested")
+                self.publish_audio_processing_status(client)
+                
+            elif 'reset' in data:
+                logger.info("[MQTT] Audio processing reset requested")
+                response = self.liquidsoap_client.send_command("reset_audio")
+                if response:
+                    logger.info(f"[MQTT] Audio reset response: {response}")
+                    self.publish_audio_processing_status(client)
+                else:
+                    logger.error(f"[MQTT] Failed to reset audio processing")
+                    
+            else:
+                # Handle individual audio parameter commands
+                for param, value in data.items():
+                    if param in ['compress_ratio', 'compress_threshold', 'attack_time', 'release_time',
+                               'highpass_freq', 'lowpass_freq', 'delay_time', 'delay_feedback',
+                               'gate_threshold', 'normalize_target']:
+                        command = f"set_{param}"
+                        response = self.liquidsoap_client.send_command(command, str(value))
+                        if response:
+                            logger.info(f"[MQTT] Set {param} to {value}: {response}")
+                        else:
+                            logger.error(f"[MQTT] Failed to set {param} to {value}")
+                
+        except Exception as e:
+            logger.error(f"[MQTT] Audio command handling error: {e}")
+    
+    def publish_audio_processing_status(self, client):
+        """Publish current audio processing status to MQTT."""
+        try:
+            response = self.liquidsoap_client.send_command("get_processing_status")
+            if response:
+                # Response is 'enabled' or 'disabled'
+                is_enabled = response.strip() == 'enabled'
+                status_data = {
+                    'processing_enabled': is_enabled,
+                    'timestamp': time.time(),
+                    'source': 'server-agent'
+                }
+                client.publish("system/audio/status", json.dumps(status_data), retain=True)
+                logger.info(f"[MQTT] Published audio processing status: {'enabled' if is_enabled else 'disabled'}")
+            else:
+                logger.error("[MQTT] Failed to get audio processing status from Liquidsoap")
+        except Exception as e:
+            logger.error(f"[MQTT] Failed to publish audio processing status: {e}")
     
     def handle_plan_command(self, client, plan):
         """Handle plan selection command."""
@@ -233,6 +303,9 @@ class StatusPublisher:
                 
                 # Regular status publish
                 self.mqtt_handlers.publish_plan_status(client)
+                
+                # Publish audio processing status
+                self.mqtt_handlers.publish_audio_processing_status(client)
                 
                 # Publish monitoring summaries
                 self.mqtt_handlers.publish_underrun_summary(client)

@@ -1,0 +1,107 @@
+---
+- name: System Setup & Hardware Configuration
+  hosts: sculptures
+  become: yes
+  vars:
+    sculpture_dir: /opt/sculpture-system
+  vars_files:
+    - ../../audio_config.yml
+    - ../../playlists.yml
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: [packages]
+
+    - name: Upgrade installed packages
+      apt:
+        upgrade: dist
+      tags: [packages]
+
+    - name: Install required packages
+      apt:
+        name:
+          - darkice
+          - mpv
+          - python3-paho-mqtt
+          - rsync
+          - alsa-utils
+          - python3-pip
+          - git
+          - pulsemixer
+          - python3-rpi.gpio
+        state: present
+      tags: [packages]
+
+    - name: Disable WiFi power saving
+      copy:
+        dest: /etc/NetworkManager/conf.d/wifi-powersave.conf
+        content: |
+          [connection]
+          wifi.powersave = 2
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart NetworkManager
+      tags: [network]
+
+    - name: Detect firmware config path
+      stat:
+        path: /boot/firmware/config.txt
+      register: firmware_cfg
+      tags: [hardware]
+
+    - name: Set boot config path
+      set_fact:
+        boot_cfg: >-
+          {{ '/boot/firmware/config.txt'
+             if firmware_cfg.stat.exists
+             else '/boot/config.txt' }}
+      tags: [hardware]
+
+    - name: Enable IQaudIO codec overlay
+      lineinfile:
+        path: "{{ boot_cfg }}"
+        regexp: '^dtoverlay=iqaudio-codec'
+        line: 'dtoverlay=iqaudio-codec'
+      register: overlay
+      tags: [hardware]
+
+    - name: Enable I2S for audio HAT
+      lineinfile:
+        path: "{{ boot_cfg }}"
+        regexp: '^#? *dtparam=i2s=on'
+        line: 'dtparam=i2s=on'
+        state: present
+      register: i2s_on
+      tags: [hardware]
+
+    - name: Disable built-in audio to prevent I2S conflicts
+      lineinfile:
+        path: "{{ boot_cfg }}"
+        regexp: '^dtparam=audio='
+        line: 'dtparam=audio=off'
+        state: present
+      register: audio_off
+      tags: [hardware]
+
+    - name: Reboot if audio configuration changed
+      reboot:
+        reboot_timeout: 300
+      when: overlay.changed or i2s_on.changed or audio_off.changed
+      tags: [hardware]
+
+    - name: Create sculpture system directory
+      file:
+        path: "{{ sculpture_dir }}"
+        state: directory
+        mode: '0755'
+      tags: [directories]
+
+  handlers:
+    - name: Restart NetworkManager
+      systemd:
+        name: NetworkManager
+        state: restarted 

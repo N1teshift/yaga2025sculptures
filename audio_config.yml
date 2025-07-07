@@ -19,11 +19,11 @@ audio_processing:
   delay_feedback: 0.0
   gate_threshold: -40.0
   normalize_target: -14.0
-mpv_audio_device: "pulse/alsa_output.platform-soc_sound.stereo-fallback"
-# mpv_audio_device: "alsa"
+# mpv_audio_device: "pulse/alsa_output.platform-soc_sound.stereo-fallback"
+mpv_audio_device: "alsa/tee_output"
 mpv_audio_device_alsa: "alsa/tee_output"
 mpv_audio_format: "s16"
-mpv_audio_buffer_secs: 15  # Increased from 10 to 15 seconds to prevent underruns
+mpv_audio_buffer_secs: 10  # Audio buffer size in seconds for mpv player
 mpv_cache_secs: 60
 mpv_demuxer_max_bytes: "20M"
 # PulseAudio optimizations for preventing underruns

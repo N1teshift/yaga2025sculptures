@@ -19,15 +19,21 @@ class LiquidSoapClient:
         self.host = host or LIQUIDSOAP_HOST
         self.port = port or LIQUIDSOAP_PORT
     
-    def send_command(self, command):
+    def send_command(self, command, *args):
         """Send a command to Liquidsoap via telnet."""
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(5)  # 5 second timeout
                 sock.connect((self.host, self.port))
                 
+                # Build command with arguments
+                if args:
+                    full_command = f"{command} {' '.join(str(arg) for arg in args)}"
+                else:
+                    full_command = command
+                
                 # Send command
-                sock.sendall(f"{command}\n".encode())
+                sock.sendall(f"{full_command}\n".encode())
                 
                 # Read response
                 response = sock.recv(1024).decode().strip()

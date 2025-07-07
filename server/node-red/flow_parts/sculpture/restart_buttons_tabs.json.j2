@@ -15,7 +15,7 @@
     "templateScope": "local",
     "x": 480,
     "y": 740,
-    "wires": [[]]
+    "wires": [["mqtt_out_{{ sculpture_id }}"]]
 },
 {
     "id": "sculpture{{ sculpture_id }}_restart_player_reactive_tab",
@@ -33,7 +33,7 @@
     "templateScope": "local",
     "x": 660,
     "y": 740,
-    "wires": [[]]
+    "wires": [["mqtt_out_{{ sculpture_id }}"]]
 },
 {
     "id": "sculpture{{ sculpture_id }}_restart_pi_agent_tab",
@@ -72,6 +72,6 @@
     "templateScope": "local",
     "x": 660,
     "y": 780,
-    "wires": [[]]
+    "wires": [["mqtt_out_{{ sculpture_id }}"]]
 }{% if not loop.last %},{% endif %}
 {% endfor %} 

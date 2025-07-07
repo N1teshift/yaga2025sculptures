@@ -103,7 +103,7 @@
     "noerr": 0,
     "x": 990,
     "y": 560,
-    "wires": [["mqtt_out_{{ sculpture_id }}", "volume_echo_{{ sculpture_id }}"]]
+    "wires": [["mqtt_out_{{ sculpture_id }}"]]
 },
 {
     "id": "capture_format_{{ sculpture_id }}",
@@ -115,7 +115,7 @@
     "noerr": 0,
     "x": 990,
     "y": 600,
-    "wires": [["mqtt_out_{{ sculpture_id }}", "capture_echo_{{ sculpture_id }}"]]
+    "wires": [["mqtt_out_{{ sculpture_id }}"]]
 },
 {
     "id": "sculpture{{ sculpture_id }}_mute_state",
@@ -161,29 +161,5 @@
     "x": 1190,
     "y": 560,
     "wires": []
-},
-{
-    "id": "volume_echo_{{ sculpture_id }}",
-    "type": "function",
-    "z": "sculpture_dashboard",
-    "name": "Echo Volume {{ sculpture_id }}",
-    "func": "msg.payload = msg.payload.volume;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "x": 1200,
-    "y": 520,
-    "wires": [["volume_slider_{{ sculpture_id }}", "volume_slider_{{ sculpture_id }}_tab"]]
-},
-{
-    "id": "capture_echo_{{ sculpture_id }}",
-    "type": "function",
-    "z": "sculpture_dashboard",
-    "name": "Echo Capture {{ sculpture_id }}",
-    "func": "msg.payload = msg.payload.capture;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "x": 1200,
-    "y": 580,
-    "wires": [["capture_slider_{{ sculpture_id }}", "capture_slider_{{ sculpture_id }}_tab"]]
 }{% if not loop.last %},{% endif %}
 {% endfor %} 
