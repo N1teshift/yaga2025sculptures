@@ -79,54 +79,7 @@ def sculpture_process(s) =
   )
 end
 
-# Crossfade function for smooth transitions
-let sculpture_crossfade = crossfade(
-  duration=2.0,
-  fade_in=1.0,
-  fade_out=1.0
-)
-
-# Simple fallback helper
-# Wraps a list of sources with Liquidsoap's `fallback` operator.
-def sculpture_fallback(id, sources) =
-  fallback(
-    id=id,
-    track_sensitive=false,
-    sources
-  )
-end
-
-# Volume control function
-let sculpture_volume = fun(vol, s) ->
-  amplify(vol, s)
-
-# Stereo to mono conversion
+# Stereo to mono conversion (used by main.liq input sources)
 let to_mono = fun(s) ->
   mean(s)
 
-
-# Delay effect - now integrated into dynamic processing chain above
-
-# Dynamic range compressor specifically for ambient audio
-let ambient_compress = compress(
-  attack=0.5,
-  release=2.0,
-  ratio=2.0,
-  threshold=-18.0
-)
-
-# Gate to remove very quiet noise  
-let sculpture_gate_with_threshold = fun(threshold, s) ->
-  gate(threshold=threshold, s)
-
-# Smooth volume automation
-let sculpture_fade_in = fade.in(duration=3.0)
-let sculpture_fade_out = fade.out(duration=3.0)
-
-# Test tone generator (for debugging)
-let test_tone = fun(freq) ->
-  sine(freq)
-
-# Log helper
-let sculpture_log = fun(msg) ->
-  log(label="sculpture", msg) 

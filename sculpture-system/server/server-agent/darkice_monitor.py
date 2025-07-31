@@ -299,6 +299,9 @@ class DarkiceMonitor:
     
     def start_monitoring(self):
         """Start monitoring all systems and services."""
+        if CONNECTION_CONFIG.get('ssh_simulation'):
+            logger.info("[DARKICE] SSH_SIMULATION enabled — skipping real SSH monitoring.")
+            return
         logger.info(f"[DARKICE] Starting darkice monitoring for {len(self.pi_systems)} systems")
         
         for system in self.pi_systems:

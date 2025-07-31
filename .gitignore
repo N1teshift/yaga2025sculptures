@@ -1,0 +1,24 @@
+# Build/tooling artifacts
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Local secrets / env
+docker/.env
+.env
+
+# Ansible vault
+.vault_pass
+**/group_vars/vault.yml
+ansible_vault_pass.txt
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

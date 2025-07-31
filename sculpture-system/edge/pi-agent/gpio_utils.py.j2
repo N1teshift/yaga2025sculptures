@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+import os
 import time
 import logging
 
@@ -8,29 +8,58 @@ BUTTON_SHUTDOWN = 27
 
 logger = logging.getLogger(__name__)
 
+SIMULATION = os.environ.get("SIMULATION", "0") == "1"
+
+# Lazily import the real GPIO library only when not simulating. RPi.GPIO is
+# deprecated on modern Raspberry Pi OS (bookworm) and does not work on Pi 5;
+# lgpio/gpiozero is the migration target. Importing lazily keeps this module
+# importable in the docker dev harness (no hardware, no RPi.GPIO installed).
+GPIO = None
+if not SIMULATION:
+    try:
+        import lgpio as GPIO  # ponytail: preferred on bookworm/Pi5
+    except ImportError:
+        try:
+            import RPi.GPIO as GPIO
+        except ImportError:
+            logger.warning("No GPIO library available; running with no-op GPIO.")
+            GPIO = None
+
+
 def setup_gpio():
+    if SIMULATION or GPIO is None:
+        logger.info("GPIO setup skipped (simulation / no library).")
+        return
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(LED_GREEN, GPIO.OUT)
     GPIO.setup(LED_RED, GPIO.OUT)
     GPIO.setup(BUTTON_SHUTDOWN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    logger.info("GPIO initialized successfully.")
     set_led_off()
-    GPIO.output(LED_GREEN, GPIO.LOW)
-    GPIO.output(LED_RED, GPIO.HIGH)
+
 
 def set_led_off(pin=None):
+    if SIMULATION or GPIO is None:
+        return
     if pin:
         GPIO.output(pin, GPIO.LOW)
     else:
         GPIO.output(LED_RED, GPIO.LOW)
         GPIO.output(LED_GREEN, GPIO.LOW)
 
+
 def set_led_on(pin):
+    if SIMULATION or GPIO is None:
+        logger.info(f"[sim] LED {pin} on")
+        return
     GPIO.output(pin, GPIO.HIGH)
 
+
 def blink_led(pin, stop_event, interval=0.5):
+    if SIMULATION or GPIO is None:
+        logger.info(f"[sim] LED {pin} blink")
+        return
     while not stop_event.is_set():
         GPIO.output(pin, GPIO.HIGH)
         time.sleep(interval)
         GPIO.output(pin, GPIO.LOW)
-        time.sleep(interval) 
+        time.sleep(interval)

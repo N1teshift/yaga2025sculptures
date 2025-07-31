@@ -14,10 +14,10 @@
     </limits>
 
     <authentication>
-        <source-password>hackme</source-password>
-        <relay-password>hackme</relay-password>
+        <source-password>{{ icecast_admin_password | default("hackme") }}</source-password>
+        <relay-password>{{ icecast_admin_password | default("hackme") }}</relay-password>
         <admin-user>admin</admin-user>
-        <admin-password>hackme</admin-password>
+        <admin-password>{{ icecast_admin_password | default("hackme") }}</admin-password>
     </authentication>
 
     <hostname>{{ ansible_default_ipv4.address }}</hostname>
@@ -26,12 +26,15 @@
         <port>8000</port>
     </listen-socket>
 
+    {% set pw = icecast_admin_password | default("hackme") %}
+    {# Microphone input mounts (one per sculpture) #}
+    {% for i in range(1, (sculpture_count | default(3)) + 1) %}
     <mount type="normal">
-        <mount-name>/s1-mic.ogg</mount-name>
+        <mount-name>/s{{ i }}-mic.ogg</mount-name>
         <username>source</username>
-        <password>hackme</password>
+        <password>{{ pw }}</password>
         <max-listeners>20</max-listeners>
-        <dump-file>/tmp/s1-mic.dump</dump-file>
+        <dump-file>/tmp/s{{ i }}-mic.dump</dump-file>
         <burst-size>65536</burst-size>
         <fallback-mount>/silence.ogg</fallback-mount>
         <fallback-override>1</fallback-override>
@@ -39,112 +42,36 @@
         <intro>/intro.ogg</intro>
         <hidden>0</hidden>
         <public>0</public>
-        <stream-name>Sculpture 1 Microphone</stream-name>
-        <stream-description>Live audio from sculpture 1</stream-description>
+        <stream-name>Sculpture {{ i }} Microphone</stream-name>
+        <stream-description>Live audio from sculpture {{ i }}</stream-description>
         <stream-url>http://sculpture.local</stream-url>
         <genre>ambient</genre>
         <bitrate>128</bitrate>
         <type>application/ogg</type>
         <subtype>vorbis</subtype>
     </mount>
+    {% endfor %}
 
+    {# Personalized mix output mounts (one per sculpture) #}
+    {% for i in range(1, (sculpture_count | default(3)) + 1) %}
     <mount type="normal">
-        <mount-name>/s2-mic.ogg</mount-name>
+        <mount-name>/mix-for-{{ i }}.ogg</mount-name>
         <username>source</username>
-        <password>hackme</password>
+        <password>{{ pw }}</password>
         <max-listeners>20</max-listeners>
-        <dump-file>/tmp/s2-mic.dump</dump-file>
-        <burst-size>65536</burst-size>
-        <fallback-mount>/silence.ogg</fallback-mount>
-        <fallback-override>1</fallback-override>
-        <fallback-when-full>1</fallback-when-full>
-        <intro>/intro.ogg</intro>
-        <hidden>0</hidden>
-        <public>0</public>
-        <stream-name>Sculpture 2 Microphone</stream-name>
-        <stream-description>Live audio from sculpture 2</stream-description>
-        <stream-url>http://sculpture.local</stream-url>
-        <genre>ambient</genre>
-        <bitrate>128</bitrate>
-        <type>application/ogg</type>
-        <subtype>vorbis</subtype>
-    </mount>
-
-    <mount type="normal">
-        <mount-name>/s3-mic.ogg</mount-name>
-        <username>source</username>
-        <password>hackme</password>
-        <max-listeners>20</max-listeners>
-        <dump-file>/tmp/s3-mic.dump</dump-file>
-        <burst-size>65536</burst-size>
-        <fallback-mount>/silence.ogg</fallback-mount>
-        <fallback-override>1</fallback-override>
-        <fallback-when-full>1</fallback-when-full>
-        <intro>/intro.ogg</intro>
-        <hidden>0</hidden>
-        <public>0</public>
-        <stream-name>Sculpture 3 Microphone</stream-name>
-        <stream-description>Live audio from sculpture 3</stream-description>
-        <stream-url>http://sculpture.local</stream-url>
-        <genre>ambient</genre>
-        <bitrate>128</bitrate>
-        <type>application/ogg</type>
-        <subtype>vorbis</subtype>
-    </mount>
-
-    <mount type="normal">
-        <mount-name>/mix-for-1.ogg</mount-name>
-        <username>source</username>
-        <password>hackme</password>
-        <max-listeners>20</max-listeners>
-        <dump-file>/tmp/mix-for-1.dump</dump-file>
+        <dump-file>/tmp/mix-for-{{ i }}.dump</dump-file>
         <burst-size>65536</burst-size>
         <hidden>0</hidden>
         <public>0</public>
-        <stream-name>Mix for Sculpture 1</stream-name>
-        <stream-description>Personalized mix for sculpture 1</stream-description>
+        <stream-name>Mix for Sculpture {{ i }}</stream-name>
+        <stream-description>Personalized mix for sculpture {{ i }}</stream-description>
         <stream-url>http://sculpture.local</stream-url>
         <genre>ambient</genre>
         <bitrate>128</bitrate>
         <type>application/ogg</type>
         <subtype>opus</subtype>
     </mount>
-
-    <mount type="normal">
-        <mount-name>/mix-for-2.ogg</mount-name>
-        <username>source</username>
-        <password>hackme</password>
-        <max-listeners>20</max-listeners>
-        <dump-file>/tmp/mix-for-2.dump</dump-file>
-        <burst-size>65536</burst-size>
-        <hidden>0</hidden>
-        <public>0</public>
-        <stream-name>Mix for Sculpture 2</stream-name>
-        <stream-description>Personalized mix for sculpture 2</stream-description>
-        <stream-url>http://sculpture.local</stream-url>
-        <genre>ambient</genre>
-        <bitrate>128</bitrate>
-        <type>application/ogg</type>
-        <subtype>opus</subtype>
-    </mount>
-
-    <mount type="normal">
-        <mount-name>/mix-for-3.ogg</mount-name>
-        <username>source</username>
-        <password>hackme</password>
-        <max-listeners>20</max-listeners>
-        <dump-file>/tmp/mix-for-3.dump</dump-file>
-        <burst-size>65536</burst-size>
-        <hidden>0</hidden>
-        <public>0</public>
-        <stream-name>Mix for Sculpture 3</stream-name>
-        <stream-description>Personalized mix for sculpture 3</stream-description>
-        <stream-url>http://sculpture.local</stream-url>
-        <genre>ambient</genre>
-        <bitrate>128</bitrate>
-        <type>application/ogg</type>
-        <subtype>opus</subtype>
-    </mount>
+    {% endfor %}
 
     <fileserve>1</fileserve>
 
@@ -166,4 +93,4 @@
     <security>
         <chroot>0</chroot>
     </security>
-</icecast> 
+</icecast>

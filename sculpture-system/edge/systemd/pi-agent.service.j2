@@ -9,14 +9,14 @@ ExecStart=/usr/bin/python3 /opt/sculpture-system/pi-agent.py
 Restart=always
 RestartSec=5
 User=pi
-Group=pi
+Group=audio
 
 # Environment variables
 Environment=SCULPTURE_ID={{ id }}
 Environment=CONTROL_HOST={{ control_host }}
 
 # Security settings
-NoNewPrivileges=false
+NoNewPrivileges=true
 PrivateTmp=true
 
 [Install]

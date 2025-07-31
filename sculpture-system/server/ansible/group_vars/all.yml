@@ -1,0 +1,6 @@
+---
+# Non-secret shared variables for the control-node (server) playbook.
+# Secrets live in group_vars/vault.yml (ansible-vault encrypted). The playbook
+# maps the vault vars (vault_icecast_admin_password, vault_icecast_source_password,
+# vault_mqtt_password) with changeme fallbacks.
+sculpture_count: 3

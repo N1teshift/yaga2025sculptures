@@ -8,6 +8,12 @@
   vars:
     sculpture_dir: /opt/sculpture-system
     liquidsoap_config_dir: /etc/liquidsoap
+    # ponytail: secrets come from ansible-vault in production (e.g. group_vars/all.yml
+    # with `ansible-vault encrypt`). Defaults keep a dry-run render working.
+    icecast_admin_password: "{{ vault_icecast_admin_password | default('changeme') }}"
+    icecast_source_password: "{{ vault_icecast_source_password | default('changeme') }}"
+    mqtt_password: "{{ vault_mqtt_password | default('changeme') }}"
+    sculpture_count: 3
     
   tasks:
     - name: Update package cache
@@ -149,9 +155,21 @@
         dest: /etc/mosquitto/conf.d/sculpture.conf
         content: |
           listener 1883
-          allow_anonymous true
+          allow_anonymous false
+          password_file /etc/mosquitto/passwd
           log_type all
         mode: '0644'
+      notify: restart mosquitto
+
+    - name: Create mosquitto password file and sculpture user
+      shell: |
+        set -e
+        touch /etc/mosquitto/passwd
+        if ! mosquitto_passwd -b /etc/mosquitto/passwd sculpture "{{ mqtt_password | default('changeme') }}" 2>/dev/null; then
+          mosquitto_passwd -c -b /etc/mosquitto/passwd sculpture "{{ mqtt_password | default('changeme') }}"
+        fi
+        chown mosquitto:mosquitto /etc/mosquitto/passwd
+        chmod 0640 /etc/mosquitto/passwd
       notify: restart mosquitto
 
     - name: Create Node-RED systemd service
@@ -270,7 +288,7 @@
         content: |
           module.exports = {
               uiPort: process.env.PORT || 1880,
-              uiHost: "0.0.0.0",
+              uiHost: "127.0.0.1",
               mqttReconnectTime: 15000,
               serialReconnectTime: 15000,
               debugMaxLength: 1000,
@@ -286,6 +304,12 @@
               editorTheme: {
                   projects: {
                       enabled: false
+                  },
+                  // Require authentication for the editor. Set adminAuth credentials
+                  // out-of-band (e.g. via node-red admin hash) before exposing.
+                  adminAuth: {
+                      type: "credentials",
+                      users: []
                   }
               },
               flowFile: 'flow.json',
@@ -295,11 +319,11 @@
               ui: { path: "ui" },
               requireHttps: false,
               httpNodeCors: {
-                  origin: "*",
+                  origin: "http://127.0.0.1:1880",
                   methods: "GET,PUT,POST,DELETE"
               },
               httpAdminCors: {
-                  origin: "*",
+                  origin: "http://127.0.0.1:1880",
                   methods: "GET,PUT,POST,DELETE"
               }
           }

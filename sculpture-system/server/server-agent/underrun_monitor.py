@@ -294,6 +294,10 @@ class UnderrunMonitor:
     
     def start_monitoring(self):
         """Start monitoring all systems and services with enhanced error handling."""
+        if CONNECTION_CONFIG.get('ssh_simulation'):
+            logger.info("[UNDERRUN] SSH_SIMULATION enabled — skipping real SSH monitoring. "
+                        "No underrun/darkice log tails will run in this environment.")
+            return
         logger.info(f"[UNDERRUN] Starting underrun monitoring for {len(self.pi_systems)} systems: {[s['name'] for s in self.pi_systems]}")
         logger.info(f"[UNDERRUN] Services to monitor: {MONITORED_SERVICES}")
         logger.info(f"[UNDERRUN] Underrun patterns: {len(UNDERRUN_PATTERNS)} patterns configured")

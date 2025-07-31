@@ -11,6 +11,8 @@ from collections import defaultdict, deque
 # MQTT Configuration
 MQTT_BROKER = os.environ.get('CONTROL_HOST', 'localhost')
 MQTT_PORT = 1883
+MQTT_USERNAME = os.environ.get('MQTT_USERNAME', 'sculpture')
+MQTT_PASSWORD = os.environ.get('MQTT_PASSWORD', '')
 CMD_TOPIC = "server/cmd"
 STATUS_TOPIC = "system/status"
 PLAN_TOPIC = "system/plan"
@@ -57,6 +59,7 @@ CONNECTION_CONFIG = {
     'connection_retry_interval': 30,  # seconds between connection attempts
     'max_connection_attempts': 3,
     'ssh_key_file': '/home/unix/.ssh/id_rsa',  # Explicit path to unix user SSH key
+    'ssh_simulation': os.environ.get('SSH_SIMULATION', '0') == '1',
     'test_connection': True,  # Test connection before starting monitoring
     'heartbeat_interval': 30,  # seconds between heartbeat logs
 }
@@ -64,8 +67,7 @@ CONNECTION_CONFIG = {
 # Paths to logs you want to tail
 LOG_PATHS = {
     "icecast2": "/var/log/icecast2/icecast.log",
-    "liquidsoap": "/var/log/liquidsoap.log",
-    "mqtt_to_telnet_bridge": "/var/log/mqtt_to_telnet_bridge.log"
+    "liquidsoap": "/var/log/liquidsoap.log"
 }
 
 # Darkice restart configuration

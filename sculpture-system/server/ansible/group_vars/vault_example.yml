@@ -1,0 +1,10 @@
+---
+# ansible-vault encrypted secrets for the server (control-node) playbook.
+# Encrypt this file with:
+#   ansible-vault encrypt group_vars/vault.yml
+# Reference the vault password at runtime:
+#   ansible-playbook ... --ask-vault-pass
+#   (or: --vault-password-file .vault_pass)
+vault_icecast_admin_password: "changeme"
+vault_icecast_source_password: "changeme"
+vault_mqtt_password: "changeme"

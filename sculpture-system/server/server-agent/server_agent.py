@@ -15,7 +15,7 @@ import sys
 
 # Import our modules
 from config import (
-    MQTT_BROKER, MQTT_PORT, PI_SYSTEMS, LOG_PATHS, 
+    MQTT_BROKER, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD, PI_SYSTEMS, LOG_PATHS,
     LOG_LEVEL, LOG_FORMAT, LOG_DATE_FORMAT, load_config_overrides
 )
 from underrun_monitor import UnderrunMonitor
@@ -71,7 +71,9 @@ class ServerAgent:
             self.underrun_monitor.set_mqtt_client(self.mqtt_client)
             self.darkice_monitor.set_mqtt_client(self.mqtt_client)
             
-            # Connect to broker
+            # Connect to broker (authenticated)
+            if MQTT_USERNAME:
+                self.mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
             self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
             logger.info(f"[MAIN] MQTT client configured and connected to {MQTT_BROKER}:{MQTT_PORT}")
             

@@ -1,4 +1,5 @@
 #!/usr/bin/liquidsoap
+settings.init.allow_root.set(true)
 
 # Liquidsoap main configuration for sculpture system
 # Supports dynamic plan switching via HTTP API
@@ -10,9 +11,10 @@
 settings.log.level.set(4)
 settings.log.file.path.set("/var/log/liquidsoap/main.log")
 
-# Enable telnet server for server-agent communication
+# Enable telnet server for server-agent communication.
+# Bind to localhost only — the telnet API has no auth of its own.
 settings.server.telnet.set(true)
-settings.server.telnet.bind_addr.set("0.0.0.0")
+settings.server.telnet.bind_addr.set("127.0.0.1")
 settings.server.telnet.port.set(1234)
 
 # Audio settings
@@ -46,8 +48,48 @@ s1_proc = sculpture_process(s1_safe)
 s2_proc = sculpture_process(s2_safe)
 s3_proc = sculpture_process(s3_safe)
 
-# Prerecorded file for local mode (replace with actual file path when available)
-prerecorded = sine(440.0)
+# Local-mode source for plan D. Point this at a real file when available;
+# until then it falls back to silence so plan D is honest (no fake 440Hz tone).
+prerecorded_file = getenv("LOCAL_MODE_FILE")
+prerecorded =
+  if prerecorded_file != "" then
+    mksafe(single(prerecorded_file))
+  else
+    log("LOCAL_MODE_FILE not set; plan D will output silence")
+    blank()
+  end
+
+# Build a list of processed sources indexed by sculpture number (1-based).
+proc_sources = [s1_proc, s2_proc, s3_proc]
+
+# Routing table: for each (recipient bus, plan) which source(s) feed its mix.
+# Recipient bus: 1=A, 2=B, 3=C. Source ids: 1=s1, 2=s2, 3=s3, 0=silence, -1=prerecorded (plan D).
+# ponytail: A1/A2 and B1..B3 collapsed to one bus per group; expand if per-sculpture routing is needed.
+def mix_sources(recipient, plan)
+  r = recipient
+  p = plan
+  if r == 1 and p == "A1" then [2]
+  elsif r == 1 and p == "A2" then [3]
+  elsif r == 1 and p == "B1" then [1]
+  elsif r == 2 and p == "A1" then [3]
+  elsif r == 2 and p == "A2" then [1]
+  elsif r == 2 and p == "B1" then [2]
+  elsif r == 3 and p == "A1" then [2, 3]
+  elsif r == 3 and p == "A2" then [1, 3]
+  elsif r == 3 and p == "B1" then [1, 2]
+  elsif r == 1 and p == "D" then [-1]
+  elsif r == 2 and p == "D" then [-1]
+  elsif r == 3 and p == "D" then [-1]
+  else [2]
+  end
+end
+
+def source_for(id)
+  if id == 0 then silence
+  elsif id == -1 then prerecorded
+  else list.nth(proc_sources, id - 1)
+  end
+end
 
 # Reference to current plan (default: A1)
 current_plan = ref("A1")
@@ -62,41 +104,25 @@ to1 = fallback(id="to1_fallback", track_sensitive=false, [to1_dynamic, silence])
 to2 = fallback(id="to2_fallback", track_sensitive=false, [to2_dynamic, silence])
 to3 = fallback(id="to3_fallback", track_sensitive=false, [to3_dynamic, silence])
 
+# Resolve the mix source(s) for a recipient bus + plan into a single source.
+def mix_source(recipient, plan)
+  ids = mix_sources(recipient, plan)
+  if list.length(ids) > 1 then
+    add([source_for(list.nth(ids, 0)), source_for(list.nth(ids, 1))])
+  else
+    source_for(list.nth(ids, 0))
+  end
+end
+
 # Function to update all mix sources based on current plan
 def update_mixes()
   plan = !current_plan
   log("Updating mixes for plan: #{plan}")
-  
-  # Update sculpture 1 mix
-  if plan == "A1" then to1_dynamic.set(s2_proc)
-  elsif plan == "A2" then to1_dynamic.set(s3_proc)  
-  elsif plan == "B1" then to1_dynamic.set(s2_proc)
-  elsif plan == "B2" then to1_dynamic.set(silence)
-  elsif plan == "B3" then to1_dynamic.set(s3_proc)
-  elsif plan == "C" then to1_dynamic.set(add([s2_proc, s3_proc]))
-  elsif plan == "D" then to1_dynamic.set(prerecorded)
-  else to1_dynamic.set(s2_proc) end
-  
-  # Update sculpture 2 mix
-  if plan == "A1" then to2_dynamic.set(s3_proc)
-  elsif plan == "A2" then to2_dynamic.set(s1_proc)
-  elsif plan == "B1" then to2_dynamic.set(s1_proc)  
-  elsif plan == "B2" then to2_dynamic.set(s3_proc)
-  elsif plan == "B3" then to2_dynamic.set(silence)
-  elsif plan == "C" then to2_dynamic.set(add([s1_proc, s3_proc]))
-  elsif plan == "D" then to2_dynamic.set(prerecorded)
-  else to2_dynamic.set(s3_proc) end
-  
-  # Update sculpture 3 mix
-  if plan == "A1" then to3_dynamic.set(s1_proc)
-  elsif plan == "A2" then to3_dynamic.set(s2_proc)
-  elsif plan == "B1" then to3_dynamic.set(silence)
-  elsif plan == "B2" then to3_dynamic.set(s2_proc)  
-  elsif plan == "B3" then to3_dynamic.set(s1_proc)
-  elsif plan == "C" then to3_dynamic.set(add([s1_proc, s2_proc]))
-  elsif plan == "D" then to3_dynamic.set(prerecorded)
-  else to3_dynamic.set(s1_proc) end
-  
+
+  to1_dynamic.set(mix_source(1, plan))
+  to2_dynamic.set(mix_source(2, plan))
+  to3_dynamic.set(mix_source(3, plan))
+
   log("Mix updates completed for plan #{plan}")
 end
 
@@ -286,7 +312,7 @@ output.icecast(
   %vorbis(quality={{ darkice_quality }}, channels={{ audio_channels }}),
   host="localhost",
   port=8000,
-  password="hackme",
+  password="{{ icecast_source_password | default("hackme") }}",
   mount="mix-for-1.ogg",
   name="Mix for Sculpture 1",
   description="Personalized audio mix",
@@ -297,7 +323,7 @@ output.icecast(
   %vorbis(quality={{ darkice_quality }}, channels={{ audio_channels }}),
   host="localhost",
   port=8000,
-  password="hackme",
+  password="{{ icecast_source_password | default("hackme") }}",
   mount="mix-for-2.ogg",
   name="Mix for Sculpture 2", 
   description="Personalized audio mix",
@@ -308,7 +334,7 @@ output.icecast(
   %vorbis(quality={{ darkice_quality }}, channels={{ audio_channels }}),
   host="localhost",
   port=8000,
-  password="hackme",
+  password="{{ icecast_source_password | default("hackme") }}",
   mount="mix-for-3.ogg",
   name="Mix for Sculpture 3",
   description="Personalized audio mix",

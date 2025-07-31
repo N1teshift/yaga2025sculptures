@@ -19,12 +19,11 @@ if [ -f /proc/sys/kernel/sched_rt_runtime_us ]; then
     echo "Real-time scheduling enabled"
 fi
 
-# Optimize CPU governor for consistent performance
+# Optimize CPU governor for consistent performance (all cores, model-agnostic)
 echo "Setting CPU governor to performance mode..."
-echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null
-echo performance > /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor 2>/dev/null
-echo performance > /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor 2>/dev/null
-echo performance > /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor 2>/dev/null
+for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    echo performance > "$gov" 2>/dev/null
+done
 
 # Increase audio buffer sizes at kernel level
 echo "Optimizing kernel audio buffers..."
@@ -68,10 +67,14 @@ if [ -n "$CARD_NUM" ]; then
     echo "ALSA buffer optimization completed"
 fi
 
-# Disable power saving features that might cause audio interruptions
-echo "Disabling power saving features..."
-echo 0 > /sys/module/snd_hda_intel/parameters/power_save 2>/dev/null
-echo 0 > /sys/module/snd_ac97_codec/parameters/power_save 2>/dev/null
+# Disable power saving features that might cause audio interruptions.
+# Only touches modules that actually exist (no-op otherwise).
+echo "Disabling audio power saving features..."
+for mod in snd_hda_intel snd_ac97_codec; do
+    if [ -d "/sys/module/$mod" ]; then
+        echo 0 > "/sys/module/$mod/parameters/power_save" 2>/dev/null
+    fi
+done
 
 # USB audio optimizations (if applicable)
 echo "Applying USB audio optimizations..."
@@ -79,7 +82,6 @@ echo 0 > /sys/module/usbcore/parameters/autosuspend 2>/dev/null
 
 # Network optimizations to reduce system load
 echo "Optimizing network settings..."
-echo 1 > /proc/sys/net/core/netdev_budget_usecs 2>/dev/null
 echo 300 > /proc/sys/net/core/netdev_max_backlog 2>/dev/null
 
 # Create a systemd service to apply these optimizations on boot

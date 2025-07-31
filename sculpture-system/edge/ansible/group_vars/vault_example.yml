@@ -1,0 +1,8 @@
+---
+# ansible-vault encrypted secrets for the edge (Raspberry Pi) playbook.
+# Encrypt this file with:
+#   ansible-vault encrypt group_vars/vault.yml
+# Reference the vault password at runtime:
+#   ansible-playbook ... --ask-vault-pass
+#   (or: --vault-password-file .vault_pass)
+vault_icecast_source_password: "changeme"

@@ -86,7 +86,8 @@ echo
 
 echo "=== 8. NETWORK CONNECTIVITY ==="
 echo "Can reach control server:"
-ping -c 1 192.168.8.156 &>/dev/null && echo "OK" || echo "FAILED"
+CONTROL_HOST="${CONTROL_HOST:-192.168.8.100}"
+ping -c 1 "$CONTROL_HOST" &>/dev/null && echo "OK" || echo "FAILED"
 echo
 
 echo "=== DIAGNOSTICS COMPLETE ===" 

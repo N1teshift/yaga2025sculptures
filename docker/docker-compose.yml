@@ -1,0 +1,144 @@
+# Docker dev harness — simulate the 3 Raspberry Pi sculptures + control server
+#
+# This lets the whole system (MQTT control plane, Liquidsoap mixing, Node-RED
+# dashboard, server-agent monitoring) be developed and validated WITHOUT the
+# real Pis. The edge agents run in `SIMULATION` mode where GPIO/ALSA/vcgencmd
+# are stubbed (see sculpture-system/edge/pi-agent/* and the SIMULATION flag).
+#
+# Prereqs (Phase 0):
+#   - WSL2 installed:        wsl --install -d Ubuntu-22.04
+#   - Docker Desktop (Win):  enable WSL2 backend, integrate with Ubuntu-22.04
+#   - Verify:                wsl -e docker info
+#
+# Usage:
+#   docker compose up --build        # bring up everything
+#   docker compose logs -f edge-1    # watch one simulated sculpture
+#   docker compose down              # tear down
+#
+# Secrets: local dev uses the .env file (gitignored). The real Ansible deploy
+# uses ansible-vault instead (see sculpture-system/*/ansible).
+
+services:
+  # ---- Control server services ----
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/docker-entrypoint.sh:/mosquitto/docker-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/mosquitto/docker-entrypoint.sh"]
+    environment:
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -p 1883 -u sculpture -P ${MQTT_PASSWORD:-changeme} -t __health -m ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  icecast:
+    build:
+      context: ./icecast
+    ports:
+      - "8000:8000"
+    environment:
+      ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD:-changeme}
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:-changeme}
+      SCULPTURE_COUNT: "3"
+    volumes:
+      - ../sculpture-system/audio_config.yml:/icecast/audio_config.yml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8000/status.xsl || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  liquidsoap:
+    build:
+      context: ./liquidsoap
+    depends_on:
+      icecast:
+        condition: service_healthy
+    environment:
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:-changeme}
+      CONTROL_HOST: icecast
+      LOCAL_MODE_FILE: ""
+    volumes:
+      - ../sculpture-system/server/liquidsoap:/app/liquidsoap:ro
+      - ../sculpture-system/audio_config.yml:/app/audio_config.yml:ro
+
+  node-red:
+    image: nodered/node-red:3.1
+    ports:
+      - "1880:1880"
+    environment:
+      PORT: "1880"
+    volumes:
+      - ../sculpture-system/server/node-red/flow.json.j2:/data/flow.json.j2:ro
+    depends_on:
+      - mosquitto
+
+  server-agent:
+    build:
+      context: ./server-agent
+    depends_on:
+      - mosquitto
+      - liquidsoap
+    environment:
+      CONTROL_HOST: mosquitto
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-changeme}
+      SSH_SIMULATION: "1"
+    volumes:
+      - ../sculpture-system/server/server-agent:/app/server-agent:ro
+
+  # ---- 3 simulated sculptures (run the REAL pi-agent in SIMULATION mode) ----
+  edge-1:
+    build:
+      context: ./edge-sim
+    environment:
+      SCULPTURE_ID: "1"
+      CONTROL_HOST: mosquitto
+      AUDIO_BACKEND: ${AUDIO_BACKEND:-alsa}
+      SIMULATION: "1"
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-changeme}
+    depends_on:
+      - mosquitto
+      - icecast
+    volumes:
+      - ../sculpture-system/edge/pi-agent:/app/pi-agent:ro
+      - ../sculpture-system/audio_config.yml:/app/audio_config.yml:ro
+      - ../sculpture-system/playlists.yml:/app/playlists.yml:ro
+
+  edge-2:
+    build:
+      context: ./edge-sim
+    environment:
+      SCULPTURE_ID: "2"
+      CONTROL_HOST: mosquitto
+      AUDIO_BACKEND: ${AUDIO_BACKEND:-alsa}
+      SIMULATION: "1"
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-changeme}
+    depends_on:
+      - mosquitto
+      - icecast
+    volumes:
+      - ../sculpture-system/edge/pi-agent:/app/pi-agent:ro
+      - ../sculpture-system/audio_config.yml:/app/audio_config.yml:ro
+      - ../sculpture-system/playlists.yml:/app/playlists.yml:ro
+
+  edge-3:
+    build:
+      context: ./edge-sim
+    environment:
+      SCULPTURE_ID: "3"
+      CONTROL_HOST: mosquitto
+      AUDIO_BACKEND: ${AUDIO_BACKEND:-alsa}
+      SIMULATION: "1"
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-changeme}
+    depends_on:
+      - mosquitto
+      - icecast
+    volumes:
+      - ../sculpture-system/edge/pi-agent:/app/pi-agent:ro
+      - ../sculpture-system/audio_config.yml:/app/audio_config.yml:ro
+      - ../sculpture-system/playlists.yml:/app/playlists.yml:ro

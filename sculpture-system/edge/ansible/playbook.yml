@@ -4,6 +4,8 @@
   become: yes
   vars:
     sculpture_dir: /opt/sculpture-system
+    # ponytail: supplied via ansible-vault in production.
+    icecast_source_password: "{{ vault_icecast_source_password | default('changeme') }}"
   vars_files:
     - ../audio_config.yml
     - ../playlists.yml
@@ -23,15 +25,18 @@
     - name: Install required packages
       apt:
         name:
-          - darkice
-          - mpv
-          - python3-paho-mqtt
-          - rsync
-          - alsa-utils
-          - python3-pip
-          - git
-          - pulsemixer
-          - python3-rpi.gpio
+      - darkice
+      - mpv
+      - python3-paho-mqtt
+      - rsync
+      - alsa-utils
+      - python3-pip
+      - git
+      - pulsemixer
+      # ponytail: lgpio is the maintained GPIO lib on bookworm/Pi5; RPi.GPIO is
+      # deprecated and broken on Pi 5. The agent imports it lazily and tolerates
+      # its absence (simulation mode).
+      - python3-lgpio
         state: present
       tags: [packages, system]
 
@@ -213,13 +218,14 @@
       tags: [content, cleanup]
 
     # SSH Key Deployment for Server-Agent Access
-    - name: Copy server's SSH public key locally
+    - name: Read server's SSH public key locally
       local_action:
-        module: ansible.builtin.command
-        cmd: sudo cat /home/unix/.ssh/id_rsa.pub
+        module: ansible.builtin.slurp
+        path: "{{ server_ssh_key_path | default('/home/unix/.ssh/id_rsa.pub') }}"
       register: unix_ssh_key_local
       run_once: true
       become: no
+      failed_when: false
       tags: [ssh, security]
 
     - name: Ensure pi user .ssh directory exists
@@ -234,9 +240,10 @@
     - name: Deploy server's SSH key to pi user
       authorized_key:
         user: pi
-        key: "{{ unix_ssh_key_local.stdout }}"
+        key: "{{ (unix_ssh_key_local.content | b64decode) if unix_ssh_key_local.content is defined else '' }}"
         comment: "server-agent access key"
         state: present
+      when: unix_ssh_key_local.content is defined
       tags: [ssh, security]
 
     - name: Template darkice configuration
@@ -355,7 +362,6 @@
         dest: "{{ sculpture_dir }}/{{ item.dest }}"
         mode: "0644"
       loop:
-        - { src: agent_main.py.j2, dest: agent_main.py }
         - { src: file_utils.py.j2, dest: file_utils.py }
         - { src: gpio_utils.py.j2, dest: gpio_utils.py }
         - { src: mqtt_client.py.j2, dest: mqtt_client.py }
