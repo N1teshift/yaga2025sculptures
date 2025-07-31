@@ -1,3 +1,15 @@
+# IDE and configuration files
+.gitignore
+.cursorrules
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
 # Ignore all files in samples directory except Test subfolder
 sculpture-system/samples/*
 
