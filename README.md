@@ -205,13 +205,6 @@ ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.157"
 ssh-keygen -f "/home/unix_user/.ssh/known_hosts" -R "192.168.8.158"
 ```
 
-## Dev Container
-The `.devcontainer` folder provides a ready-to-use VS Code development
-container. It mirrors the control node and Pi simulator packages so Node.js
-20, Liquidsoap, Mosquitto, Node‑RED and the required Python packages are
-available out of the box. Open the project with the **Remote – Containers**
-extension to develop without installing dependencies locally.
-
 ## 🔮 Future Development Ideas
 
 *Ideas for potential improvements if development continues:*
