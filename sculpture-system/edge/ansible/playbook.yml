@@ -5,8 +5,8 @@
   vars:
     sculpture_dir: /opt/sculpture-system
   vars_files:
-    - ../../audio_config.yml
-    - ../../playlists.yml
+    - ../audio_config.yml
+    - ../playlists.yml
 
   tasks:
     - name: Update package cache
@@ -162,7 +162,7 @@
         module: ansible.builtin.shell
         cmd: |
           # Convert all supported audio formats to WAV with correct settings (only if needed)
-          find ../../samples -type f "(" -iname '*.wav' -o -iname '*.flac' -o -iname '*.mp3' -o -iname '*.ogg' -o -iname '*.m4a' -o -iname '*.aac' ")" | while read f; do
+          find ../samples -type f "(" -iname '*.wav' -o -iname '*.flac' -o -iname '*.mp3' -o -iname '*.ogg' -o -iname '*.m4a' -o -iname '*.aac' ")" | while read f; do
             if [ -f "$f" ]; then
               # Get filename without extension and add .wav
               basename_noext=$(basename "$f" | sed 's/\.[^.]*$//')
@@ -369,7 +369,7 @@
         dest: "{{ item.dest }}"
         mode: "{{ item.mode }}"
       loop:
-        - { src: ../scripts/status_collector.py, dest: "{{ sculpture_dir }}/status_collector.py", mode: '0644' }
+        - { src: ../pi-agent/status_collector.py, dest: "{{ sculpture_dir }}/status_collector.py", mode: '0644' }
         - { src: ../scripts/audio_diagnostics.sh, dest: "{{ sculpture_dir }}/audio_diagnostics.sh", mode: '0755' }
         - { src: ../scripts/hardware_audio_test.sh, dest: "{{ sculpture_dir }}/hardware_audio_test.sh", mode: '0755' }
         - { src: ../scripts/optimize_audio.sh, dest: "{{ sculpture_dir }}/optimize_audio.sh", mode: '0755' }

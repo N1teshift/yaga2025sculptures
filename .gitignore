@@ -1,14 +1,6 @@
-# Ignore all files in samples directory
-samples/*
+# Ignore all files in samples directory except Test subfolder
+sculpture-system/samples/*
 
-# But keep the specific test files
-!samples/test1.wav
-!samples/test2.wav
-!samples/test3.wav
-!samples/test4.wav
-!samples/test5.wav
-!samples/test6.wav
-
-# Ignore all samples except Test
-!samples/Test/
-!samples/Test/*
+# But keep the Test directory and its contents
+!sculpture-system/samples/Test/
+!sculpture-system/samples/Test/*

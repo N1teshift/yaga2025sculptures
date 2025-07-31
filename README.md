@@ -1,28 +1,37 @@
-# Sculpture Audio System
+# YAGA 2025 Sculptures - Interactive Audio System
 
-A distributed audio system for interactive sculpture installations using Raspberry Pi devices and a central control server.
+A distributed audio system for interactive sculpture installations, featuring networked Raspberry Pi devices and centralized audio mixing. Successfully deployed at YAGA 2025 festival.
 
-## Overview
+## 🎯 Project Overview
 
-This system creates a network of three sculptures, each equipped with a Raspberry Pi, microphone, and speaker. Each sculpture captures audio from its environment and streams it to a central server, which creates personalized audio mixes for each sculpture.
+This system creates a network of three interactive sculptures, each equipped with a Raspberry Pi, microphone, and speaker. Each sculpture captures ambient audio and streams it to a central server, which creates personalized audio mixes that are played back through each sculpture's speaker, creating an immersive, responsive audio environment.
 
-## Architecture
+## 🏗️ System Architecture
 
-- **Edge Devices (3x Raspberry Pi):** Audio capture, streaming, and playback
-- **Control Server (1x Windows + WSL 2 or Linux PC):** Audio mixing, MQTT broker, web dashboard
-- **Communication:** MQTT for control, Icecast for audio streaming
+- **🎤 Edge Devices (3x Raspberry Pi)**: Audio capture, streaming, and playback
+- **🎛️ Control Server (Linux/WSL)**: Audio mixing engine, MQTT broker, web dashboard  
+- **📡 Communication**: MQTT for device control, Icecast for audio streaming
+- **🌐 Web Interface**: Real-time control and monitoring dashboard
 
-## Features
+## ✨ Key Features
 
-- **Live Audio Streaming:** Real-time audio capture and streaming using DarkIce
-- **Personalized Mixing:** Each sculpture receives a unique mix via Liquidsoap
-- **Remote Control:** Web-based dashboard for volume control and mode switching
-- **System Monitoring:** Real-time CPU and temperature monitoring
-- **Automated Deployment:** Ansible playbooks for easy setup
-- **Fallback Mode:** Local audio playback when network is unavailable
-- **Cross-Platform:** Supports Windows + WSL 2 and native Linux
+- **🔄 Live Audio Processing**: Real-time capture, mixing, and playback
+- **🎨 Dynamic Audio Mixing**: Each sculpture receives unique processed mixes via Liquidsoap
+- **📱 Web Control Interface**: Volume control, mode switching, system monitoring
+- **📊 Real-time Monitoring**: CPU, temperature, audio levels, service status
+- **🚀 Automated Deployment**: Complete Ansible automation for reproducible setup
+- **🎵 Flexible Playback**: Live streaming mode + local playlist fallback
+- **⚡ High Performance**: Optimized for low-latency audio processing
 
-## Quick Start
+## 🚀 Quick Start
+
+### Prerequisites
+- **Control Server**: Linux PC or Windows with WSL 2 (Ubuntu 22.04+ recommended)
+- **Edge Devices**: 3x Raspberry Pi with audio HATs (IQaudIO codec recommended)
+- **Network**: WiFi/Ethernet network connecting all devices
+- **Software**: Ansible installed on control server
+
+### Basic Setup
 
 1. **Clone Repository:**
    ```bash
@@ -30,30 +39,49 @@ This system creates a network of three sculptures, each equipped with a Raspberr
    cd yaga2025sculptures
    ```
 
-2. **Install Server Dependencies:**
-   Run the setup script to install Icecast2, Liquidsoap, Mosquitto, Node.js and other requirements.
+2. **Configure Network:**
    ```bash
-   sudo ./setup.sh
+   # Update IP addresses in configuration files
+   nano sculpture-system/edge/ansible/hosts.ini
+   nano sculpture-system/server/ansible/hosts.ini
    ```
 
-3. **Follow Setup Guide:**
-   See [docs/quickstart.md](docs/quickstart.md) for detailed deployment instructions.
+3. **Deploy System:**
+   ```bash
+   # Deploy to edge devices (Raspberry Pis)
+   cd sculpture-system/edge/ansible
+   ansible-playbook -i hosts.ini playbook.yml
+   
+   # Deploy to server
+   cd ../../server/ansible  
+   ansible-playbook -i hosts.ini playbook.yml
+   ```
 
-## Repository Structure
+4. **Access Dashboard:**
+   Open `http://YOUR_SERVER_IP:1880/ui` for the control interface
+
+## 📁 Repository Structure
 
 ```
-sculpture-system/
-├── edge/                    # Raspberry Pi configuration
-│   ├── ansible/            #   - Deployment automation
-│   ├── darkice/            #   - Audio streaming config
-│   ├── scripts/            #   - Pi agent and utilities
-│   └── systemd/            #   - Service definitions
-├── server/                 # Control server setup
-│   ├── ansible/           #   - Server deployment & Node-RED flows
-│   ├── liquidsoap/        #   - Audio mixing engine
-│   └── templates/         #   - Other configuration templates (e.g., Icecast)
-└── docs/                  # Documentation
-    └── quickstart.md      #   - Deployment guide
+yaga2025sculptures/
+├── sculpture-system/            # Core sculpture system
+│   ├── 🎤 edge/                 #   Raspberry Pi sculpture devices
+│   │   ├── ansible/             #     Automated deployment & configuration
+│   │   ├── pi-agent/           #     Python modules for device control
+│   │   ├── scripts/            #     Diagnostic and maintenance scripts
+│   │   ├── darkice/            #     Audio streaming configuration
+│   │   └── systemd/            #     Service definitions
+│   ├── 🎛️ server/               #   Central control server
+│   │   ├── ansible/            #     Server deployment automation
+│   │   ├── liquidsoap/         #     Audio mixing engine
+│   │   ├── node-red/           #     Web dashboard components
+│   │   ├── server-agent/       #     Server monitoring & control
+│   │   └── icecast/            #     Streaming server config
+│   ├── 🎵 samples/              #   Audio content library
+│   ├── ⚙️ audio_config.yml      #   Global audio settings
+│   └── 📋 playlists.yml         #   Predefined audio playlists
+├── 📚 GUIDE.md                  # Complete installation guide
+└── 📜 LICENSE.md               # MIT License
 ```
 
 ## System Components
@@ -184,6 +212,38 @@ container. It mirrors the control node and Pi simulator packages so Node.js
 available out of the box. Open the project with the **Remote – Containers**
 extension to develop without installing dependencies locally.
 
-## License
+## 🔮 Future Development Ideas
+
+*Ideas for potential improvements if development continues:*
+
+### 🔧 **System Improvements**
+- **Enhanced Ansible Modularity**: Break down playbooks into focused, reusable modules for faster development cycles
+- **Automated Recovery**: Implement self-healing mechanisms for common failure scenarios
+- **Dynamic Sample Rate Management**: Create dedicated playbooks for quick audio configuration updates
+- **Comprehensive System Restart Sequencing**: Ordered service restart logic for complete system recovery
+
+### 🎵 **Audio Features**  
+- **Advanced Plan Switching**: Enable live-to-local mode transitions per sculpture
+- **Enhanced Audio Processing**: Improve audible effects of processing parameters with better monitoring
+- **Stereo-to-Mono Optimization**: Refinements to dual-head microphone processing
+
+### 🚀 **Performance & Monitoring**
+- **Production Underrun Monitoring**: Enhanced buffer management and dropout prevention
+- **Extended Audio Processing Documentation**: Better characterization of effect parameters
+- **Server-Agent Connectivity Improvements**: More robust edge device communication
+
+### 🏗️ **Architecture** 
+- **Service Modularity**: Further decomposition of components for easier maintenance
+- **Cross-Platform Audio Backend**: Enhanced PulseAudio/ALSA abstraction layer
+
+## 📊 Project Status
+
+This system was successfully deployed and operated during the **YAGA 2025 festival**. The codebase is now in a clean, documented state suitable for archival and potential future development.
+
+## 📜 License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE.md) for details.
+
+## 🙏 Acknowledgments
+
+Developed for the YAGA 2025 festival interactive sculpture installation.

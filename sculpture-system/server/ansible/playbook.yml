@@ -3,7 +3,7 @@
   hosts: localhost
   become: yes
   vars_files:
-    - ../../audio_config.yml
+    - ../audio_config.yml
 
   vars:
     sculpture_dir: /opt/sculpture-system
